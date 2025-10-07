@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <!-- Include CSS and fonts as in original -->
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/atlantis.min.css">
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-barcode"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Menu</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:text="${title}"></a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <!-- <div th:replace="~{part/modal :: modal}"></div> -->
+                    <!-- <a href="/code-generator/data-tables.html" class="btn btn-primary ml-auto mt-2">
+                        <i class="fa fa-table mr-1"></i> Data Tables
+                    </a> -->
+                    <a th:href="@{/code-generator/data-tables}">
+                        <button class="btn btn-primary ml-auto mt-2">
+                            <i class="fa fa-table mr-1"></i> Data Tables
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Generate Item Code</h4>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Code Generator Form -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <!-- Machine Type -->
+                                        <label>Machine Type <span class="text-danger">*</span></label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="machineTypeInput"
+                                                placeholder="Search machine type by Name or Code" autocomplete="off"
+                                                required />
+                                            <div id="machineTypeDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="machineType" id="machineTypeSelect">
+                                                <option th:each="mt : ${machineTypes}" th:value="${mt.code}"
+                                                    th:text="${mt.code + ' - ' + mt.name}"></option>
+                                            </select>
+
+                                            <datalist id="machineTypeOptions">
+                                                <option th:each="mt : ${machineTypes}"
+                                                    th:value="${mt.name} + ' (' + ${mt.id} + ')'"
+                                                    th:data-machine-type-id="${mt.id}">
+                                                </option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: machine-type-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addMachineTypeModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <div th:replace="~{fragments/cg-modal :: view-modal}"></div>
+                                            <button class="btn btn-secondary ml-2" data-toggle="modal"
+                                                data-target="#addViewModal"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Category -->
+                                    <div class="form-group">
+                                        <label>Category <span class="text-danger">*</span></label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="categoryInput"
+                                                placeholder="Search category by Name or Code" autocomplete="off"
+                                                required />
+                                            <div id="categoryDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="category" id="categorySelect">
+                                                <option th:each="cat : ${categories}" th:value="${cat.code}"
+                                                    th:text="${cat.code + ' - ' + cat.name}"></option>
+                                            </select>
+
+                                            <datalist id="categoryOptions">
+                                                <option th:each="cat : ${categories}"
+                                                    th:value="${cat.name} + ' (' + ${cat.id} + ')'"
+                                                    th:data-category-id="${cat.id}">
+                                                </option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: category-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addCategoryModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Subcategory -->
+                                    <div class="form-group">
+                                        <label>Subcategory <span class="text-danger">*</span></label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="subcategoryInput"
+                                                placeholder="Search subcategory by Name or Code" autocomplete="off"
+                                                required />
+                                            <div id="subcategoryDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="subcategory" id="subcategorySelect">
+                                                <option th:each="subcat : ${subcategories}" th:value="${subcat.code}"
+                                                    th:text="${subcat.code + ' - ' + subcat.name}"></option>
+                                            </select>
+
+                                            <datalist id="subcategoryOptions">
+                                                <option th:each="subcat : ${subcategories}"
+                                                    th:value="${subcat.name} + ' (' + ${subcat.id} + ')'"
+                                                    th:data-subcategory-id="${subcat.id}">
+                                                </option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: subcategory-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addSubcategoryModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Capacity/Part Number <span class="text-danger">*</span></label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="serialNumberInput"
+                                                placeholder="Search Capacity/Part Number" autocomplete="off" required />
+                                            <div id="serialNumberDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="serialNumber" id="serialNumberSelect">
+                                                <option th:each="sn : ${serialNumbers}" th:value="${sn.code}"
+                                                    th:text="${sn.code + ' - ' + sn.name}"></option>
+                                            </select>
+
+                                            <datalist id="serialNumberOptions">
+                                                <option th:each="sn : ${serialNumbers}"
+                                                    th:value="${sn.name} + ' (' + ${sn.id} + ')'"
+                                                    th:data-serial-number-id="${sn.id}"></option>
+                                                </option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: serial-number-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addSerialNumberModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Supplier/SN</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="supplierInput"
+                                                placeholder="Search Supplier/SN" required />
+                                            <div id="supplierDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="supplier" id="supplierSelect">
+                                                <option th:each="sup : ${suppliers}" th:value="${sup.code}"
+                                                    th:text="${sup.code + ' - ' + sup.name}"></option>
+                                            </select>
+                                            <datalist id="supplierOptions">
+                                                <option th:each="sup : ${suppliers}"
+                                                    th:value="${sup.name} + ' (' + ${sup.code} + ')'"
+                                                    th:data-supplier-id="${sup.id}"></option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: supplier-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addSupplierModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Section</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control" id="sectionInput"
+                                                placeholder="Enter Section" required />
+                                            <div id="sectionDropdown" class="dropdown-menu"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
+                                            </div>
+                                            <select class="d-none" name="section" id="sectionSelect">
+                                                <option th:each="sec : ${sections}" th:value="${sec.code}"
+                                                    th:text="${sec.code}"></option>
+                                            </select>
+
+                                            <datalist id="sectionOptions">
+                                                <option th:each="sec : ${sections}" th:value="${sec.code}"
+                                                    th:data-section-id="${sec.id}"></option>
+                                            </datalist>
+                                            <div th:replace="~{fragments/cg-modal :: section-modal}"></div>
+                                            <button class="btn btn-primary ml-2" data-toggle="modal"
+                                                data-target="#addSectionModal">
+                                                <i class="fa fa-plus-circle mr-2"></i> Add
+                                            </button>
+                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
+                                                View</button> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generated Code -->
+                            <div class="row align-items-center mt-4">
+                                <div class="col-md-6 d-flex justify-content-center">
+                                    <button class="btn btn-success" id="generateBtn">Generate Code</button>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Generated Code</label>
+                                        <div class="input-group">
+                                            <textarea id="generatedCode" class="form-control text-dark"
+                                                rows="5"></textarea>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary ml-2" id="copyBtn">Copy Code</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                document.getElementById('copyBtn').addEventListener('click', function () {
+                                    const generatedCode = document.getElementById('generatedCode');
+                                    generatedCode.select();
+                                    document.execCommand('copy');
+
+                                    // Display a toast message using a card
+                                    const toastCard = document.createElement('div');
+                                    toastCard.className = 'card text-white bg-success';
+                                    toastCard.style.position = 'fixed';
+                                    toastCard.style.top = '20px';
+                                    toastCard.style.left = '50%';
+                                    toastCard.style.transform = 'translateX(-50%)';
+                                    toastCard.style.zIndex = '1050';
+                                    toastCard.style.width = '300px';
+                                    toastCard.innerHTML = `
+                                        <div class="card-body d-flex justify-content-center align-items-center text-center">
+                                            <span>Generated code copied to clipboard: <strong id="copiedCode">${generatedCode.value}</strong></span>
+                                        </div>`;
+                                    document.body.appendChild(toastCard);
+
+                                    // Automatically remove the card after 3 seconds
+                                    setTimeout(() => {
+                                        toastCard.remove();
+                                    }, 3000);
+                                });
+                            </script>
+
+                            <script>
+                                document.getElementById('generateBtn').addEventListener('click', function () {
+                                    const machineTypeCode = document.getElementById('machineTypeSelect').value;
+                                    const categoryCode = document.getElementById('categorySelect').value;
+                                    const subcategoryCode = document.getElementById('subcategorySelect').value;
+                                    const serialNumberCode = document.getElementById('serialNumberSelect').value;
+                                    const supplierCode = document.getElementById('supplierSelect').value;
+                                    const sectionCode = document.getElementById('sectionSelect').value;
+
+                                    if (!machineTypeCode || !categoryCode || !subcategoryCode || !serialNumberCode || !supplierCode || !sectionCode) {
+                                        alert('Please select all required fields before generating the code.');
+                                        return;
+                                    }
+
+                                    // Concatenate the codes directly
+                                    const generatedCode = `${machineTypeCode}${categoryCode}${subcategoryCode}${serialNumberCode}${supplierCode}${sectionCode}`;
+                                    document.getElementById('generatedCode').value = generatedCode;
+                                });
+                            </script>
+
+                            <!-- Success/Error Messages -->
+                            <div th:if="${message}" class="alert alert-success mt-3">
+                                [[${message}]]
+                            </div>
+                            <div th:if="${error}" class="alert alert-danger mt-3">
+                                [[${error}]]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Files -->
+    <script src="/assets/js/core/jquery.3.2.1.min.js"></script>
+    <script src="/assets/js/core/popper.min.js"></script>
+    <script src="/assets/js/core/bootstrap.min.js"></script>
+</body>
+
+</html>
+
+<th:block layout:fragment="scripts">
+    <script>
+        function setupLiveSearch(inputId, selectId, optionsContainerId, fieldLabel = 'item') {
+            const input = document.getElementById(inputId);
+            const select = document.getElementById(selectId);
+            const dropdown = document.getElementById(`${inputId.replace('Input', 'Dropdown')}`);
+            const options = Array.from(select.options)
+                .filter(opt => opt.value) // skip empty option
+                .map(opt => ({
+                    value: opt.value,
+                    label: opt.text,
+                    id: opt.dataset.id || opt.dataset.code || ''
+                }));
+
+            if (!input || !select || !dropdown) {
+                console.warn(`Missing elements for ${inputId}`);
+                return;
+            }
+
+            input.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                dropdown.innerHTML = '';
+                if (term === '') {
+                    dropdown.style.display = 'none';
+                    select.value = '';
+                    return;
+                }
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(term)
+                );
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+                filtered.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.style.cursor = 'pointer';
+                    div.style.whiteSpace = 'normal';
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    const highlighted = opt.label.replace(regex, '<strong>$1</strong>');
+                    div.innerHTML = highlighted;
+                    div.addEventListener('click', () => {
+                        input.value = opt.label;
+                        select.value = opt.value;
+                        dropdown.style.display = 'none';
+                        input.focus();
+                    });
+                    dropdown.appendChild(div);
+                });
+                // Dynamically set dropdown width and align left/top to match input
+                dropdown.style.display = 'block';
+                dropdown.style.width = input.offsetWidth + 'px';
+                // Align left and top relative to offset parent
+                const inputRect = input.getBoundingClientRect();
+                const parentRect = input.offsetParent ? input.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+                dropdown.style.left = (inputRect.left - parentRect.left) + 'px';
+                dropdown.style.top = (input.offsetTop + input.offsetHeight) + 'px';
+            });
+            document.addEventListener('click', function (e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+            input.addEventListener('keydown', function (e) {
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                if (items.length === 0) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+
+        }
+        $(document).ready(function () {
+            setupLiveSearch('machineTypeInput', 'machineTypeSelect', 'machineTypeOptions');
+            setupLiveSearch('categoryInput', 'categorySelect', 'categoryOptions');
+            setupLiveSearch('subcategoryInput', 'subcategorySelect', 'subcategoryOptions');
+            setupLiveSearch('serialNumberInput', 'serialNumberSelect', 'serialNumberOptions');
+            setupLiveSearch('supplierInput', 'supplierSelect', 'supplierOptions', 'supplier');
+            setupLiveSearch('sectionInput', 'sectionSelect', 'sectionOptions', 'section');
+        });
+    </script>
+</th:block>

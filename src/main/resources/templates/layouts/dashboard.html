@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title th:text="${title} ? ${title} + ' - Maintenance' : 'Maintenance'"></title>
+	<meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+	<link rel="icon" href="/assets/img/icon.ico" type="image/x-icon" />
+
+	<!-- Fonts and icons -->
+	<script src="/assets/js/plugin/webfont/webfont.min.js"></script>
+	<script src="/assets/js/core/jquery.3.2.1.min.js"></script>
+	<script th:inline="javascript">
+		WebFont.load({
+			google: { "families": ["Lato:300,400,700,900"] },
+			custom: {
+				"families": ["Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "simple-line-icons"],
+				urls: ['/assets/css/fonts.min.css']
+			},
+			active: function () {
+				sessionStorage.fonts = true;
+			}
+		});
+	</script>
+
+	<!-- CSS Files -->
+	<link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/assets/css/atlantis.min.css">
+
+	<!-- Custom Styles -->
+	<th:block layout:fragment="styles">
+	</th:block>
+</head>
+
+<body>
+	<div class="wrapper">
+		<div class="main-header">
+			<!-- Logo Header -->
+			<div class="logo-header" data-background-color="blue">
+
+				<a href="index.html" class="logo">
+					<img src="/assets/img/logo.svg" alt="navbar brand" class="navbar-brand">
+				</a>
+				<button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
+					data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon">
+						<i class="icon-menu"></i>
+					</span>
+				</button>
+				<button class="topbar-toggler more"><i class="icon-options-vertical"></i></button>
+				<div class="nav-toggle">
+					<button class="btn btn-toggle toggle-sidebar">
+						<i class="icon-menu"></i>
+					</button>
+				</div>
+			</div>
+			<!-- End Logo Header -->
+
+			<!-- Navbar Header -->
+			<nav class="navbar navbar-header navbar-expand-lg" data-background-color="blue">
+
+				<div class="container-fluid">
+					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
+					</ul>
+				</div>
+			</nav>
+			<!-- End Navbar -->
+		</div>
+
+		<!-- Sidebar -->
+		<div class="sidebar sidebar-style-2">
+			<div class="sidebar-wrapper scrollbar scrollbar-inner">
+				<div class="sidebar-content">
+
+					<!-- User Profile -->
+					<div class="user">
+						<div class="avatar-sm float-left mr-3">
+							<img src="/assets/img/profile.jpg" alt="User Avatar"
+								class="avatar-img rounded-circle border border-primary"
+								style="border-width: 2px !important;">
+						</div>
+						<div class="info">
+							<a data-toggle="collapse" href="#collapseUserMenu" aria-expanded="false">
+								<span>
+									Hizrian
+									<span class="user-level">Administrator</span>
+									<span class="caret"></span>
+								</span>
+							</a>
+							<div class="clearfix"></div>
+
+							<div class="collapse" id="collapseUserMenu">
+								<ul class="nav nav-small mt-2">
+									<li class="nav-item">
+										<a class="nav-link" href="/users/aB3cD5eF78">
+											<i class="fas fa-user-circle mr-2"></i> My Profile
+										</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" href="logout">
+											<i class="fas fa-sign-out-alt mr-2"></i> Logout
+										</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+
+					<!-- Navigation -->
+					<ul class="nav nav-primary">
+
+						<!-- Dashboard -->
+						<li class="nav-item" th:classappend="${title == 'Overview'} ? 'active' : ''">
+							<a th:href="@{/}">
+								<i class="fas fa-tachometer-alt"></i>
+								<p class="nav-label">Dashboard</p>
+							</a>
+						</li>
+
+						<!-- Menu Section Divider -->
+						<li class="nav-section">
+							<span class="sidebar-mini-icon">
+								<i class="fa fa-ellipsis-h"></i>
+							</span>
+							<h4 class="text-section">Maintenance System</h4>
+						</li>
+
+						<!-- User Management -->
+						<li class="nav-item" th:classappend="${title == 'User Management'} ? 'active' : ''">
+							<a th:href="@{/users}">
+								<i class="fas fa-users"></i>
+								<p class="nav-label">User Management</p>
+							</a>
+						</li>
+
+						<!-- Complaint List -->
+						<li class="nav-item" th:classappend="${title == 'Complaint List'} ? 'active' : ''">
+							<a th:href="@{/complaints}">
+								<i class="fas fa-exclamation-triangle"></i>
+								<p class="nav-label">Complaint List</p>
+							</a>
+						</li>
+
+						<!-- Work Report -->
+						<li class="nav-item" th:classappend="${title == 'Work Report'} ? 'active' : ''">
+							<a th:href="@{/work-reports}">
+								<i class="far fa-calendar-check"></i>
+								<p class="nav-label">Work Report</p>
+							</a>
+						</li>
+
+						<!-- Areas -->
+						<li class="nav-item" th:classappend="${title == 'Areas'} ? 'active' : ''">
+							<a th:href="@{/areas}">
+								<i class="fas fa-industry"></i>
+								<p class="nav-label">Areas</p>
+							</a>
+						</li>
+
+						<!-- Equipments -->
+						<li class="nav-item" th:classappend="${title == 'Equipments'} ? 'active' : ''">
+							<a th:href="@{/equipments}">
+								<i class="fas fa-cogs"></i>
+								<p class="nav-label">Equipments</p>
+							</a>
+						</li>
+
+						<!-- Bill of Materials -->
+						<li class="nav-item" th:classappend="${title == 'Bill of Materials'} ? 'active' : ''">
+							<a th:href="@{/bom}">
+								<i class="fas fa-list-alt"></i>
+								<p class="nav-label">Bill of Materials</p>
+							</a>
+						</li>
+
+						<!-- Code Generator -->
+						<li class="nav-item" th:classappend="${title == 'Code Generator'} ? 'active' : ''">
+							<a th:href="@{/code-generator}">
+								<i class="fas fa-barcode"></i>
+								<p class="nav-label">Code Generator</p>
+							</a>
+						</li>
+
+						<!-- Parts -->
+						<li class="nav-item" th:classappend="${title == 'Parts Inventory'} ? 'active' : ''">
+							<a th:href="@{/parts}">
+								<i class="fas fa-toolbox"></i>
+								<p class="nav-label">Parts Inventory</p>
+							</a>
+						</li>
+
+						<!-- Reports (Optional)
+						<li class="nav-item">
+							<a href="#reports" data-toggle="collapse" aria-expanded="false">
+								<i class="fas fa-chart-bar"></i>
+								<p class="nav-label">Reports</p>
+								<span class="caret"></span>
+							</a>
+							<div class="collapse" id="reports">
+								<ul class="nav nav-collapse">
+									<li><a href="/reports/complaint"><span class="sub-item">Complaint Summary</span></a>
+									</li>
+									<li><a href="/reports/machine-uptime"><span class="sub-item">Machine
+												Uptime</span></a></li>
+									<li><a href="/reports/parts-usage"><span class="sub-item">Parts Usage</span></a>
+									</li>
+								</ul>
+							</div>
+						</li> -->
+					</ul>
+				</div>
+			</div>
+		</div>
+		<!-- End Sidebar -->
+
+		<!-- Main Panel -->
+		<div class="main-panel">
+			<div class="content" layout:fragment="content">
+				<!-- Page-specific content goes here -->
+			</div>
+		</div>
+	</div>
+
+	
+
+	<!--   Core JS Files   -->
+	<script src="/assets/js/core/jquery.3.2.1.min.js"></script>
+	<script src="/assets/js/core/popper.min.js"></script>
+	<script src="/assets/js/core/bootstrap.min.js"></script>
+
+	<!-- jQuery UI -->
+	<script src="/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+	<script src="/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+
+	<!-- jQuery Scrollbar -->
+	<script src="/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+	<!-- Chart JS -->
+	<!-- <script src="/assets/js/plugin/chart.js/chart.min.js"></script> -->
+
+	<!-- jQuery Sparkline -->
+	<script src="/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+
+	<!-- Chart Circle -->
+	<script src="/assets/js/plugin/chart-circle/circles.min.js"></script>
+
+	<!-- Datatables -->
+	<script src="/assets/js/plugin/datatables/datatables.min.js"></script>
+
+	<!-- Bootstrap Notify -->
+	<script src="/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+
+	<!-- jQuery Vector Maps -->
+	<script src="/assets/js/plugin/jqvmap/jquery.vmap.min.js"></script>
+	<script src="/assets/js/plugin/jqvmap/maps/jquery.vmap.world.js"></script>
+
+	<!-- Atlantis JS -->
+	<script src="/assets/js/atlantis.min.js"></script>
+
+	<script src="/assets/js/demo.js"></script>
+
+	<!-- Page-specific scripts -->
+	<th:block layout:fragment="scripts">
+	</th:block>
+
+</body>
+
+</html>

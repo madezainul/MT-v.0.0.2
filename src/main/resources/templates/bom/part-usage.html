@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/dashboard}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="${title}">Part Usage Analysis</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="page-inner">
+        <div class="page-header">
+            <h4 class="page-title">Part Usage Analysis</h4>
+            <ul class="breadcrumbs">
+                <li class="nav-home">
+                    <a href="/dashboard">
+                        <i class="flaticon-home"></i>
+                    </a>
+                </li>
+                <li class="separator">
+                    <i class="flaticon-right-arrow"></i>
+                </li>
+                <li class="nav-item">
+                    <a href="/bom">Bill of Materials</a>
+                </li>
+                <li class="separator">
+                    <i class="flaticon-right-arrow"></i>
+                </li>
+                <li class="nav-item">
+                    <span>Part Usage Analysis</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <h4 class="card-title">Part Usage Analysis</h4>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Part Selection -->
+                        <form method="get" th:action="@{/bom/part-usage}">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="partSelect">Select Part:</label>
+                                        <select class="form-control" id="partSelect" name="partId" onchange="this.form.submit()">
+                                            <option value="">-- Select Part --</option>
+                                            <option th:each="part : ${parts}"
+                                                    th:value="${part.id}"
+                                                    th:text="|${part.code} - ${part.name}|"
+                                                    th:selected="${selectedPartId == part.id}"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Part Usage Details -->
+                        <div th:if="${selectedPart}" class="mt-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Part Details</h5>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="30%">Code:</th>
+                                            <td th:text="${selectedPart.code}"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Name:</th>
+                                            <td th:text="${selectedPart.name}"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Description:</th>
+                                            <td th:text="${selectedPart.description}"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Current Stock:</th>
+                                            <td>
+                                                <span class="badge" 
+                                                      th:classappend="${selectedPart.currentStock > selectedPart.minimumStock} ? 'badge-success' : 'badge-danger'"
+                                                      th:text="${selectedPart.currentStock}"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Used in Equipment:</th>
+                                            <td>
+                                                <span class="badge badge-info" th:text="${#lists.size(usageEntries)}"></span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h5>Usage Statistics</h5>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h6 class="card-title">Total Equipment Using This Part</h6>
+                                                    <h2 class="text-primary" th:text="${#lists.size(usageEntries)}">0</h2>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="fas fa-cogs fa-3x text-primary"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h6 class="card-title">Total Quantity Required</h6>
+                                                    <h2 class="text-success" th:text="${#aggregates.sum(usageEntries.![quantityPerUnit])}">0</h2>
+                                                </div>
+                                                <div class="align-self-center">
+                                                    <i class="fas fa-cubes fa-3x text-success"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Usage Entries Table -->
+                            <div class="mt-4">
+                                <h5>Equipment Using This Part</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead class="bg-info text-white">
+                                            <tr>
+                                                <th>Equipment Code</th>
+                                                <th>Equipment Name</th>
+                                                <th>Quantity Required</th>
+                                                <th>Criticality</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:if="${#lists.isEmpty(usageEntries)}">
+                                                <td colspan="5" class="text-center">This part is not used in any equipment</td>
+                                            </tr>
+                                            <tr th:each="usage : ${usageEntries}">
+                                                <td th:text="${usage.equipment.code}"></td>
+                                                <td th:text="${usage.equipment.name}"></td>
+                                                <td>
+                                                    <span class="badge badge-primary" th:text="${usage.quantityPerUnit}"></span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge" 
+                                                          th:classappend="${usage.criticalityLevel == 'CRITICAL'} ? 'badge-danger' : 
+                                                                         (${usage.criticalityLevel == 'IMPORTANT'} ? 'badge-warning' : 'badge-secondary')"
+                                                          th:text="${usage.criticalityLevel}"></span>
+                                                </td>
+                                                <td th:text="${usage.notes}"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Critical Parts Alert -->
+                            <div th:if="${#lists.size(usageEntries) > 0}" class="mt-4">
+                                <div class="alert alert-warning" th:if="${#lists.size(usageEntries.?[criticalityLevel == 'CRITICAL']) > 0}">
+                                    <strong>Warning:</strong> This part is marked as CRITICAL in 
+                                    <span th:text="${#lists.size(usageEntries.?[criticalityLevel == 'CRITICAL'])}"></span> equipment(s).
+                                    Ensure adequate stock levels are maintained.
+                                </div>
+                                
+                                <div class="alert alert-info" th:if="${selectedPart.currentStock < #aggregates.sum(usageEntries.![quantityPerUnit])}">
+                                    <strong>Stock Alert:</strong> Current stock (<span th:text="${selectedPart.currentStock}"></span>) 
+                                    is less than total required quantity (<span th:text="${#aggregates.sum(usageEntries.![quantityPerUnit])}"></span>).
+                                    Consider restocking.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

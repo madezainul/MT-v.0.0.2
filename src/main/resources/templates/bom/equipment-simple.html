@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/dashboard}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Equipment BOM - Simple</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="page-inner">
+        <div class="page-header">
+            <h4 class="page-title">Equipment BOM</h4>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Equipment BOM Management</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Testing BOM Page</h5>
+                        <p>Equipment ID: <span th:text="${selectedEquipmentId}">No ID</span></p>
+                        <p>Equipment Count: <span th:text="${equipments != null ? equipments.size() : 0}">0</span></p>
+                        <p>BOM Entries: <span th:text="${bomEntries != null ? bomEntries.size() : 0}">0</span></p>
+                        
+                        <div th:if="${error}" class="alert alert-danger">
+                            <span th:text="${error}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

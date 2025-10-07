@@ -1,0 +1,1072 @@
+<div th:fragment="modal">
+    <!-- Modal Add -->
+    <div class="modal fade" id="addRowModal" tabindex="-1" role="dialog" aria-labelledby="addRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="addRowModalLabel">Report New Issue</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <form th:action="@{/work-reports}" th:object="${workReportDTO}" method="post" id="formAdd">
+
+                        <!-- Hidden ID -->
+                        <!-- <input type="hidden" name="id" th:value="${workReportDTO.id ?: ''}" /> -->
+
+                        <!-- Row 1: Report Date & Shift -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Report Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" th:field="*{reportDate}"
+                                        th:errorclass="is-invalid" required />
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('reportDate')}"
+                                        th:errors="*{reportDate}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Shift <span class="text-danger">*</span></label>
+                                    <select class="form-control" th:field="*{shift}" th:errorclass="is-invalid"
+                                        required>
+                                        <option value="" disabled selected>Select Shift</option>
+                                        <th:block
+                                            th:each="shift : ${T(ahqpck.maintenance.report.entity.WorkReport.Shift).values()}">
+                                            <option th:value="${shift}" th:text="${shift}"
+                                                th:selected="${param.shift == shift}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('shift')}"
+                                        th:errors="*{shift}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Area & Equipment -->
+                        <div class="form-row">
+                            <!-- Area -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Area</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="areaInput"
+                                            placeholder="Search area by name or code" autocomplete="off" />
+                                        <div id="areaDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <datalist id="areaOptions">
+                                        <option th:each="area : ${areas}"
+                                            th:value="${area.name} + ' (' + ${area.code} + ')'"
+                                            th:data-code="${area.code}">
+                                        </option>
+                                    </datalist>
+                                    <select class="d-none" th:field="*{area.code}" id="areaSelect">
+                                        <option value="">Select Area</option>
+                                        <option th:each="area : ${areas}" th:value="${area.code}">Area</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Equipment -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Equipment</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="equipmentInput"
+                                            placeholder="Search equipment by name or code" autocomplete="off" />
+                                        <div id="equipmentDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <datalist id="equipmentOptions">
+                                        <option th:each="equipment : ${equipments}"
+                                            th:value="${equipment.name} + ' (' + ${equipment.code} + ')'"
+                                            th:data-code="${equipment.code}">
+                                        </option>
+                                    </datalist>
+                                    <select class="d-none" th:field="*{equipment.code}" id="equipmentSelect">
+                                        <option value="">Select Equipment</option>
+                                        <option th:each="equipment : ${equipments}" th:value="${equipment.code}">
+                                            Equipment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Technician & Supervisor -->
+                        <div class="form-row">
+                            <!-- Technician(s) -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Technician(s) <span class="text-danger">*</span></label>
+
+                                    <select id="technicianSelect" name="technicianEmpIds" multiple
+                                        style="display: none;">
+                                        <option th:each="user : ${users}" th:value="${user.employeeId}"
+                                            th:data-employee-id="${user.employeeId}"
+                                            th:text="${user.name} + ' (' + ${user.employeeId} + ')'">
+                                        </option>
+                                    </select>
+
+                                    <div class="tag-input" id="technicianInput">
+                                        <div class="tag-list" id="technicianTagList"></div>
+                                        <div class="position-relative w-100">
+                                            <input type="text" id="technicianTagSearch" class="tag-input-field"
+                                                placeholder="Add technician..." autocomplete="off">
+                                            <div id="technicianTagSearchDropdown" class="dropdown-menu w-100"
+                                                style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('technicianEmpIds')}"
+                                        th:errors="*{technicianEmpIds}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supervisor</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="supervisorInput"
+                                            placeholder="Search supervisor by name or ID" autocomplete="off" />
+                                        <div id="supervisorDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <select class="d-none" th:field="*{supervisor.employeeId}" id="supervisorSelect">
+                                        <option value="">Select Supervisor</option>
+                                        <option th:each="user : ${users}" th:value="${user.employeeId}">User</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <datalist id="userOptions">
+                                <option th:each="user : ${users}"
+                                    th:value="${user.name} + ' (' + ${user.employeeId} + ')'"
+                                    th:data-employee-id="${user.employeeId}">
+                                </option>
+                            </datalist>
+
+                        </div>
+
+                        <!-- Row 4: Category & Status -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category <span class="text-danger">*</span></label>
+                                    <select class="form-control" th:field="*{category}" th:errorclass="is-invalid"
+                                        required>
+                                        <option value="" disabled selected>Select Category</option>
+                                        <th:block
+                                            th:each="category : ${T(ahqpck.maintenance.report.entity.WorkReport.Category).values()}">
+                                            <option th:value="${category}" th:text="${category}"
+                                                th:selected="${param.category == category}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}"
+                                        th:errors="*{category}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Status <span class="text-danger">*</span></label>
+                                    <select class="form-control" th:field="*{status}" th:errorclass="is-invalid"
+                                        required>
+                                        <option value="" disabled selected>Select Status</option>
+                                        <th:block
+                                            th:each="status : ${T(ahqpck.maintenance.report.entity.WorkReport.Status).values()}">
+                                            <option th:value="${status}" th:text="${status}"
+                                                th:selected="${param.status == status}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('status')}"
+                                        th:errors="*{status}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Problem & Solution -->
+                        <div class="form-group">
+                            <label>Problem Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" th:field="*{problem}" rows="2"
+                                placeholder="Describe the issue..." required></textarea>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('problem')}"
+                                th:errors="*{problem}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Solution</label>
+                            <textarea class="form-control" th:field="*{solution}" rows="2"
+                                placeholder="Describe the solution..."></textarea>
+                        </div>
+
+                        <!-- Start & Stop Time -->
+                        <div class="form-row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Start Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" th:field="*{startTime}"
+                                        id="addStartTime" required />
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('startTime')}"
+                                        th:errors="*{startTime}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Stop Time</label>
+                                    <input type="datetime-local" class="form-control" th:field="*{stopTime}"
+                                        id="addStopTime" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Total Time (min)</label>
+                                    <input type="number" class="form-control" th:field="*{totalTimeMinutes}"
+                                        id="addTotalTime" readonly />
+                                    <small id="addTotalTimeDisplay" class="text-muted"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Type & Remark -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Work Type</label>
+                                    <input type="text" class="form-control" th:field="*{workType}" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Scope <span class="text-danger">*</span></label>
+                                    <select class="form-control" th:field="*{scope}" th:errorclass="is-invalid"
+                                        required>
+                                        <option value="" disabled selected>Select scope</option>
+                                        <th:block
+                                            th:each="scope : ${T(ahqpck.maintenance.report.entity.WorkReport.Scope).values()}">
+                                            <option th:value="${scope}" th:text="${scope}"
+                                                th:selected="${param.scope == scope}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('scope')}"
+                                        th:errors="*{scope}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Remark</label>
+                                    <textarea class="form-control" th:field="*{remark}" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formAdd" class="btn btn-primary ml-2">Create Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit -->
+    <div class="modal fade" id="editRowModal" tabindex="-1" role="dialog" aria-labelledby="editRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="editRowModalLabel">Edit Report</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <form th:action="@{/work-reports/update}" method="post" id="formEdit">
+                        <input type="hidden" name="id" id="editId">
+
+                        <!-- Report Date & Shift -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Report Date</label>
+                                    <input type="date" class="form-control" id="editReportDate" name="reportDate"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Shift <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="editShift" name="shift" required>
+                                        <option value="" disabled selected>Select Shift</option>
+                                        <th:block
+                                            th:each="shift : ${T(ahqpck.maintenance.report.entity.WorkReport.Shift).values()}">
+                                            <option th:value="${shift}" th:text="${shift}"
+                                                th:selected="${param.shift == shift}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <!-- Area -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Area</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="editAreaInput"
+                                            placeholder="Search area by name or code" autocomplete="off" />
+                                        <div id="editAreaDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <select class="d-none" name="area.code" id="editAreaSelect">
+                                        <option value="">Select Area</option>
+                                        <option th:each="area : ${areas}" th:value="${area.code}">Area</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Equipment -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Equipment</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="editEquipmentInput"
+                                            placeholder="Search equipment by name or code" autocomplete="off" />
+                                        <div id="editEquipmentDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <select class="d-none" name="equipment.code" id="editEquipmentSelect">
+                                        <option value="">Select Equipment</option>
+                                        <option th:each="equipment : ${equipments}" th:value="${equipment.code}">
+                                            Equipment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Technician & Supervisor -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Technician(s) <span class="text-danger">*</span></label>
+
+                                    <select id="editTechnicianSelect" name="technicianEmpIds" multiple
+                                        class="d-none"></select>
+
+                                    <div class="tag-input" id="editTechnicianInput">
+                                        <div class="tag-list" id="editTechnicianTagList"></div>
+                                        <input type="text" id="editTechnicianSearch" class="tag-input-field"
+                                            placeholder="Search technician by name or ID..." list="userOptions">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supervisor</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="editSupervisorInput"
+                                            placeholder="Search supervisor by name or ID" autocomplete="off" />
+                                        <div id="editSupervisorDropdown" class="dropdown-menu w-100"
+                                            style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                        </div>
+                                    </div>
+                                    <select class="d-none" name="supervisor.employeeId" id="editSupervisorSelect">
+                                        <option value="">Select Supervisor</option>
+                                        <option th:each="user : ${users}" th:value="${user.employeeId}">User</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category & Status -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="editCategory" name="category" required>
+                                        <th:block
+                                            th:each="category : ${T(ahqpck.maintenance.report.entity.WorkReport.Category).values()}">
+                                            <option th:value="${category}" th:text="${category}"
+                                                th:selected="${param.category == category}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Status <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="editStatus" name="status" required>
+                                        <th:block
+                                            th:each="status : ${T(ahqpck.maintenance.report.entity.WorkReport.Status).values()}">
+                                            <option th:value="${status}" th:text="${status}"
+                                                th:selected="${param.status == status}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Problem & Solution -->
+                        <div class="form-group">
+                            <label>Problem Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="editProblem" name="problem" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Solution</label>
+                            <textarea class="form-control" id="editSolution" name="solution" rows="2"></textarea>
+                        </div>
+
+                        <!-- Start & Stop Time -->
+                        <div class="form-row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Start Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="editStartTime"
+                                        name="startTime">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Stop Time</label>
+                                    <input type="datetime-local" class="form-control" id="editStopTime" name="stopTime">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Total Time Time (min)</label>
+                                    <input type="number" class="form-control" id="editTotalTime"
+                                        name="totalTimeMinutes" readonly />
+                                    <small id="editTotalTimeDisplay" class="text-muted"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Type & Remark -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Work Type</label>
+                                    <input type="text" class="form-control" id="editWorkType" name="workType">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Scope <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="editScope" name="scope" required>
+                                        <th:block
+                                            th:each="scope : ${T(ahqpck.maintenance.report.entity.WorkReport.Scope).values()}">
+                                            <option th:value="${scope}" th:text="${scope}"
+                                                th:selected="${param.scope == scope}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Remark</label>
+                                    <textarea class="form-control" id="editRemark" name="remark" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Parts Used Table + Modal -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-group d-flex align-items-center mb-0">
+                                    <label>
+                                        Parts Used
+                                    </label>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm btn-round" data-toggle="modal"
+                                    data-target="#addPartModal">
+                                    <i class="fas fa-plus"></i> Add Part
+                                </button>
+                            </div>
+                            <span id=""></span>
+
+                            <div th:replace="~{fragments/part-modal :: part-modal}"></div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm" id="partsTable">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Part Code</th>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rows will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="partsUsedInputs"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formEdit" class="btn btn-primary ml-2">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete -->
+    <div class="modal fade" id="deleteRowModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white no-bd">
+                    <h5 class="modal-title" id="deleteRowModalLabel">Delete Report</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Are you sure you want to delete this report?</p>
+                    <strong id="deleteDocName" class="text-dark"></strong>
+                    <p class="text-muted mt-2 mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-border" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="confirmDeleteButton" class="btn btn-danger ml-2">Yes, Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/error-modal :: error-modal}"></div>
+
+    <style>
+        .tag-input {
+            /* Match .form-control */
+            border: 1px solid #ebedf2;
+            border-radius: 0.25rem;
+            /* 6px - Bootstrap default */
+            padding: 0.375rem 0.75rem;
+            /* 6px 12px - Bootstrap padding */
+            min-height: calc(1.5em + 0.75rem + 2px);
+            /* ~42px, matches input height */
+            line-height: 1.5;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.375rem;
+            /* 6px gap between tags */
+            background-color: #fff;
+            background-clip: padding-box;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            cursor: text;
+            width: 100%;
+        }
+
+        /* Focus style like Bootstrap */
+        .tag-input:focus-within {
+            border-color: #3e93ff;
+            outline: 0;
+        }
+
+        /* Optional: Disabled state */
+        .tag-input:has(input:disabled) {
+            background-color: #e9ecef;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        /* Tag List */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Individual Tag */
+        .tag {
+            background: #007bff;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .tag .remove-tag {
+            margin-left: 4px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            opacity: 0.8;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .tag .remove-tag:hover {
+            opacity: 1;
+        }
+
+        /* Input Field inside Tag Input */
+        .tag-input-field {
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+            padding: 0px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .tag-input-field::placeholder {
+            color: #999;
+        }
+    </style>
+
+    <script>
+        function setupLiveSearch(inputId, selectId, optionsContainerId, fieldLabel = 'item') {
+            const input = document.getElementById(inputId);
+            const select = document.getElementById(selectId);
+            const dropdown = document.getElementById(`${inputId.replace('Input', 'Dropdown')}`);
+            const options = Array.from(document.querySelectorAll(`#${optionsContainerId} option`)).map(opt => ({
+                value: opt.value,
+                label: opt.value,
+                id: opt.dataset.employeeId || opt.dataset.code || ''
+            }));
+
+            if (!input || !select || !dropdown) {
+                console.warn(`Missing elements for ${inputId}`);
+                return;
+            }
+
+            // Filter and show dropdown
+            input.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                dropdown.innerHTML = '';
+
+                if (term === '') {
+                    dropdown.style.display = 'none';
+                    select.value = '';
+                    return;
+                }
+
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(term)
+                );
+
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                filtered.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.style.cursor = 'pointer';
+                    div.style.whiteSpace = 'normal';
+
+                    // Highlight matched text
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    const highlighted = opt.label.replace(regex, '<strong>$1</strong>');
+                    div.innerHTML = highlighted;
+
+                    div.addEventListener('click', () => {
+                        input.value = opt.label;
+                        select.value = opt.id;
+                        dropdown.style.display = 'none';
+                        input.focus();
+                    });
+
+                    dropdown.appendChild(div);
+                });
+
+                dropdown.style.display = 'block';
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Navigate with keyboard
+            input.addEventListener('keydown', function (e) {
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        setupLiveSearch('areaInput', 'areaSelect', 'areaOptions', 'Area');
+        setupLiveSearch('editAreaInput', 'editAreaSelect', 'areaOptions', 'Area');
+
+        setupLiveSearch('equipmentInput', 'equipmentSelect', 'equipmentOptions', 'Equipment');
+        setupLiveSearch('editEquipmentInput', 'editEquipmentSelect', 'equipmentOptions', 'Equipment');
+
+        setupLiveSearch('supervisorInput', 'supervisorSelect', 'userOptions', 'Supervisor');
+        setupLiveSearch('editSupervisorInput', 'editSupervisorSelect', 'userOptions', 'Supervisor');
+
+        function setupTagInput(inputId, tagListId, tagSearchId, selectId, formatDisplay = val => val) {
+            const tagInput = document.getElementById(inputId);
+            const tagList = document.getElementById(tagListId);
+            const tagSearch = document.getElementById(tagSearchId);
+            const hiddenSelect = document.getElementById(selectId);
+
+            if (!tagInput || !tagList || !tagSearch || !hiddenSelect) return;
+
+            function syncSelect() {
+                hiddenSelect.innerHTML = "";
+                Array.from(tagList.querySelectorAll(".tag")).forEach(tag => {
+                    const option = document.createElement("option");
+                    option.value = tag.dataset.value;
+                    option.selected = true;
+                    hiddenSelect.appendChild(option);
+                });
+            }
+
+            function addTag(value, displayText) {
+                if (!value || Array.from(tagList.querySelectorAll(".tag")).some(t => t.dataset.value === value)) return;
+                const tag = document.createElement("div");
+                tag.className = "tag";
+                tag.dataset.value = value;
+                tag.innerHTML = `
+                ${displayText || value}
+                <span class="remove-tag" onclick="window.removeTag(this, '${selectId}', '${tagListId}')">×</span>`;
+                tagList.appendChild(tag);
+                syncSelect();
+            }
+
+            window.removeTag = function (el, selectId, tagListId) {
+                const tag = el.parentElement;
+                const value = tag.dataset.value;
+                tag.remove();
+
+                const select = document.getElementById(selectId);
+                const option = select.querySelector(`option[value="${value}"]`);
+                if (option) option.remove();
+
+                select.dispatchEvent(new Event('change'));
+            };
+
+            // --- INTEGRATE LIVE SEARCH (REPLACES datalist logic) ---
+            const dropdownId = tagSearchId.replace('Search', 'Dropdown') || `${tagSearchId}Dropdown`;
+            let dropdown = document.getElementById(dropdownId);
+
+            // Create dropdown if doesn't exist
+            if (!dropdown) {
+                dropdown = document.createElement('div');
+                dropdown.id = dropdownId;
+                dropdown.className = 'dropdown-menu w-100';
+                Object.assign(dropdown.style, {
+                    position: 'absolute',
+                    zIndex: 1000,
+                    display: 'none',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    border: '1px solid #dee2e6',
+                    borderTop: 'none',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                    backgroundColor: 'white',
+                    width: '100%',
+                    left: '0'
+                });
+                tagSearch.parentElement.appendChild(dropdown);
+            }
+
+            // Prepare options for live search
+            const options = Array.from(document.querySelectorAll("#userOptions option")).map(opt => ({
+                value: opt.value,
+                label: opt.value, // Display text like "John (EMP001)"
+                id: opt.dataset.employeeId || ''
+            }));
+
+            // Attach live search behavior to tagSearch input
+            tagSearch.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                dropdown.innerHTML = '';
+
+                if (term === '') {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(term)
+                );
+
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                filtered.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.style.cursor = 'pointer';
+                    div.style.whiteSpace = 'normal';
+
+                    // Highlight matched text
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    const highlighted = opt.label.replace(regex, '<strong>$1</strong>');
+                    div.innerHTML = highlighted;
+
+                    div.addEventListener('click', () => {
+                        // Parse display text to extract name & ID if needed
+                        const match = opt.label.match(/(.+) \((.+)\)/);
+                        const displayText = match ? `${match[1]} (${match[2]})` : opt.label;
+
+                        addTag(opt.id, displayText);
+                        tagSearch.value = '';
+                        dropdown.style.display = 'none';
+                        tagSearch.focus();
+                    });
+
+                    dropdown.appendChild(div);
+                });
+
+                dropdown.style.display = 'block';
+                // Position dropdown under input
+                const rect = tagSearch.getBoundingClientRect();
+                dropdown.style.top = `${rect.height + 2}px`;
+            });
+
+            // Hide dropdown on outside click
+            document.addEventListener('click', function (e) {
+                if (!tagSearch.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Keyboard navigation
+            tagSearch.addEventListener('keydown', function (e) {
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                } else if (e.key === ',' || e.key === 'Tab') {
+                    e.preventDefault();
+                    // If dropdown is open and has active item, select it
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    } else {
+                        // Fallback: try to match typed text
+                        const typed = tagSearch.value.trim();
+                        const matched = options.find(opt => opt.label === typed);
+                        if (matched) {
+                            const match = matched.label.match(/(.+) \((.+)\)/);
+                            const displayText = match ? `${match[1]} (${match[2]})` : matched.label;
+                            addTag(matched.id, displayText);
+                            tagSearch.value = '';
+                        }
+                    }
+                }
+            });
+
+            tagInput.addEventListener("click", () => tagSearch.focus());
+        }
+
+        setupTagInput('technicianInput', 'technicianTagList', 'technicianTagSearch', 'technicianSelect');
+        setupTagInput('editTechnicianInput', 'editTechnicianTagList', 'editTechnicianSearch', 'editTechnicianSelect');
+    </script>
+
+    <script>
+        // Parse ISO datetime string to Date object
+        function parseDateTime(str) {
+            if (!str) return null;
+            const d = new Date(str);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        // Calculate duration in minutes between two datetime strings
+        function getDurationMinutes(startStr, endStr) {
+            const start = parseDateTime(startStr);
+            const end = parseDateTime(endStr);
+            if (!start || !end || end < start) return 0;
+            return Math.floor((end - start) / 60000); // 60 * 1000
+        }
+
+        // Format minutes as "Xd Xh Xm" (e.g., "1d 2h 30m")
+        function formatDuration(mins) {
+            mins = parseInt(mins, 10);
+            if (isNaN(mins) || mins <= 0) return '0m';
+
+            const days = Math.floor(mins / 1440); // 24*60
+            const hours = Math.floor((mins % 1440) / 60);
+            const minutes = mins % 60;
+
+            let parts = [];
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+
+            return parts.join(' ');
+        }
+
+        // Generic updater for any form (Add/Edit)
+        function updateDuration(startId, stopId, totalInputId, displayId) {
+            const start = document.getElementById(startId)?.value;
+            const stop = document.getElementById(stopId)?.value;
+            const totalMins = getDurationMinutes(start, stop);
+
+            const display = document.getElementById(displayId);
+            if (display) display.textContent = formatDuration(totalMins);
+
+            const input = document.getElementById(totalInputId);
+            if (input) input.value = totalMins > 0 ? totalMins : '';
+        }
+
+        // Specific wrappers (keep these — you call them externally)
+        function calculateAddTotalTime() {
+            updateDuration('addStartTime', 'addStopTime', 'addTotalTime', 'addTotalTimeDisplay');
+        }
+
+        function calculateEditTotalTime() {
+            updateDuration('editStartTime', 'editStopTime', 'editTotalTime', 'editTotalTimeDisplay');
+        }
+
+        // Setup event listeners on DOM ready
+        document.addEventListener("DOMContentLoaded", function () {
+            // Add modal
+            const addStart = document.getElementById('addStartTime');
+            const addStop = document.getElementById('addStopTime');
+            if (addStart && addStop) {
+                addStart.addEventListener('change', calculateAddTotalTime);
+                addStop.addEventListener('change', calculateAddTotalTime);
+            }
+
+            // Edit modal
+            const editStart = document.getElementById('editStartTime');
+            const editStop = document.getElementById('editStopTime');
+            if (editStart && editStop) {
+                editStart.addEventListener('change', calculateEditTotalTime);
+                editStop.addEventListener('change', calculateEditTotalTime);
+            }
+
+            // Recalculate on modal open (optional safety net)
+            const addModal = document.getElementById('addRowModal');
+            const editModal = document.getElementById('editRowModal');
+            if (addModal) addModal.addEventListener('shown.bs.modal', calculateAddTotalTime);
+            if (editModal) editModal.addEventListener('shown.bs.modal', calculateEditTotalTime);
+
+            calculateAddTotalTime();
+        });
+    </script>
+    <!-- <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formInput = document.getElementById("formAdd");
+            if (formInput) {
+                formInput.addEventListener("submit", function (event) {
+                    event.preventDefault();
+
+                    console.log("DEBUG: Form Submission Data (Add Work Report)");
+                    console.log("=".repeat(50));
+
+                    const formData = new FormData(formInput);
+                    const entries = {};
+                    for (let [key, value] of formData.entries()) {
+                        if (value === "") {
+                            entries[key] = "(empty)";
+                        } else {
+                            entries[key] = value;
+                        }
+                    }
+                    console.table(entries);
+                    console.log("ull FormData object:", Object.fromEntries(formData));
+                    formInput.submit();
+                });
+            }
+        });
+    </script> -->
+</div>

@@ -1,0 +1,25 @@
+<div th:fragment="delete-modal">
+    <!-- Modal Delete -->
+    <div class="modal fade" id="deleteRowModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white no-bd">
+                    <h5 class="modal-title" id="deleteRowModalLabel">Delete Complaint</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Are you sure you want to delete this complaint?</p>
+                    <strong id="deleteDocName" class="text-dark"></strong>
+                    <p class="text-muted mt-2 mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-border" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="confirmDeleteButton" class="btn btn-danger ml-2">Yes, Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

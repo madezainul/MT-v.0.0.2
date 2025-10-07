@@ -1,0 +1,37 @@
+<div th:fragment="error-modal">
+    <div th:if="${error != null or success != null}" id="flashMessageModalContainer">
+        <div class="modal fade" id="flashMessageModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header"
+                        th:classappend="${error} ? 'bg-danger text-white' : 'bg-success text-white'">
+                        <h5 class="modal-title">
+                            <i
+                                th:class="${error} ? 'fas fa-exclamation-triangle mr-2' : 'fas fa-check-circle mr-2'"></i>
+                            <span th:text="${error} ? 'Error' : 'Success'">Status</span>
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body py-4">
+                        <div th:if="${error}" class="text-center">
+                            <ul class="list-unstyled">
+                                <li th:each="err : ${#strings.listSplit(error, '|')}">
+                                    <p class="mb-2" th:text="${err.trim()}">Error</p>
+                                </li>
+                            </ul>
+                        </div>
+                        <div th:if="${success}" class="text-center">
+                            <p th:text="${success}">Success</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer mt--3">
+                        <button type="button" class="btn" th:classappend="${error} ? 'btn-danger' : 'btn-success'"
+                            data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

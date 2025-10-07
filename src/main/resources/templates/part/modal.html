@@ -1,0 +1,710 @@
+<div th:fragment="modal">
+    <!-- Modal Add -->
+    <div class="modal fade" id="addRowModal" tabindex="-1" role="dialog" aria-labelledby="addRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="addRowModalLabel">Add New Item</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form th:action="@{/parts}" th:object="${partDTO}" method="post" enctype="multipart/form-data"
+                        id="formAdd">
+
+                        <!-- Code -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{code}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('code')}"
+                                        th:errors="*{code}">Error</div>
+                                </div>
+                            </div>
+
+                            <!-- Name -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{name}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"
+                                        th:errors="*{name}">Error</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category & Supplier -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <!-- <input type="text" class="form-control" th:field="*{category}"> -->
+                                    <input type="text" class="form-control" id="categoryInput"
+                                        placeholder="Search category by Name or Code" autocomplete="off" required />
+                                    <div id="categoryDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="categoryName" id="categorySelect">
+                                        <option th:each="cat : ${categories}" th:value="${cat.name}"
+                                            th:text="${cat.code + ' - ' + cat.name}"></option>
+                                    </select>
+                                    <datalist id="categoryOptions">
+                                        <option th:each="cat : ${categories}"
+                                            th:value="${cat.name} + ' (' + ${cat.id} + ')'"
+                                            th:data-category-id="${cat.id}">
+                                        </option>
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supplier</label>
+                                    <!-- <input type="text" class="form-control" th:field="*{supplier}"> -->
+                                    <input type="text" class="form-control" id="supplierInput"
+                                        placeholder="Search Supplier/SN" required />
+                                    <div id="supplierDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="supplierName" id="supplierSelect">
+                                        <option th:each="sup : ${suppliers}" th:value="${sup.name}"
+                                            th:text="${sup.code + ' - ' + sup.name}"></option>
+                                    </select>
+                                    <datalist id="supplierOptions">
+                                        <option th:each="sup : ${suppliers}"
+                                            th:value="${sup.name} + ' (' + ${sup.code} + ')'"
+                                            th:data-supplier-id="${sup.id}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <!-- Section -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Section</label>
+                                    <input type="text" class="form-control" id="sectionInput"
+                                        placeholder="Enter Section" required />
+                                    <div id="sectionDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="sectionCode" id="sectionSelect">
+                                        <option th:each="sec : ${sections}" th:value="${sec.code}"
+                                            th:text="${sec.code}"></option>
+                                    </select>
+                                    <datalist id="sectionOptions">
+                                        <option th:each="sec : ${sections}" th:value="${sec.code}"
+                                            th:data-section-id="${sec.id}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                            <!-- Description -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" th:field="*{description}" rows="3"
+                                        placeholder="Enter item description..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Image <span class="text-muted">(optional)</span></label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="addImageInput" name="imageFile"
+                                            accept="image/*">
+                                        <label class="custom-file-label" for="addImageInput">Choose file</label>
+                                    </div>
+                                    <div class="mt-2">
+                                        <img id="addImagePreview" src="" alt="Image Preview" class="img-thumbnail"
+                                            style="max-height: 150px; display: none;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stock Quantity -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Stock Quantity</label>
+                                    <input type="number" class="form-control" th:field="*{stockQuantity}">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formAdd" class="btn btn-primary ml-2">Save Item</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit -->
+    <div class="modal fade" id="editRowModal" tabindex="-1" role="dialog" aria-labelledby="editRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="editRowModalLabel">Edit Item</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form th:action="@{/parts/update}" th:object="${partDTO}" method="post"
+                        enctype="multipart/form-data" id="formEdit">
+                        <input type="hidden" name="id" id="editId">
+
+                        <!-- Code & Name -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editCode" name="code">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('code')}"
+                                        th:errors="*{code}">Please enter a unique code.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editName" name="name">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"
+                                        th:errors="*{name}">Please enter a name.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category & Supplier -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <!-- <input type="text" class="form-control" id="editCategory" name="category"> -->
+                                    <input type="text" class="form-control" id="editCategoryInput"
+                                        placeholder="Search category by Name or Code" autocomplete="off" required />
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('categoryName')}"
+                                        th:errors="*{categoryName}">Please enter a unique category name.</div>
+                                    <div id="editCategoryDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="categoryName" id="editCategorySelect">
+                                        <option th:each="cat : ${editCategories}" th:value="${cat.name}"
+                                            th:text="${cat.code + ' - ' + cat.name}"></option>
+                                    </select>
+                                    <datalist id="editCategoryOptions">
+                                        <option th:each="cat : ${editCategories}"
+                                            th:value="${cat.name} + ' (' + ${cat.id} + ')'"
+                                            th:data-category-id="${cat.id}">
+                                        </option>
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supplier</label>
+                                    <!-- <input type="text" class="form-control" id="editSupplier" name="supplier"> -->
+                                    <input type="text" class="form-control" id="editSupplierInput"
+                                        placeholder="Search Supplier/SN" required />
+                                    <div id="editSupplierDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="supplierName" id="editSupplierSelect">
+                                        <option th:each="sup : ${editSuppliers}" th:value="${sup.name}"
+                                            th:text="${sup.code + ' - ' + sup.name}"></option>
+                                    </select>
+                                    <datalist id="editSupplierOptions">
+                                        <option th:each="sup : ${editSuppliers}"
+                                            th:value="${sup.name} + ' (' + ${sup.code} + ')'"
+                                            th:data-supplier-id="${sup.id}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <!-- Section -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Section</label>
+                                    <input type="text" class="form-control" id="editSectionInput" name="editSection"
+                                        placeholder="Enter Section" required />
+                                    <div id="editSectionDropdown" class="dropdown-menu w-100"
+                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    </div>
+                                    <select class="d-none" name="sectionCode" id="editSectionSelect">
+                                        <option th:each="sec : ${editSections}" th:value="${sec.code}"
+                                            th:text="${sec.code}"></option>
+                                    </select>
+                                    <datalist id="editSectionOptions">
+                                        <option th:each="sec : ${editSections}" th:value="${sec.code}"
+                                            th:data-section-id="${sec.id}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                            <!-- Description -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" id="editDescription" name="description" rows="3"
+                                        placeholder="Enter item description..."></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
+                                        th:errors="*{description}">Please enter a description.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload & Management -->
+                        <div class="form-row">
+                            <!-- Current Image Preview + Delete Option -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Current Image <span class="text-muted">(optional)</span></label>
+
+                                    <!-- Image Preview -->
+                                    <div class="mb-2">
+                                        <img id="editImagePreview" src="" alt="No image" class="img-thumbnail"
+                                            style="max-height: 150px; display: none;">
+                                    </div>
+
+                                    <!-- Delete Image Checkbox -->
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="deleteImage"
+                                            name="deleteImage" value="true">
+                                        <label class="custom-control-label" for="deleteImage">
+                                            <small>Remove current image</small>
+                                        </label>
+                                    </div>
+
+                                    <!-- File Upload -->
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="editImageInput"
+                                            name="imageFile" accept="image/*">
+                                        <label class="custom-file-label" for="editImageInput">Change image...</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stock Quantity -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Stock Quantity</label>
+                                    <input type="number" class="form-control" id="editStockQuantity"
+                                        name="stockQuantity">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formEdit" class="btn btn-primary ml-2">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete -->
+    <div class="modal fade" id="deleteRowModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white no-bd">
+                    <h5 class="modal-title" id="deleteRowModalLabel">Delete Item</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Are you sure you want to delete this item?</p>
+                    <strong id="deleteDocName" class="text-dark"></strong>
+                    <p class="text-muted mt-2 mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 pb-4 px-4">
+                    <button type="button" class="btn btn-secondary btn-border" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="confirmDeleteButton" class="btn btn-danger ml-2">Yes, Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Message Modal (Success or Error) -->
+    <div th:if="${error != null or success != null}" id="flashMessageModalContainer">
+        <div class="modal fade" id="flashMessageModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <!-- Modal Header: Red for error, Green for success -->
+                    <div class="modal-header"
+                        th:classappend="${error} ? 'bg-danger text-white' : 'bg-success text-white'">
+                        <h5 class="modal-title">
+                            <i th:class="${error} ? 'fas fa-exclamation-triangle mr-2' : 'fas fa-check-circle mr-2'"
+                                th:style="${error} ? 'margin-left: 2px;' : ''"></i>
+                            <span th:text="${error} ? 'Error' : 'Success'">Status</span>
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body py-4">
+                        <div th:if="${error}" class="text-center">
+                            <ul class="list-unstyled">
+                                <li th:each="err : ${#strings.listSplit(error, '|')}">
+                                    <p class="text-danger mb-2" th:text="${err}">Error message</p>
+                                </li>
+                            </ul>
+                        </div>
+                        <div th:if="${success}" class="text-center">
+                            <p class="text-success" th:text="${success}">
+                                Success message will appear here.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn" th:classappend="${error} ? 'btn-danger' : 'btn-success'"
+                            data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script>
+        function setupLiveSearch(inputId, selectId, optionsContainerId, fieldLabel = 'item') {
+            const input = document.getElementById(inputId);
+            const select = document.getElementById(selectId);
+            const dropdown = document.getElementById(`${inputId.replace('Input', 'Dropdown')}`);
+            const options = Array.from(select.options)
+                .filter(opt => opt.value) // skip empty option
+                .map(opt => ({
+                    value: opt.value,
+                    label: opt.text,
+                    id: opt.dataset.id || opt.dataset.code || ''
+                }));
+
+            if (!input || !select || !dropdown) {
+                console.warn(`Missing elements for ${inputId}`);
+                return;
+            }
+
+            // Filter and show dropdown
+            input.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                dropdown.innerHTML = '';
+
+                if (term === '') {
+                    dropdown.style.display = 'none';
+                    select.value = '';
+                    return;
+                }
+
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(term)
+                );
+
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                filtered.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.style.cursor = 'pointer';
+                    div.style.whiteSpace = 'normal';
+
+                    // Highlight matched text
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    const highlighted = opt.label.replace(regex, '<strong>$1</strong>');
+                    div.innerHTML = highlighted;
+
+                    div.addEventListener('click', () => {
+                        input.value = opt.label;
+                        select.value = opt.id;
+                        dropdown.style.display = 'none';
+                        input.focus();
+                    });
+
+                    dropdown.appendChild(div);
+                });
+
+                // Use getBoundingClientRect for accurate dropdown alignment
+                const inputRect = input.getBoundingClientRect();
+                const parentRect = input.offsetParent ? input.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+                dropdown.style.display = 'block';
+                dropdown.style.width = input.offsetWidth + 'px';
+                dropdown.style.left = (inputRect.left - parentRect.left) + 'px';
+                dropdown.style.top = (inputRect.top - parentRect.top + input.offsetHeight) + 'px';
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            input.addEventListener('keydown', function (e) {
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                if (items.length === 0) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+        // let originalEditValues = {};
+        $(document).ready(function () {
+            setupLiveSearch('categoryInput', 'categorySelect', 'categoryOptions', 'category');
+            setupLiveSearch('supplierInput', 'supplierSelect', 'supplierOptions', 'supplier');
+            setupLiveSearch('sectionInput', 'sectionSelect', 'sectionOptions', 'section');
+            setupLiveSearch('editCategoryInput', 'editCategorySelect', 'editCategoryOptions', 'category');
+            setupLiveSearch('editSupplierInput', 'editSupplierSelect', 'editSupplierOptions', 'supplier');
+            setupLiveSearch('editSectionInput', 'editSectionSelect', 'editSectionOptions', 'section');
+
+            // Capture original values when edit modal is shown
+            $('#editRowModal').on('show.bs.modal', function () {
+                originalEditValues = {
+                    category: $('#editCategoryInput').val(),
+                    supplier: $('#editSupplierInput').val(),
+                    section: $('#editSectionInput').val()
+                };
+            });
+
+            // Prevent form submit if no changes
+            $('#formEdit').on('submit', function (e) {
+                // Set the input value to the selected code from the select
+                $('#editCategoryInput').val($('#editCategorySelect').val());
+                $('#editSupplierInput').val($('#editSupplierSelect').val());
+                $('#editSectionInput').val($('#editSectionSelect').val());
+                const currentValues = {
+                    category: $('#editCategoryInput').val(),
+                    supplier: $('#editSupplierInput').val(),
+                    section: $('#editSectionInput').val()
+                };
+                if (JSON.stringify(originalEditValues) === JSON.stringify(currentValues)) {
+                    e.preventDefault();
+                    alert('No changes detected.');
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.getElementById('addImageInput').onchange = function (evt) {
+            const preview = document.getElementById('addImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('editImageInput').onchange = function (evt) {
+            const preview = document.getElementById('editImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script> -->
+
+    <script>
+        function setupLiveSearch(inputId, selectId, optionsContainerId, fieldLabel = 'item') {
+            const input = document.getElementById(inputId);
+            const select = document.getElementById(selectId);
+            const dropdown = document.getElementById(`${inputId.replace('Input', 'Dropdown')}`);
+            const options = Array.from(select.options)
+                .filter(opt => opt.value) // skip empty option
+                .map(opt => ({
+                    value: opt.value,
+                    label: opt.text,
+                    id: opt.dataset.id || opt.dataset.code || ''
+                }));
+
+            if (!input || !select || !dropdown) {
+                console.warn(`Missing elements for ${inputId}`);
+                return;
+            }
+
+            input.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                dropdown.innerHTML = '';
+                if (term === '') {
+                    dropdown.style.display = 'none';
+                    select.value = '';
+                    return;
+                }
+                const filtered = options.filter(opt =>
+                    opt.label.toLowerCase().includes(term)
+                );
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+                filtered.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.style.cursor = 'pointer';
+                    div.style.whiteSpace = 'normal';
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    const highlighted = opt.label.replace(regex, '<strong>$1</strong>');
+                    div.innerHTML = highlighted;
+                    div.addEventListener('click', () => {
+                        input.value = opt.label;
+                        select.value = opt.value;
+                        dropdown.style.display = 'none';
+                        input.focus();
+                    });
+                    dropdown.appendChild(div);
+                });
+                dropdown.style.display = 'block';
+            });
+            document.addEventListener('click', function (e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+            input.addEventListener('keydown', function (e) {
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                if (items.length === 0) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = dropdown.querySelector('.dropdown-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+        let originalEditValues = {};
+        $(document).ready(function () {
+            setupLiveSearch('categoryInput', 'categorySelect', 'categoryOptions', 'category');
+            setupLiveSearch('supplierInput', 'supplierSelect', 'supplierOptions', 'supplier');
+            setupLiveSearch('sectionInput', 'sectionSelect', 'sectionOptions', 'section');
+            setupLiveSearch('editCategoryInput', 'editCategorySelect', 'editCategoryOptions', 'category');
+            setupLiveSearch('editSupplierInput', 'editSupplierSelect', 'editSupplierOptions', 'supplier');
+            setupLiveSearch('editSectionInput', 'editSectionSelect', 'editSectionOptions', 'section');
+
+            // Capture original values when edit modal is shown
+            $('#editRowModal').on('show.bs.modal', function () {
+                originalEditValues = {
+                    category: $('#editCategoryInput').val(),
+                    supplier: $('#editSupplierInput').val(),
+                    section: $('#editSectionInput').val()
+                };
+            });
+
+            // Prevent form submit if no changes
+            $('#formEdit').on('submit', function (e) {
+                // Set the input value to the selected code from the select
+                $('#editCategoryInput').val($('#editCategorySelect').val());
+                $('#editSupplierInput').val($('#editSupplierSelect').val());
+                $('#editSectionInput').val($('#editSectionSelect').val());
+                const currentValues = {
+                    category: $('#editCategoryInput').val(),
+                    supplier: $('#editSupplierInput').val(),
+                    section: $('#editSectionInput').val()
+                };
+                if (JSON.stringify(originalEditValues) === JSON.stringify(currentValues)) {
+                    e.preventDefault();
+                    alert('No changes detected.');
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.getElementById('addImageInput').onchange = function (evt) {
+            const preview = document.getElementById('addImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('editImageInput').onchange = function (evt) {
+            const preview = document.getElementById('editImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</div>
