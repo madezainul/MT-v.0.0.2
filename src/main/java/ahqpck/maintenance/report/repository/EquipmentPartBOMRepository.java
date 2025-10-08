@@ -38,6 +38,12 @@ public interface EquipmentPartBOMRepository extends JpaRepository<EquipmentPartB
     // Find all active BOM entries
     List<EquipmentPartBOM> findByIsActiveTrue();
     
+    // Count active BOM entries
+    long countByIsActiveTrue();
+    
+    // Count critical parts in active BOMs
+    long countByCriticalityLevelAndIsActiveTrue(String criticalityLevel);
+    
     // Delete relationship (set inactive)
     @Query("UPDATE EquipmentPartBOM b SET b.isActive = false WHERE b.equipment.id = :equipmentId AND b.part.id = :partId")
     void deactivateByEquipmentIdAndPartId(@Param("equipmentId") String equipmentId, @Param("partId") String partId);

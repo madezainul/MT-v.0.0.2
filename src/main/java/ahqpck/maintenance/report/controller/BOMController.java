@@ -21,61 +21,50 @@ public class BOMController {
 
     @GetMapping
     public String index(Model model) {
-        model.addAttribute("title", "Bill of Materials");
-        return "bom/index";
-    }
-
-    @GetMapping("/equipment-simple")
-    public String equipmentBOMSimple(@RequestParam(required = false) String equipmentId, Model model) {
-        model.addAttribute("title", "Equipment BOM Simple");
-        model.addAttribute("selectedEquipmentId", equipmentId);
-        
         try {
             var equipments = bomService.getAllEquipmentsForBOM();
+            
+            // Get comprehensive statistics
+            String totalEquipments = bomService.getTotalEquipmentCount();
+            String totalParts = bomService.getTotalPartCount();
+            String totalBOMEntries = bomService.getTotalBOMEntriesCount();
+            String criticalParts = bomService.getCriticalPartsCount();
+            
             model.addAttribute("equipments", equipments);
+            model.addAttribute("totalEquipments", totalEquipments);
+            model.addAttribute("totalParts", totalParts);
+            model.addAttribute("totalBOMEntries", totalBOMEntries);
+            model.addAttribute("criticalParts", criticalParts);
+            model.addAttribute("title", "Bill of Materials");
             
-            if (equipmentId != null && !equipmentId.trim().isEmpty()) {
-                var bomEntries = bomService.getEquipmentBOM(equipmentId);
-                model.addAttribute("bomEntries", bomEntries);
-            }
+            return "bom/index";
         } catch (Exception e) {
-            model.addAttribute("error", "Error: " + e.getMessage());
-        }
-        
-        return "bom/equipment-simple";
-    }
-
-    @GetMapping("/equipment")
-    public String equipmentBOM(@RequestParam(required = false) String equipmentId, Model model) {
-        try {
-            // Get all equipment for dropdown
-            var equipments = bomService.getAllEquipmentsForBOM();
-            model.addAttribute("equipments", equipments);
-            model.addAttribute("title", "Equipment BOM");
-            
-            if (equipmentId != null && !equipmentId.trim().isEmpty()) {
-                var selectedEquipment = bomService.getEquipmentWithParts(equipmentId);
-                var bomEntries = bomService.getEquipmentBOM(equipmentId);
-                var availableParts = bomService.getAvailablePartsForEquipment(equipmentId);
-                
-                model.addAttribute("selectedEquipment", selectedEquipment);
-                model.addAttribute("bomEntries", bomEntries);
-                model.addAttribute("availableParts", availableParts);
-                model.addAttribute("selectedEquipmentId", equipmentId);
-            } else {
-                // If no equipment selected, add empty collections to prevent template errors
-                model.addAttribute("bomEntries", java.util.Collections.emptyList());
-                model.addAttribute("availableParts", java.util.Collections.emptyList());
-            }
-            
-            return "bom/equipment";
-            
-        } catch (Exception e) {
-            model.addAttribute("error", "Failed to load equipment BOM: " + e.getMessage());
+            model.addAttribute("error", "Failed to load BOM data: " + e.getMessage());
             model.addAttribute("equipments", java.util.Collections.emptyList());
-            model.addAttribute("bomEntries", java.util.Collections.emptyList());
-            model.addAttribute("availableParts", java.util.Collections.emptyList());
-            return "bom/equipment";
+            model.addAttribute("totalEquipments", "0");
+            model.addAttribute("totalParts", "0");
+            model.addAttribute("totalBOMEntries", "0");
+            model.addAttribute("criticalParts", "0");
+            return "bom/index";
+        }
+    }
+
+    @GetMapping("/{equipmentId}")
+    public String equipmentDetail(@PathVariable String equipmentId, Model model) {
+        try {
+            var equipment = bomService.getEquipmentWithParts(equipmentId);
+            var bomEntries = bomService.getEquipmentBOM(equipmentId);
+            var availableParts = bomService.getAvailablePartsForEquipment(equipmentId);
+            
+            model.addAttribute("equipment", equipment);
+            model.addAttribute("bomEntries", bomEntries);
+            model.addAttribute("availableParts", availableParts);
+            model.addAttribute("title", "Equipment BOM Detail");
+            
+            return "bom/detail";
+        } catch (Exception e) {
+            model.addAttribute("error", "Equipment not found: " + e.getMessage());
+            return "error/404";
         }
     }
 
@@ -111,7 +100,7 @@ public class BOMController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/bom/equipment?equipmentId=" + equipmentId;
+        return "redirect:/bom/" + equipmentId;
     }
 
     @PostMapping("/remove-part")
@@ -124,7 +113,7 @@ public class BOMController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/bom/equipment?equipmentId=" + equipmentId;
+        return "redirect:/bom/" + equipmentId;
     }
 
     @PostMapping("/update-bom")

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/dashboard}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="${title}">Equipment BOM Detail</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="page-inner">
+        <div class="page-header">
+            <h4 class="page-title">Equipment BOM Detail</h4>
+            <ul class="breadcrumbs">
+                <li class="nav-home">
+                    <a href="/dashboard">
+                        <i class="flaticon-home"></i>
+                    </a>
+                </li>
+                <li class="separator">
+                    <i class="flaticon-right-arrow"></i>
+                </li>
+                <li class="nav-item">
+                    <a href="/bom">Bill of Materials</a>
+                </li>
+                <li class="separator">
+                    <i class="flaticon-right-arrow"></i>
+                </li>
+                <li class="nav-item">
+                    <span th:text="${equipment.code + ' - BOM'}">Equipment BOM</span>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        
+        <div class="row">
+            <!-- Equipment Details -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Equipment Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Equipment Code:</th>
+                                <td><strong th:text="${equipment.code ?: 'N/A'}">N/A</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Equipment Name:</th>
+                                <td th:text="${equipment.name ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Model:</th>
+                                <td th:text="${equipment.model ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Unit:</th>
+                                <td th:text="${equipment.unit ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Quantity:</th>
+                                <td th:text="${equipment.qty ?: 0}">0</td>
+                            </tr>
+                            <tr>
+                                <th>Manufacturer:</th>
+                                <td th:text="${equipment.manufacturer ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Serial Number:</th>
+                                <td th:text="${equipment.serialNo ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Manufactured Date:</th>
+                                <td th:text="${equipment.manufacturedDate != null ? #temporals.format(equipment.manufacturedDate, 'dd/MM/yyyy') : 'Not specified'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Commissioned Date:</th>
+                                <td th:text="${equipment.commissionedDate != null ? #temporals.format(equipment.commissionedDate, 'dd/MM/yyyy') : 'Not specified'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Capacity:</th>
+                                <td th:text="${equipment.capacity ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <th>Remarks:</th>
+                                <td th:text="${equipment.remarks ?: 'No remarks'}">No remarks</td>
+                            </tr>
+                            <tr>
+                                <th>BOM Parts Count:</th>
+                                <td>
+                                    <span class="badge badge-primary" th:text="${bomEntries.size()}">0</span>
+                                    <small class="text-muted">parts assigned</small>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <div th:if="${equipment.image != null && !equipment.image.isEmpty()}" class="mt-3">
+                            <h6>Equipment Image:</h6>
+                            <img th:src="@{'/upload/equipment/image/' + ${equipment.image}}" 
+                                 class="img-thumbnail" 
+                                 style="max-width: 200px; max-height: 200px;"
+                                 alt="Equipment Image">
+                        </div>
+                        
+                        <div class="mt-3">
+                            <a href="/bom" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to BOM List
+                            </a>
+                            <a th:href="@{/equipments/{id}(id=${equipment.id})}" class="btn btn-info ml-2" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> View Equipment Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Add Part Form -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Add Part to BOM</h4>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/bom/add-part}" method="post">
+                            <input type="hidden" name="equipmentId" th:value="${equipment.id}">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="partSelect">Select Part:</label>
+                                        <select class="form-control" id="partSelect" name="partId" required>
+                                            <option value="">-- Select Part --</option>
+                                            <option th:each="part : ${availableParts}"
+                                                    th:value="${part.id}"
+                                                    th:text="${part.code + ' - ' + part.name}"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="quantity">Quantity:</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                                               value="1" min="1" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="criticalityLevel">Criticality:</label>
+                                        <select class="form-control" id="criticalityLevel" name="criticalityLevel">
+                                            <option value="STANDARD">Standard</option>
+                                            <option value="IMPORTANT">Important</option>
+                                            <option value="CRITICAL">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="notes">Notes:</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes about this part..."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Part to BOM
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BOM Entries Table -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Bill of Materials</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="bg-primary text-white">
+                                    <tr>
+                                        <th>Part Code</th>
+                                        <th>Part Name</th>
+                                        <th>Category</th>
+                                        <th>Supplier</th>
+                                        <th>Section</th>
+                                        <th>Description</th>
+                                        <th>Stock Qty</th>
+                                        <th>Used In</th>
+                                        <th>BOM Qty</th>
+                                        <th>Criticality</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${bomEntries.isEmpty()}">
+                                        <td colspan="12" class="text-center text-muted">No parts assigned to this equipment</td>
+                                    </tr>
+                                    <tr th:each="bom : ${bomEntries}">
+                                        <td>
+                                            <strong th:text="${bom.part.code ?: 'N/A'}">N/A</strong>
+                                        </td>
+                                        <td th:text="${bom.part.name ?: 'N/A'}">N/A</td>
+                                        <td>
+                                            <span class="badge badge-light" th:text="${bom.part.categoryName ?: 'N/A'}">N/A</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info" th:text="${bom.part.supplierName ?: 'N/A'}">N/A</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary" th:text="${bom.part.sectionCode ?: 'N/A'}">N/A</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted" th:text="${bom.part.description ?: 'No description'}">No description</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge" 
+                                                  th:classappend="${bom.part.stockQuantity > 0} ? 'badge-success' : 'badge-warning'"
+                                                  th:text="${bom.part.stockQuantity ?: 0}">0</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <small class="text-muted" th:text="${bom.part.equipmentCount ?: 0} + ' equip.'">0 equip.</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-primary" th:text="${bom.quantityPerUnit}">0</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${bom.criticalityLevel == 'CRITICAL'} ? 'badge-danger' : 
+                                                                 (${bom.criticalityLevel == 'IMPORTANT'} ? 'badge-warning' : 'badge-secondary')"
+                                                  th:text="${bom.criticalityLevel}">STANDARD</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted" th:text="${bom.notes ?: 'No notes'}">No notes</small>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/bom/remove-part}" method="post" style="display: inline;">
+                                                <input type="hidden" name="equipmentId" th:value="${equipment.id}">
+                                                <input type="hidden" name="partId" th:value="${bom.part.id}">
+                                                <button type="submit" class="btn btn-sm btn-danger" 
+                                                        onclick="return confirm('Remove this part from BOM?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

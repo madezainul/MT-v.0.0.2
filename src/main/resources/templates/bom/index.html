@@ -32,7 +32,7 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex align-items-center">
-                            <h4 class="card-title">BOM Management</h4>
+                            <h4 class="card-title">Equipment Bill of Materials Management</h4>
                         </div>
                     </div>
                     <div class="card-body">
@@ -43,10 +43,18 @@
                                         <h4 class="card-title">Equipment BOM</h4>
                                     </div>
                                     <div class="card-body">
-                                        <p>Manage parts assigned to each equipment. View which parts are required for specific equipment and add or remove parts from equipment BOMs.</p>
-                                        <a href="/bom/equipment" class="btn btn-primary">
-                                            <i class="fas fa-cogs"></i> Manage Equipment BOM
-                                        </a>
+                                        <p>Manage parts assigned to each equipment. Select an equipment below to view and manage its Bill of Materials.</p>
+                                        
+                                        <!-- Equipment Selection Dropdown -->
+                                        <div class="form-group">
+                                            <label for="equipmentSelect">Select Equipment:</label>
+                                            <select class="form-control" id="equipmentSelect" onchange="goToEquipmentBOM()">
+                                                <option value="">-- Select Equipment --</option>
+                                                <option th:each="equipment : ${equipments}"
+                                                        th:value="${equipment.id}"
+                                                        th:text="${equipment.code + ' - ' + equipment.name}"></option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -86,7 +94,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Total Equipment</p>
-                                                                    <h4 class="card-title">-</h4>
+                                                                    <h4 class="card-title" th:text="${totalEquipments}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -105,7 +113,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Total Parts</p>
-                                                                    <h4 class="card-title">-</h4>
+                                                                    <h4 class="card-title" th:text="${totalParts}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -124,7 +132,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">BOM Entries</p>
-                                                                    <h4 class="card-title">-</h4>
+                                                                    <h4 class="card-title" th:text="${totalBOMEntries}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -143,7 +151,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Critical Parts</p>
-                                                                    <h4 class="card-title">-</h4>
+                                                                    <h4 class="card-title" th:text="${criticalParts}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -162,4 +170,17 @@
     </div>
 </div>
 </body>
+
+<div layout:fragment="scripts">
+<script>
+function goToEquipmentBOM() {
+    const select = document.getElementById('equipmentSelect');
+    const equipmentId = select.value;
+    if (equipmentId) {
+        window.location.href = '/bom/' + equipmentId;
+    }
+}
+</script>
+</div>
+
 </html>

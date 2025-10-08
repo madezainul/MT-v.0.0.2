@@ -142,4 +142,21 @@ public class BOMService {
         
         bomRepository.save(bom);
     }
+
+    // Statistics methods for BOM dashboard
+    public String getTotalEquipmentCount() {
+        return String.valueOf(equipmentRepository.count());
+    }
+
+    public String getTotalPartCount() {
+        return String.valueOf(partRepository.count());
+    }
+
+    public String getTotalBOMEntriesCount() {
+        return String.valueOf(bomRepository.countByIsActiveTrue());
+    }
+
+    public String getCriticalPartsCount() {
+        return String.valueOf(bomRepository.countByCriticalityLevelAndIsActiveTrue("CRITICAL"));
+    }
 }
