@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Create Purchase Requisition</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Create</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/purchase-requisition/list}" class="btn btn-secondary ml-auto mt-2">
+                        <i class="fa fa-list mr-1"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Purchase Requisition Information</div>
+                        </div>
+                        <form th:action="@{/purchase-requisition/create}" th:object="${prDTO}" method="post">
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- Title -->
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="title">Title <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="title" th:field="*{title}" 
+                                                   placeholder="Enter PR title" required>
+                                            <div th:if="${#fields.hasErrors('title')}" class="text-danger">
+                                                <small th:errors="*{title}"></small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Date Needed -->
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="dateNeeded">Date Needed <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="dateNeeded" th:field="*{dateNeeded}" required>
+                                            <div th:if="${#fields.hasErrors('dateNeeded')}" class="text-danger">
+                                                <small th:errors="*{dateNeeded}"></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Requestor -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="requestorId">Requestor <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="requestorId" th:field="*{requestorId}" required>
+                                                <option value="">Select Requestor</option>
+                                                <option th:if="${usersList != null}" th:each="user : ${usersList}" 
+                                                        th:value="${user.id}" 
+                                                        th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                                <option th:if="${usersList == null or usersList.isEmpty()}" disabled>No active users available</option>
+                                            </select>
+                                            <div th:if="${#fields.hasErrors('requestorId')}" class="text-danger">
+                                                <small th:errors="*{requestorId}"></small>
+                                            </div>
+                                            <div th:if="${warning}" class="alert alert-warning mt-2">
+                                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                <span th:text="${warning}"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Target Equipment -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="targetEquipmentId">Target Equipment (Optional)</label>
+                                            <select class="form-control" id="targetEquipmentId" th:field="*{targetEquipmentId}">
+                                                <option value="">Select target equipment</option>
+                                                <option th:if="${equipmentList != null}" th:each="equipment : ${equipmentList}" 
+                                                        th:value="${equipment.id}" 
+                                                        th:text="${equipment.code + ' - ' + equipment.name}"></option>
+                                                <option th:if="${equipmentList == null or equipmentList.isEmpty()}" disabled>No equipment available</option>
+                                            </select>
+                                            <small class="form-text text-muted">Select if this PR is for a specific equipment</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Description -->
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="description">Description</label>
+                                            <textarea class="form-control" id="description" th:field="*{description}" rows="3" 
+                                                      placeholder="Enter PR description"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Items Section -->
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <div class="card-head-row">
+                                                    <div class="card-title">PR Items</div>
+                                                    <div class="card-tools">
+                                                        <button type="button" class="btn btn-primary btn-sm" onclick="addPRItem()">
+                                                            <i class="fa fa-plus mr-1"></i> Add Item
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="prItemsContainer">
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle mr-2"></i>
+                                                        Click "Add Item" to add parts to this purchase requisition.
+                                                        You can add both existing parts from inventory and new parts that need to be purchased.
+                                                    </div>
+                                                    <div th:if="${partsList == null or partsList.isEmpty()}" class="alert alert-warning">
+                                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                        <strong>No parts available in inventory.</strong> You can still add new parts using the "Add Item" button.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-action">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save mr-1"></i> Create Purchase Requisition
+                                </button>
+                                <a th:href="@{/purchase-requisition/list}" class="btn btn-secondary">
+                                    <i class="fas fa-times mr-1"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Include Add Item Modal -->
+        <div th:replace="~{purchase-requisition/modal :: addItemModal}"></div>
+        
+        <!-- Fallback Modal for Testing -->
+        <div class="modal fade" id="testModal" tabindex="-1" role="dialog" style="display: none;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Test Modal</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>This is a test modal to verify modal functionality.</p>
+                        <p>Parts available: <span th:text="${#lists.size(partsList)}">0</span></p>
+                        <p>If you see this, fragment inclusion is working!</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Success/Error Messages -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+</body>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/js/purchase-requisition-modal.js}"></script>
+</th:block>
+</html>

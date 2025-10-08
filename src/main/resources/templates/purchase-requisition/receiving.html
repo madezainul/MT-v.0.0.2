@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Parts Receiving</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title">Parts Receiving</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Parts Receiving</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">
+                                    <h3>Manage Parts Receiving</h3>
+                                    <p class="text-muted">Process incoming parts and update Part inventory with generated codes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Search Filters -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="searchFilter">Search PR</label>
+                                        <input type="text" class="form-control" id="searchFilter" 
+                                               placeholder="PR Code or Title">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="statusFilter">Status</label>
+                                        <select class="form-control" id="statusFilter">
+                                            <option value="">All Statuses</option>
+                                            <option value="SENT_TO_PURCHASE">Sent to Purchase</option>
+                                            <option value="COMPLETED">Completed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="poFilter">PO Status</label>
+                                        <select class="form-control" id="poFilter">
+                                            <option value="">All PO Status</option>
+                                            <option value="with_po">With PO Number</option>
+                                            <option value="without_po">Without PO Number</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="btn btn-primary btn-block" onclick="loadReceivingData()">
+                                            <i class="fas fa-search mr-1"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PR List for Receiving -->
+                            <div id="receivingList">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Click "Search" to load purchase requisitions ready for receiving</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Items Modal -->
+    <div class="modal fade" id="receiveItemsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Receive Parts - <span id="modalPRCode"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="receiveItemsForm">
+                        <input type="hidden" id="prId" name="prId">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="inspectorName">Inspector Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="inspectorName" name="inspectorName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="receivingDate">Receiving Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="receivingDate" name="receivingDate" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="receivingNotes">Receiving Notes</label>
+                            <textarea class="form-control" id="receivingNotes" name="receivingNotes" rows="2"
+                                      placeholder="Notes about the receiving process"></textarea>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3">Items to Receive</h6>
+                        <div id="itemsToReceive">
+                            <!-- Items will be loaded here -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="processReceiving()">
+                        <i class="fas fa-check mr-1"></i> Process Receiving
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Generator Modal -->
+    <div class="modal fade" id="codeGeneratorModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Part Code</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Code Format:</strong> MachineType(2) - Category(2) - Subcategory(2) - SerialNumber(2) - Supplier(1) - Section(3)
+                    </div>
+
+                    <form id="codeGeneratorForm">
+                        <input type="hidden" id="targetItemId" name="targetItemId">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="machineType">Machine Type <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="machineType" name="machineType" required>
+                                        <option value="">Select Machine Type</option>
+                                        <option th:each="mt : ${machineTypes}" th:value="${mt.code}" th:text="${mt.name}"></option>
+                                    </select>
+                                    <small class="text-muted">2-digit code</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="category">Category <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="category" name="category" required>
+                                        <option value="">Select Category</option>
+                                        <option th:each="cat : ${categories}" th:value="${cat.code}" th:text="${cat.name}"></option>
+                                    </select>
+                                    <small class="text-muted">2-digit code</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subcategory">Subcategory</label>
+                                    <select class="form-control" id="subcategory" name="subcategory">
+                                        <option value="">Select Subcategory</option>
+                                        <option th:each="sub : ${subcategories}" th:value="${sub.code}" th:text="${sub.name}"></option>
+                                    </select>
+                                    <small class="text-muted">2-digit code (optional)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="serialNumber">Capacity/Part Number <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="serialNumber" name="serialNumber" required>
+                                        <option value="">Select Capacity/Part Number</option>
+                                        <option th:each="sn : ${serialNumbers}" th:value="${sn.code}" th:text="${sn.name}"></option>
+                                    </select>
+                                    <small class="text-muted">2-digit code</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="supplier">Suppliers/SN <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="supplier" name="supplier" required>
+                                        <option value="">Select Supplier</option>
+                                        <option th:each="sup : ${suppliers}" th:value="${sup.code}" th:text="${sup.name}"></option>
+                                    </select>
+                                    <small class="text-muted">1-digit code</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="section">Section <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="section" name="section" required>
+                                        <option value="">Select Section</option>
+                                        <option th:each="sec : ${sections}" th:value="${sec.code}" th:text="${sec.name}"></option>
+                                    </select>
+                                    <small class="text-muted">3-digit code</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="generatedCode">Generated Code</label>
+                            <input type="text" class="form-control" id="generatedCode" name="generatedCode" readonly>
+                            <small class="text-muted">Code will be generated automatically</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="partSpecifications">Part Specifications</label>
+                            <textarea class="form-control" id="partSpecifications" name="partSpecifications" rows="3"
+                                      placeholder="Enter detailed specifications for this part"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="generateCode()">
+                        <i class="fas fa-cog mr-1"></i> Generate Code
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="applyGeneratedCode()" id="applyCodeBtn" style="display: none;">
+                        <i class="fas fa-check mr-1"></i> Apply Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            $(document).ready(function() {
+                // Set today's date as default
+                $('#receivingDate').val(new Date().toISOString().split('T')[0]);
+
+                // Auto-generate code when fields change
+                $('#machineType, #category, #subcategory, #serialNumber, #supplier, #section').change(function() {
+                    generateCodePreview();
+                });
+            });
+
+            function loadReceivingData() {
+                const searchFilter = $('#searchFilter').val();
+                const statusFilter = $('#statusFilter').val();
+                const poFilter = $('#poFilter').val();
+
+                // Show loading
+                $('#receivingList').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading...</p></div>');
+
+                // Simulate API call (replace with actual AJAX call)
+                setTimeout(function() {
+                    const mockData = generateMockReceivingData();
+                    displayReceivingData(mockData);
+                }, 1000);
+            }
+
+            function generateMockReceivingData() {
+                return [
+                    {
+                        id: '1',
+                        code: 'PR-2024-001',
+                        title: 'Emergency Motor Parts',
+                        status: 'SENT_TO_PURCHASE',
+                        poNumber: 'PO-2024-0501',
+                        requestorName: 'John Smith',
+                        dateNeeded: '2024-01-20',
+                        totalItems: 3,
+                        pendingItems: 2,
+                        receivedItems: 1,
+                        hasPendingNewParts: true
+                    },
+                    {
+                        id: '2',
+                        code: 'PR-2024-002',
+                        title: 'Preventive Maintenance Parts',
+                        status: 'SENT_TO_PURCHASE',
+                        poNumber: null,
+                        requestorName: 'Jane Doe',
+                        dateNeeded: '2024-01-25',
+                        totalItems: 5,
+                        pendingItems: 5,
+                        receivedItems: 0,
+                        hasPendingNewParts: true
+                    }
+                ];
+            }
+
+            function displayReceivingData(data) {
+                if (data.length === 0) {
+                    $('#receivingList').html(`
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No purchase requisitions found for receiving</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                let html = '<div class="table-responsive"><table class="table table-bordered table-hover"><thead class="thead-light"><tr>';
+                html += '<th>PR Details</th><th class="text-center">Items Status</th><th class="text-center">PO Number</th>';
+                html += '<th class="text-center">Status</th><th class="text-center">Actions</th></tr></thead><tbody>';
+
+                data.forEach(function(pr) {
+                    const statusBadge = pr.status === 'COMPLETED' ? 
+                        '<span class="badge badge-success">Completed</span>' : 
+                        '<span class="badge badge-secondary">Sent to Purchase</span>';
+                    
+                    const poDisplay = pr.poNumber ? 
+                        `<span class="text-success">${pr.poNumber}</span>` : 
+                        '<span class="text-warning">Awaiting PO</span>';
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div><strong>${pr.code}</strong></div>
+                                <div class="text-muted">${pr.title}</div>
+                                <small class="text-muted">
+                                    Requestor: ${pr.requestorName} | Needed: ${pr.dateNeeded}
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <div><strong>${pr.totalItems}</strong> total items</div>
+                                <div class="text-success">${pr.receivedItems} received</div>
+                                <div class="text-warning">${pr.pendingItems} pending</div>
+                                ${pr.hasPendingNewParts ? '<small class="text-info">Has new parts</small>' : ''}
+                            </td>
+                            <td class="text-center">${poDisplay}</td>
+                            <td class="text-center">${statusBadge}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-primary btn-sm" 
+                                        onclick="openReceiveModal('${pr.id}', '${pr.code}')"
+                                        ${pr.pendingItems === 0 ? 'disabled' : ''}>
+                                    <i class="fas fa-truck mr-1"></i> Receive
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                $('#receivingList').html(html);
+            }
+
+            function openReceiveModal(prId, prCode) {
+                $('#prId').val(prId);
+                $('#modalPRCode').text(prCode);
+                
+                // Load items for this PR (mock data)
+                const mockItems = generateMockPRItems(prId);
+                displayItemsToReceive(mockItems);
+                
+                $('#receiveItemsModal').modal('show');
+            }
+
+            function generateMockPRItems(prId) {
+                return [
+                    {
+                        id: '1',
+                        partName: 'Motor Bearing SKF 6205',
+                        partDescription: 'Deep groove ball bearing for motor',
+                        partCategory: 'Bearing',
+                        partSupplier: 'SKF Industries',
+                        quantity: 5,
+                        receivedQuantity: 0,
+                        unitMeasure: 'pcs',
+                        criticalityLevel: 'HIGH',
+                        isNewPart: true,
+                        isReceived: false
+                    },
+                    {
+                        id: '2',
+                        partCode: 'MT-01-05-02-A-WH1',
+                        partName: 'Motor Coupling',
+                        quantity: 2,
+                        receivedQuantity: 0,
+                        unitMeasure: 'pcs',
+                        criticalityLevel: 'MEDIUM',
+                        isNewPart: false,
+                        isReceived: false
+                    }
+                ];
+            }
+
+            function displayItemsToReceive(items) {
+                let html = '<div class="table-responsive"><table class="table table-bordered"><thead class="thead-light">';
+                html += '<tr><th>Part Details</th><th class="text-center">Quantity</th><th class="text-center">Receive</th><th class="text-center">Actions</th></tr>';
+                html += '</thead><tbody>';
+
+                items.forEach(function(item) {
+                    const criticalityBadge = getCriticalityBadge(item.criticalityLevel);
+                    const isNewPart = item.isNewPart;
+                    const partDisplay = isNewPart ? item.partName : `${item.partCode} - ${item.partName}`;
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>${partDisplay}</strong>
+                                    ${isNewPart ? '<span class="badge badge-info ml-2">New Part</span>' : ''}
+                                </div>
+                                ${item.partDescription ? `<div class="text-muted">${item.partDescription}</div>` : ''}
+                                <small class="text-muted">
+                                    ${item.partCategory || 'N/A'} | ${item.partSupplier || 'N/A'}
+                                </small>
+                                <div class="mt-1">${criticalityBadge}</div>
+                            </td>
+                            <td class="text-center">
+                                <div><strong>${item.quantity}</strong> ${item.unitMeasure}</div>
+                                <small class="text-muted">Ordered</small>
+                            </td>
+                            <td class="text-center">
+                                <input type="number" class="form-control form-control-sm text-center" 
+                                       name="receivedQuantity_${item.id}" max="${item.quantity}" min="0" 
+                                       value="${item.quantity}" style="width: 80px;">
+                                <small class="text-muted">Received</small>
+                            </td>
+                            <td class="text-center">
+                                ${isNewPart ? `
+                                    <button type="button" class="btn btn-info btn-sm" 
+                                            onclick="openCodeGenerator('${item.id}', '${item.partName}')">
+                                        <i class="fas fa-cog mr-1"></i> Generate Code
+                                    </button>
+                                ` : ''}
+                                <div class="form-check mt-1">
+                                    <input type="checkbox" class="form-check-input" 
+                                           name="markReceived_${item.id}" value="true" checked>
+                                    <label class="form-check-label">Mark as received</label>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                $('#itemsToReceive').html(html);
+            }
+
+            function openCodeGenerator(itemId, partName) {
+                $('#targetItemId').val(itemId);
+                $('#codeGeneratorModal').modal('show');
+                resetCodeGenerator();
+            }
+
+            function resetCodeGenerator() {
+                $('#codeGeneratorForm')[0].reset();
+                $('#generatedCode').val('');
+                $('#applyCodeBtn').hide();
+            }
+
+            function generateCodePreview() {
+                const machineType = $('#machineType').val();
+                const category = $('#category').val();
+                const subcategory = $('#subcategory').val() || '00';
+                const serialNumber = $('#serialNumber').val();
+                const supplier = $('#supplier').val();
+                const section = $('#section').val();
+
+                if (machineType && category && serialNumber && supplier && section) {
+                    const code = `${machineType}-${category}-${subcategory}-${serialNumber}-${supplier}-${section}`;
+                    $('#generatedCode').val(code);
+                }
+            }
+
+            function generateCode() {
+                generateCodePreview();
+                if ($('#generatedCode').val()) {
+                    $('#applyCodeBtn').show();
+                } else {
+                    alert('Please fill in all required fields');
+                }
+            }
+
+            function applyGeneratedCode() {
+                const generatedCode = $('#generatedCode').val();
+                const itemId = $('#targetItemId').val();
+                
+                if (generatedCode) {
+                    // Store the generated code for this item (you can enhance this with actual data storage)
+                    $(`input[name="generatedCode_${itemId}"]`).remove();
+                    $('#itemsToReceive').append(`<input type="hidden" name="generatedCode_${itemId}" value="${generatedCode}">`);
+                    
+                    // Update visual indication
+                    const targetRow = $(`button[onclick="openCodeGenerator('${itemId}', '${$('#targetItemId').data('partName')}')"]`).closest('tr');
+                    targetRow.find('button').html('<i class="fas fa-check text-success mr-1"></i> Code Generated');
+                    targetRow.find('button').removeClass('btn-info').addClass('btn-success').prop('disabled', true);
+                    
+                    $('#codeGeneratorModal').modal('hide');
+                } else {
+                    alert('Please generate a code first');
+                }
+            }
+
+            function processReceiving() {
+                if (!$('#inspectorName').val()) {
+                    alert('Please enter inspector name');
+                    return;
+                }
+
+                if (!$('#receivingDate').val()) {
+                    alert('Please select receiving date');
+                    return;
+                }
+
+                // Collect all receiving data
+                const receivingData = {
+                    prId: $('#prId').val(),
+                    inspectorName: $('#inspectorName').val(),
+                    receivingDate: $('#receivingDate').val(),
+                    receivingNotes: $('#receivingNotes').val(),
+                    items: []
+                };
+
+                // Process each item
+                $('#itemsToReceive tbody tr').each(function() {
+                    const row = $(this);
+                    const itemId = row.find('input[type="number"]').attr('name').split('_')[1];
+                    const receivedQuantity = row.find(`input[name="receivedQuantity_${itemId}"]`).val();
+                    const markReceived = row.find(`input[name="markReceived_${itemId}"]`).is(':checked');
+                    const generatedCode = $(`input[name="generatedCode_${itemId}"]`).val();
+
+                    receivingData.items.push({
+                        itemId: itemId,
+                        receivedQuantity: receivedQuantity,
+                        markReceived: markReceived,
+                        generatedCode: generatedCode
+                    });
+                });
+
+                // Submit to server (replace with actual AJAX call)
+                console.log('Receiving Data:', receivingData);
+                
+                // Simulate success
+                alert('Parts receiving processed successfully!');
+                $('#receiveItemsModal').modal('hide');
+                loadReceivingData(); // Refresh the list
+            }
+
+            function getCriticalityBadge(level) {
+                switch(level) {
+                    case 'CRITICAL': return '<span class="badge badge-danger">Critical</span>';
+                    case 'HIGH': return '<span class="badge badge-warning">High</span>';
+                    case 'MEDIUM': return '<span class="badge badge-info">Medium</span>';
+                    case 'LOW': return '<span class="badge badge-secondary">Low</span>';
+                    default: return '<span class="badge badge-secondary">Unknown</span>';
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

@@ -189,6 +189,14 @@
 							</a>
 						</li>
 
+						<!-- Purchase Requisition -->
+						<li class="nav-item" th:classappend="${title.contains('Purchase Requisition')} ? 'active' : ''">
+							<a th:href="@{/purchase-requisition}">
+								<i class="fas fa-shopping-cart"></i>
+								<p class="nav-label">Purchase Requisition</p>
+							</a>
+						</li>
+
 						<!-- Reports (Optional)
 						<li class="nav-item">
 							<a href="#reports" data-toggle="collapse" aria-expanded="false">

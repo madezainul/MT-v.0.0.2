@@ -1,0 +1,193 @@
+<!-- Add Item Modal Fragment -->
+<div class="modal fade" id="itemModal" tabindex="-1" role="dialog" th:fragment="addItemModal" 
+     xmlns:th="http://www.thymeleaf.org">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add PR Item</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Item Type</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="itemType" id="existingPart" value="existing" 
+                                           th:checked="${partsList != null and !partsList.isEmpty()}"
+                                           th:disabled="${partsList == null or partsList.isEmpty()}">
+                                    <label class="form-check-label" for="existingPart">
+                                        <span th:if="${partsList != null and !partsList.isEmpty()}">Existing Part from Inventory</span>
+                                        <span th:if="${partsList == null or partsList.isEmpty()}" class="text-muted">Existing Part from Inventory (No parts available)</span>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="itemType" id="newPart" value="new"
+                                           th:checked="${partsList == null or partsList.isEmpty()}">
+                                    <label class="form-check-label" for="newPart">
+                                        New Part (not in inventory)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing Part Section -->
+                    <div id="existingPartSection" th:style="${partsList == null or partsList.isEmpty()} ? 'display: none;' : ''">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Select Part <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="existingPartSelect">
+                                        <option value="">Choose a part from inventory</option>
+                                        <option th:if="${partsList != null}" th:each="part : ${partsList}" 
+                                                th:value="${part.id}" 
+                                                th:text="${part.code + ' - ' + part.name + ' (Stock: ' + part.stockQuantity + ')'}"
+                                                th:attr="data-name=${part.name},data-code=${part.code},data-category=${part.categoryName},data-supplier=${part.supplierName},data-stock=${part.stockQuantity}"></option>
+                                        <option th:if="${partsList == null or partsList.isEmpty()}" disabled>No parts available in inventory</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> Parts are loaded from inventory. If you don't see the part you need, select "New Part" option.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Part Details Preview -->
+                        <div id="partDetailsPreview" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-info-circle"></i> Selected Part Details</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>Code:</strong> <span id="previewCode"></span><br>
+                                                <strong>Name:</strong> <span id="previewName"></span><br>
+                                                <strong>Category:</strong> <span id="previewCategory"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Supplier:</strong> <span id="previewSupplier"></span><br>
+                                                <strong>Stock:</strong> <span id="previewStock"></span>
+                                                <span id="stockWarning" class="text-danger" style="display: none;">
+                                                    <br><i class="fas fa-exclamation-triangle"></i> Low stock alert!
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Part Section -->
+                    <div id="newPartSection" th:style="${partsList != null and !partsList.isEmpty()} ? 'display: none;' : ''">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Part Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="newPartName" 
+                                           placeholder="Enter part name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <input type="text" class="form-control" id="newPartCategory" 
+                                           placeholder="Enter category">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supplier</label>
+                                    <input type="text" class="form-control" id="newPartSupplier" 
+                                           placeholder="Enter supplier">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" class="form-control" id="newPartDescription" 
+                                           placeholder="Enter description">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Specifications</label>
+                                    <textarea class="form-control" id="newPartSpecifications" rows="2" 
+                                              placeholder="Enter detailed specifications"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Common Fields -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="itemQuantity" min="1" value="1" required>
+                                <small id="quantityWarning" class="text-warning" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle"></i> Requested quantity exceeds available stock
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Unit</label>
+                                <input type="text" class="form-control" id="itemUnit" placeholder="pcs, kg, m, etc.">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Criticality</label>
+                                <select class="form-control" id="itemCriticality">
+                                    <option value="STANDARD">Standard</option>
+                                    <option value="LOW">Low</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="HIGH">High</option>
+                                    <option value="CRITICAL">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Justification</label>
+                                <textarea class="form-control" id="itemJustification" rows="2" 
+                                          placeholder="Why is this part needed?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea class="form-control" id="itemNotes" rows="2" 
+                                          placeholder="Additional notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="saveItem()">
+                    <i class="fas fa-plus mr-1"></i> Add Item
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External JavaScript -->
+<script th:src="@{/js/purchase-requisition-modal.js}"></script>

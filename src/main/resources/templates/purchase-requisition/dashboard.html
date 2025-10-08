@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Purchase Requisition Dashboard</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Dashboard</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/purchase-requisition/create}" class="btn btn-primary ml-auto mt-2">
+                        <i class="fa fa-plus mr-1"></i> Create New PR
+                    </a>
+                    <a th:href="@{/purchase-requisition/list}" class="btn btn-info ml-2 mt-2">
+                        <i class="fa fa-list mr-1"></i> View All
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row">
+                <div class="col-sm-6 col-md-3">
+                    <div class="card card-stats card-round">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-icon">
+                                    <div class="icon-big text-center icon-primary bubble-shadow-small">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                </div>
+                                <div class="col col-stats ml-3 ml-sm-0">
+                                    <div class="numbers">
+                                        <p class="card-category">Total PRs</p>
+                                        <h4 class="card-title" th:text="${totalPRs}">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card card-stats card-round">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-icon">
+                                    <div class="icon-big text-center icon-warning bubble-shadow-small">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                                <div class="col col-stats ml-3 ml-sm-0">
+                                    <div class="numbers">
+                                        <p class="card-category">Pending Approval</p>
+                                        <h4 class="card-title" th:text="${pendingApproval}">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card card-stats card-round">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-icon">
+                                    <div class="icon-big text-center icon-secondary bubble-shadow-small">
+                                        <i class="fas fa-shipping-fast"></i>
+                                    </div>
+                                </div>
+                                <div class="col col-stats ml-3 ml-sm-0">
+                                    <div class="numbers">
+                                        <p class="card-category">Require PO Number</p>
+                                        <h4 class="card-title" th:text="${requirePONumber}">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card card-stats card-round">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-icon">
+                                    <div class="icon-big text-center icon-success bubble-shadow-small">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                                <div class="col col-stats ml-3 ml-sm-0">
+                                    <div class="numbers">
+                                        <p class="card-category">Ready for Completion</p>
+                                        <h4 class="card-title" th:text="${readyForCompletion}">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Dashboard Sections -->
+            <div class="row">
+                <!-- Action Required Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">
+                                    <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
+                                    Action Required
+                                </div>
+                                <div class="card-tools">
+                                    <a th:href="@{/purchase-requisition/list?status=SUBMITTED}" class="btn btn-info btn-sm">
+                                        View All
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${actionRequiredPRs != null and !actionRequiredPRs.empty}">
+                                <div th:each="pr : ${actionRequiredPRs}" class="mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                   th:text="${pr.code}" class="text-decoration-none"></a>
+                                            </h6>
+                                            <p class="mb-1 text-muted" th:text="${pr.title}"></p>
+                                            <small class="text-muted">
+                                                Requestor: <span th:text="${pr.requestorName}"></span> |
+                                                Items: <span th:text="${pr.totalItems}"></span>
+                                            </small>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="badge badge-warning" th:text="${pr.statusDisplay}"></span>
+                                            <br>
+                                            <small class="text-muted" th:text="${#temporals.format(pr.createdAt, 'MMM dd, yyyy')}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${actionRequiredPRs == null or actionRequiredPRs.empty}" class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                <p>No purchase requisitions requiring approval</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">
+                                    <i class="fas fa-eye text-info mr-2"></i>
+                                    Monitoring
+                                </div>
+                                <div class="card-tools">
+                                    <a th:href="@{/purchase-requisition/list?status=SENT_TO_PURCHASE}" class="btn btn-info btn-sm">
+                                        View All
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${monitoringPRs != null and !monitoringPRs.empty}">
+                                <div th:each="pr : ${monitoringPRs}" class="mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                   th:text="${pr.code}" class="text-decoration-none"></a>
+                                            </h6>
+                                            <p class="mb-1 text-muted" th:text="${pr.title}"></p>
+                                            <small class="text-muted">
+                                                PO: <span th:text="${pr.poNumber ?: 'Pending'}" 
+                                                         th:class="${pr.poNumber} ? 'text-success' : 'text-danger'"></span>
+                                            </small>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="badge badge-secondary" th:text="${pr.statusDisplay}"></span>
+                                            <br>
+                                            <small class="text-muted" th:text="${#temporals.format(pr.reviewedAt ?: pr.createdAt, 'MMM dd, yyyy')}"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${monitoringPRs == null or monitoringPRs.empty}" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                                <p>No purchase requisitions to monitor</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">
+                                    <i class="fas fa-history text-primary mr-2"></i>
+                                    Recent Activity (Last 7 days)
+                                </div>
+                                <div class="card-tools">
+                                    <a th:href="@{/purchase-requisition/list}" class="btn btn-info btn-sm">
+                                        View All
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${recentPRs != null and !recentPRs.empty}">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>PR Code</th>
+                                                <th>Title</th>
+                                                <th>Requestor</th>
+                                                <th>Status</th>
+                                                <th>Items</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="pr : ${recentPRs}">
+                                                <td>
+                                                    <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                       th:text="${pr.code}" class="text-decoration-none"></a>
+                                                </td>
+                                                <td th:text="${pr.title}"></td>
+                                                <td th:text="${pr.requestorName}"></td>
+                                                <td>
+                                                    <span class="badge" 
+                                                          th:class="${pr.status.name() == 'SUBMITTED'} ? 'badge-warning' : 
+                                                                     (${pr.status.name() == 'APPROVED'} ? 'badge-success' : 
+                                                                     (${pr.status.name() == 'SENT_TO_PURCHASE'} ? 'badge-secondary' : 'badge-primary'))"
+                                                          th:text="${pr.statusDisplay}"></span>
+                                                </td>
+                                                <td th:text="${pr.totalItems}"></td>
+                                                <td th:text="${#temporals.format(pr.createdAt, 'MMM dd, yyyy')}"></td>
+                                                <td>
+                                                    <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                       class="btn btn-sm btn-info" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div th:if="${recentPRs == null or recentPRs.empty}" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                                <p>No recent purchase requisitions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</body>
+</html>

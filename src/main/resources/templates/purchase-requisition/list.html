@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Purchase Requisitions List</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>List</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/purchase-requisition/create}" class="btn btn-primary ml-auto mt-2">
+                        <i class="fa fa-plus mr-1"></i> Create New PR
+                    </a>
+                    <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
+                        <i class="fa fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">Purchase Requisitions</div>
+                                <div class="card-tools">
+                                    <!-- Search Form -->
+                                    <form th:action="@{/purchase-requisition/list}" method="get" class="form-inline">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="search" 
+                                                   th:value="${searchTerm}" placeholder="Search PRs..." />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="submit">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                                        <input type="hidden" name="ascending" th:value="${ascending}" />
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-head-bg-primary">
+                                    <thead>
+                                        <tr>
+                                            <th data-sort="code">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='code', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    PR Code
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="title">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='title', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Title
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="requestorName">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='requestorName', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Requestor
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="status">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='status', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Status
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th>Items</th>
+                                            <th data-sort="dateNeeded">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='dateNeeded', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Date Needed
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="createdAt">
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='createdAt', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Created
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="pr : ${prs}">
+                                            <td>
+                                                <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                   th:text="${pr.code}" class="text-decoration-none font-weight-bold"></a>
+                                            </td>
+                                            <td th:text="${pr.title}"></td>
+                                            <td th:text="${pr.requestorName}"></td>
+                                            <td>
+                                                <span class="badge" 
+                                                      th:class="${pr.status.name() == 'SUBMITTED'} ? 'badge-warning' : 
+                                                                 (${pr.status.name() == 'APPROVED'} ? 'badge-success' : 
+                                                                 (${pr.status.name() == 'SENT_TO_PURCHASE'} ? 'badge-secondary' : 'badge-primary'))"
+                                                      th:text="${pr.statusDisplay}"></span>
+                                                <div th:if="${pr.isApproved != null}" class="mt-1">
+                                                    <small class="text-muted" th:text="${pr.approvalStatusDisplay}"></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span th:text="${pr.totalItems}"></span> items
+                                                <br>
+                                                <small class="text-muted" th:text="${pr.totalQuantity} + ' qty'"></small>
+                                            </td>
+                                            <td th:text="${#temporals.format(pr.dateNeeded, 'MMM dd, yyyy')}"></td>
+                                            <td th:text="${#temporals.format(pr.createdAt, 'MMM dd, yyyy')}"></td>
+                                            <td>
+                                                <div class="form-button-action">
+                                                    <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
+                                                       class="btn btn-link btn-primary btn-lg" 
+                                                       data-original-title="View Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    <a th:if="${pr.status.name() == 'SUBMITTED'}"
+                                                       th:href="@{'/purchase-requisition/' + ${pr.id} + '/edit'}" 
+                                                       class="btn btn-link btn-info btn-lg" 
+                                                       data-original-title="Edit">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <small class="text-muted">
+                                        Showing <span th:text="${currentPage * 10 + 1}"></span> to 
+                                        <span th:text="${currentPage * 10 + prs.size()}"></span> of 
+                                        <span th:text="${totalElements}"></span> entries
+                                    </small>
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <!-- Previous -->
+                                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${currentPage - 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Previous
+                                            </a>
+                                        </li>
+
+                                        <!-- Page Numbers -->
+                                        <li class="page-item" 
+                                            th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                            th:classappend="${i == currentPage} ? 'active'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${i}, sortBy=${sortBy}, ascending=${ascending})}"
+                                               th:text="${i + 1}"></a>
+                                        </li>
+
+                                        <!-- Next -->
+                                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${currentPage + 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Next
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
+                            <!-- No Results -->
+                            <div th:if="${prs == null or prs.empty}" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <h5>No Purchase Requisitions Found</h5>
+                                <p th:if="${searchTerm}">
+                                    No results found for "<span th:text="${searchTerm}"></span>".
+                                    <a th:href="@{/purchase-requisition/list}">Clear search</a>
+                                </p>
+                                <p th:unless="${searchTerm}">
+                                    <a th:href="@{/purchase-requisition/create}" class="btn btn-primary">
+                                        Create your first Purchase Requisition
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</body>
+</html>
