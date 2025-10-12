@@ -17,31 +17,46 @@ import ahqpck.maintenance.report.entity.PurchaseRequisition.PRStatus;
 
 @Repository
 public interface PurchaseRequisitionRepository extends JpaRepository<PurchaseRequisition, String>, JpaSpecificationExecutor<PurchaseRequisition> {
-
+    
     // Find by code
     Optional<PurchaseRequisition> findByCode(String code);
+    boolean existsByCode(String code);
 
     // Find by status
     List<PurchaseRequisition> findByStatus(PRStatus status);
     Page<PurchaseRequisition> findByStatus(PRStatus status, Pageable pageable);
 
-    // Find by requestor
-    @Query("SELECT pr FROM PurchaseRequisition pr JOIN pr.requestor u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :requestorName, '%'))")
-    List<PurchaseRequisition> findByRequestorNameContainingIgnoreCase(@Param("requestorName") String requestorName);
-    
-    @Query("SELECT pr FROM PurchaseRequisition pr JOIN pr.requestor u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :requestorName, '%'))")
-    Page<PurchaseRequisition> findByRequestorNameContainingIgnoreCase(@Param("requestorName") String requestorName, Pageable pageable);
-
     // Find by approval status
     List<PurchaseRequisition> findByIsApproved(Boolean isApproved);
     Page<PurchaseRequisition> findByIsApproved(Boolean isApproved, Pageable pageable);
 
-    // Find pending approval
+    // Find pending approval (submitted but not reviewed)
     @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.status = 'SUBMITTED' AND pr.isApproved IS NULL")
     List<PurchaseRequisition> findPendingApproval();
 
     @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.status = 'SUBMITTED' AND pr.isApproved IS NULL")
     Page<PurchaseRequisition> findPendingApproval(Pageable pageable);
+
+    // Find PRs requiring action (pending approval + rejected PRs)
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE (pr.status = 'SUBMITTED' AND pr.isApproved IS NULL) OR (pr.status = 'SUBMITTED' AND pr.isApproved = false)")
+    List<PurchaseRequisition> findActionRequired();
+
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE (pr.status = 'SUBMITTED' AND pr.isApproved IS NULL) OR (pr.status = 'SUBMITTED' AND pr.isApproved = false)")
+    Page<PurchaseRequisition> findActionRequired(Pageable pageable);
+
+    // Find approved PRs that can create POs
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.status = 'APPROVED' AND pr.isApproved = true")
+    List<PurchaseRequisition> findReadyForPO();
+
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.status = 'APPROVED' AND pr.isApproved = true")
+    Page<PurchaseRequisition> findReadyForPO(Pageable pageable);
+
+    // Find by requestor
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.requestor.id = :requestorId")
+    List<PurchaseRequisition> findByRequestorId(@Param("requestorId") String requestorId);
+
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.requestor.id = :requestorId")
+    Page<PurchaseRequisition> findByRequestorId(@Param("requestorId") String requestorId, Pageable pageable);
 
     // Find by date range
     @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.dateNeeded BETWEEN :startDate AND :endDate")
@@ -50,37 +65,27 @@ public interface PurchaseRequisitionRepository extends JpaRepository<PurchaseReq
     // Find by target equipment
     List<PurchaseRequisition> findByTargetEquipmentId(String targetEquipmentId);
 
-    // Count by status
-    long countByStatus(PRStatus status);
-
-    // Count pending approval
-    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE pr.status = 'SUBMITTED' AND pr.isApproved IS NULL")
-    long countPendingApproval();
-
-    // Count requiring PO number
-    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE pr.status = 'SENT_TO_PURCHASE' AND (pr.poNumber IS NULL OR pr.poNumber = '')")
-    long countRequiringPONumber();
-
-    // Count ready for completion
-    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE pr.status = 'SENT_TO_PURCHASE' AND pr.poNumber IS NOT NULL AND pr.poNumber != ''")
-    long countReadyForCompletion();
-
     // Find recent submissions
     @Query("SELECT pr FROM PurchaseRequisition pr WHERE pr.createdAt >= :since ORDER BY pr.createdAt DESC")
     List<PurchaseRequisition> findRecentSubmissions(@Param("since") LocalDateTime since);
 
-    // Search across multiple fields
-    @Query("SELECT pr FROM PurchaseRequisition pr JOIN pr.requestor u WHERE " +
-           "LOWER(pr.code) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(pr.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(u.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(u.employeeId) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(pr.targetEquipmentName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<PurchaseRequisition> searchPurchaseRequisitions(@Param("searchTerm") String searchTerm, Pageable pageable);
+    // Count queries
+    long countByStatus(PRStatus status);
 
-    // Find by title containing
-    Page<PurchaseRequisition> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE pr.status = 'SUBMITTED' AND pr.isApproved IS NULL")
+    long countPendingApproval();
 
-    // Find all ordered by created date desc
-    Page<PurchaseRequisition> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE (pr.status = 'SUBMITTED' AND pr.isApproved IS NULL) OR (pr.status = 'SUBMITTED' AND pr.isApproved = false)")
+    long countActionRequired();
+
+    @Query("SELECT COUNT(pr) FROM PurchaseRequisition pr WHERE pr.status = 'APPROVED' AND pr.isApproved = true")
+    long countReadyForPO();
+
+    // Search queries
+    @Query("SELECT pr FROM PurchaseRequisition pr WHERE " +
+           "LOWER(pr.code) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(pr.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(pr.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(pr.requestor.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<PurchaseRequisition> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

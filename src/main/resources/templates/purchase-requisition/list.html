@@ -56,6 +56,7 @@
                                                 </button>
                                             </div>
                                         </div>
+                                        <input type="hidden" name="actionRequired" th:value="${actionRequired}" />
                                         <input type="hidden" name="sortBy" th:value="${sortBy}" />
                                         <input type="hidden" name="ascending" th:value="${ascending}" />
                                     </form>
@@ -68,43 +69,43 @@
                                     <thead>
                                         <tr>
                                             <th data-sort="code">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='code', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='code', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     PR Code
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="title">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='title', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='title', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     Title
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="requestorName">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='requestorName', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='requestorName', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     Requestor
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="status">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='status', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='status', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     Status
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
-                                            <th>Items</th>
+                                            <th>Parts</th>
                                             <th data-sort="dateNeeded">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='dateNeeded', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='dateNeeded', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     Date Needed
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="createdAt">
-                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, sortBy='createdAt', ascending=${!ascending})}" 
+                                                <a th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, sortBy='createdAt', ascending=${!ascending})}" 
                                                    class="text-white text-decoration-none">
                                                     Created
                                                     <i class="fas fa-sort ml-1"></i>
@@ -122,19 +123,19 @@
                                             <td th:text="${pr.title}"></td>
                                             <td th:text="${pr.requestorName}"></td>
                                             <td>
-                                                <span class="badge" 
-                                                      th:class="${pr.status.name() == 'SUBMITTED'} ? 'badge-warning' : 
-                                                                 (${pr.status.name() == 'APPROVED'} ? 'badge-success' : 
-                                                                 (${pr.status.name() == 'SENT_TO_PURCHASE'} ? 'badge-secondary' : 'badge-primary'))"
-                                                      th:text="${pr.statusDisplay}"></span>
-                                                <div th:if="${pr.isApproved != null}" class="mt-1">
-                                                    <small class="text-muted" th:text="${pr.approvalStatusDisplay}"></small>
-                                                </div>
+                                                <span class="badge badge-pill" 
+                                                      th:class="${pr.status.name() == 'SUBMITTED'} ? 
+                                                                 (${pr.isApproved == null} ? 'badge-warning badge-pill' : 
+                                                                  (${pr.isApproved} ? 'badge-success badge-pill' : 'badge-danger badge-pill')) : 
+                                                                 (${pr.status.name() == 'APPROVED'} ? 'badge-success badge-pill' : 
+                                                                 (${pr.status.name() == 'SENT_TO_PURCHASE'} ? 'badge-secondary badge-pill' : 
+                                                                 (${pr.status.name() == 'COMPLETED'} ? 'badge-primary badge-pill' : 'badge-info badge-pill')))"
+                                                      th:text="${pr.isApproved != null && pr.status.name() == 'SUBMITTED'} ? ${pr.approvalStatusDisplay} : ${pr.statusDisplay}"></span>
                                             </td>
                                             <td>
-                                                <span th:text="${pr.totalItems}"></span> items
+                                                <span th:text="${pr.totalParts ?: 0}"></span> parts
                                                 <br>
-                                                <small class="text-muted" th:text="${pr.totalQuantity} + ' qty'"></small>
+                                                <small class="text-muted" th:text="${pr.totalQuantity ?: 0} + ' qty'"></small>
                                             </td>
                                             <td th:text="${#temporals.format(pr.dateNeeded, 'MMM dd, yyyy')}"></td>
                                             <td th:text="${#temporals.format(pr.createdAt, 'MMM dd, yyyy')}"></td>
@@ -172,7 +173,7 @@
                                         <!-- Previous -->
                                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                                             <a class="page-link" 
-                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${currentPage - 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, page=${currentPage - 1}, sortBy=${sortBy}, ascending=${ascending})}">
                                                 Previous
                                             </a>
                                         </li>
@@ -182,14 +183,14 @@
                                             th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                                             th:classappend="${i == currentPage} ? 'active'">
                                             <a class="page-link" 
-                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${i}, sortBy=${sortBy}, ascending=${ascending})}"
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, page=${i}, sortBy=${sortBy}, ascending=${ascending})}"
                                                th:text="${i + 1}"></a>
                                         </li>
 
                                         <!-- Next -->
                                         <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                                             <a class="page-link" 
-                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, page=${currentPage + 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                               th:href="@{/purchase-requisition/list(search=${searchTerm}, actionRequired=${actionRequired}, page=${currentPage + 1}, sortBy=${sortBy}, ascending=${ascending})}">
                                                 Next
                                             </a>
                                         </li>

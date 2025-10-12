@@ -2,6 +2,7 @@ package ahqpck.maintenance.report.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,6 @@ import lombok.NoArgsConstructor;
 public class PurchaseRequisitionDTO {
 
     private String id;
-
     private String code;
 
     @NotBlank(message = "Title is required")
@@ -49,47 +49,65 @@ public class PurchaseRequisitionDTO {
     private LocalDateTime reviewedAt;
     private String reviewNotes;
 
-    private String poNumber;
-    private String inspectorId;
-    private String inspectorName;
-    private String inspectorEmail;
-    private String inspectorEmployeeId;
-    private LocalDateTime receivedAt;
-    private String completionNotes;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     @Builder.Default
-    private List<PurchaseRequisitionItemDTO> items = new ArrayList<>();
+    private List<PurchaseRequisitionPartDTO> parts = new ArrayList<>();
 
     // Computed fields
-    private Integer totalItems;
+    private Integer totalParts;
     private Long totalQuantity;
     private Boolean canBeApproved;
-    private Boolean canBeSentToPurchase;
-    private Boolean canBeReceived;
+    private Boolean canCreatePO;
     private Boolean canBeCompleted;
+
+    // Suppliers for PO creation
+    private List<String> suppliers;
+
+    // QR Number if created
+    private String quotationNumber;
 
     // Helper methods for display
     public String getFormattedDateNeeded() {
-        return dateNeeded != null ? dateNeeded.toString() : "";
+        return dateNeeded != null ? dateNeeded.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
     }
 
     public String getApprovalStatusDisplay() {
-        if (isApproved == null) return "Pending Review";
+        if (isApproved == null) {
+            return "Pending Approval";
+        }
         return Boolean.TRUE.equals(isApproved) ? "Approved" : "Rejected";
     }
 
     public String getFormattedCreatedAt() {
-        return createdAt != null ? createdAt.toString() : "";
+        return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "";
     }
 
-    // Add item helper
-    public void addItem(PurchaseRequisitionItemDTO item) {
-        if (items == null) {
-            items = new ArrayList<>();
+    public String getStatusBadgeClass() {
+        if (status == null) return "badge-secondary";
+        return switch (status) {
+            case SUBMITTED -> Boolean.TRUE.equals(isApproved) ? "badge-success" : 
+                           (Boolean.FALSE.equals(isApproved) ? "badge-danger" : "badge-warning");
+            case APPROVED -> "badge-success";
+            case COMPLETED -> "badge-primary";
+        };
+    }
+
+    // Add part helper
+    public void addPart(PurchaseRequisitionPartDTO part) {
+        if (this.parts == null) {
+            this.parts = new ArrayList<>();
         }
-        items.add(item);
+        this.parts.add(part);
+    }
+
+    // Template compatibility methods
+    public List<PurchaseRequisitionPartDTO> getRequisitionParts() {
+        return this.parts;
+    }
+
+    public String getStatusDisplay() {
+        return status != null ? status.getDisplayName() : "Unknown";
     }
 }

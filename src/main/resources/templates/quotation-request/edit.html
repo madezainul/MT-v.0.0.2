@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Edit Quotation Request</title>
+    <style>
+        /* Enhanced Form Styling */
+        .form-section {
+            background: #ffffff;
+            border: 1px solid #e0e4e7;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px 10px 0 0;
+            margin: 0;
+        }
+
+        .section-header h5 {
+            color: white;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .section-body {
+            padding: 1.5rem;
+        }
+
+        /* Enhanced Form Controls */
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        /* Button Enhancements */
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        /* Parts Table Styling */
+        .parts-table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .parts-table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #495057;
+            padding: 1rem 0.75rem;
+        }
+
+        .parts-table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .parts-table .form-control {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Input Group Styling */
+        .input-group-text {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-color: #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Part Details Styling */
+        .part-details {
+            min-width: 200px;
+        }
+
+        .part-code {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .part-name {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .part-meta {
+            font-size: 0.8rem;
+            color: #868e96;
+        }
+
+        /* Alert Styling */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .section-body {
+                padding: 1rem;
+            }
+            
+            .parts-table {
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Validation Styling */
+        .is-invalid {
+            border-color: #dc3545;
+        }
+
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc3545;
+        }
+
+        /* Calculate Total Button */
+        .calculate-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .calculate-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, #1c9970 100%);
+            color: white;
+        }
+
+        /* Total Display */
+        .total-display {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #2196f3;
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1976d2;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-edit"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/quotation-request}">Quotation Request</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{'/quotation-request/' + ${qr.id}}">Details</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Edit</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Edit Form -->
+            <form th:action="@{'/quotation-request/' + ${qr.id} + '/edit'}" method="post" id="editQRForm">
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-8">
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5><i class="fas fa-info-circle mr-2"></i>Quotation Request Information</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="quotationNumber" class="form-label">QR Number</label>
+                                            <input type="text" class="form-control" id="quotationNumber" 
+                                                   th:value="${qr.quotationNumber}" readonly>
+                                            <small class="text-muted">QR number cannot be changed</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="requestDate" class="form-label">Request Date</label>
+                                            <input type="text" class="form-control" id="requestDate" 
+                                                   th:value="${qr.formattedRequestDate}" readonly>
+                                            <small class="text-muted">Request date cannot be changed</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="supplierName" class="form-label">
+                                                Supplier Name <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="supplierName" name="supplierName" 
+                                                   th:value="${qr.supplierName}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="supplierContact" class="form-label">Supplier Contact</label>
+                                            <input type="text" class="form-control" id="supplierContact" name="supplierContact" 
+                                                   th:value="${qr.supplierContact}" placeholder="Phone / Email">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="expectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+                                            <input type="date" class="form-control" id="expectedDeliveryDate" name="expectedDeliveryDate" 
+                                                   th:value="${qr.expectedDeliveryDate}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="notes" class="form-label">Notes</label>
+                                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                                      th:text="${qr.notes}" placeholder="Optional notes for this quotation request"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parts Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5><i class="fas fa-boxes mr-2"></i>QR Parts (<span id="partsCount" th:text="${qr.totalParts ?: 0}"></span> parts)</h5>
+                            </div>
+                            <div class="section-body">
+                                <div th:if="${qr.parts != null && !qr.parts.empty}">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered parts-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 25%;">Part Details</th>
+                                                    <th style="width: 15%;" class="text-center">Quantity <span class="required">*</span></th>
+                                                    <th style="width: 15%;" class="text-center">Unit Price</th>
+                                                    <th style="width: 15%;" class="text-center">Total Price</th>
+                                                    <th style="width: 30%;">Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="part, partStat : ${qr.parts}">
+                                                    <td class="part-details">
+                                                        <input type="hidden" th:name="'partIds[' + ${partStat.index} + ']'" th:value="${part.id}">
+                                                        <div class="part-code" th:text="${part.partCode ?: part.partName}">Part Code</div>
+                                                        <div th:if="${part.partName != null && part.partCode != null}" 
+                                                             class="part-name" th:text="${part.partName}"></div>
+                                                        <div class="part-meta">
+                                                            <span th:text="${part.partCategory ?: 'N/A'}"></span> | 
+                                                            <span th:text="${part.partSupplier ?: 'N/A'}"></span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <input type="number" class="form-control text-center quantity-input" 
+                                                               th:name="'quantities[' + ${partStat.index} + ']'" 
+                                                               th:value="${part.quantityRequested}" 
+                                                               min="1" required onchange="calculateRowTotal(this)">
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">$</span>
+                                                            <input type="number" class="form-control text-center price-input" 
+                                                                   th:name="'unitPrices[' + ${partStat.index} + ']'" 
+                                                                   th:value="${part.unitPrice}" 
+                                                                   step="0.01" min="0" placeholder="0.00" onchange="calculateRowTotal(this)">
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="font-weight-bold total-price-display" 
+                                                              th:text="${part.formattedTotalPrice}">$0.00</span>
+                                                    </td>
+                                                    <td>
+                                                        <textarea class="form-control" 
+                                                                  th:name="'partNotes[' + ${partStat.index} + ']'" 
+                                                                  rows="2" placeholder="Part-specific notes"
+                                                                  th:text="${part.notes}"></textarea>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <button type="button" class="btn calculate-btn" onclick="calculateGrandTotal()">
+                                            <i class="fas fa-calculator mr-1"></i> Recalculate Total
+                                        </button>
+                                        <div class="total-display text-center">
+                                            <small class="text-muted">Total Amount</small>
+                                            <div class="total-amount" id="grandTotal" th:text="${qr.formattedTotalAmount ?: '$0.00'}">$0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div th:if="${qr.parts == null || qr.parts.empty}" class="text-center text-muted py-4">
+                                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                                    <p>No parts in this quotation request</p>
+                                    <small>Parts can be added from approved purchase requisitions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Panel -->
+                    <div class="col-md-4">
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5><i class="fas fa-cogs mr-2"></i>Actions</h5>
+                            </div>
+                            <div class="section-body">
+                                <!-- Status Warning -->
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <strong>Edit Mode</strong><br>
+                                    <small>Only quotation requests with CREATED status can be edited. Once sent, editing is restricted.</small>
+                                </div>
+
+                                <!-- Save Changes -->
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-save mr-1"></i> Save Changes
+                                    </button>
+                                </div>
+
+                                <!-- Cancel -->
+                                <div class="mb-3">
+                                    <a th:href="@{'/quotation-request/' + ${qr.id}}" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-times mr-1"></i> Cancel
+                                    </a>
+                                </div>
+
+                                <!-- Delete (Danger Zone) -->
+                                <div class="border-top pt-3 mt-3">
+                                    <h6 class="text-danger mb-3">Danger Zone</h6>
+                                    <button type="button" class="btn btn-outline-danger btn-block btn-sm" 
+                                            data-toggle="modal" data-target="#deleteModal">
+                                        <i class="fas fa-trash mr-1"></i> Delete QR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Help -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5><i class="fas fa-question-circle mr-2"></i>Help</h5>
+                            </div>
+                            <div class="section-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <i class="fas fa-info-circle text-primary mr-2"></i>
+                                        <small>Update supplier information and delivery expectations</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-boxes text-primary mr-2"></i>
+                                        <small>Modify quantities and unit prices for each part</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-calculator text-primary mr-2"></i>
+                                        <small>Total amount will be recalculated automatically</small>
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-save text-primary mr-2"></i>
+                                        <small>Changes are saved only when you click "Save Changes"</small>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <span th:text="${success}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <span th:text="${error}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this quotation request?</p>
+                        <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+                        <p>QR Number: <strong th:text="${qr.quotationNumber}"></strong></p>
+                        <p>Supplier: <strong th:text="${qr.supplierName}"></strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <form th:action="@{'/quotation-request/' + ${qr.id} + '/delete'}" method="post">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for calculations -->
+    <script>
+        function calculateRowTotal(element) {
+            const row = element.closest('tr');
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            const totalDisplay = row.querySelector('.total-price-display');
+            
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const total = quantity * price;
+            
+            totalDisplay.textContent = '$' + total.toFixed(2);
+            
+            // Auto-calculate grand total
+            calculateGrandTotal();
+        }
+        
+        function calculateGrandTotal() {
+            let grandTotal = 0;
+            document.querySelectorAll('.total-price-display').forEach(display => {
+                const value = display.textContent.replace('$', '').replace(',', '');
+                grandTotal += parseFloat(value) || 0;
+            });
+            
+            document.getElementById('grandTotal').textContent = '$' + grandTotal.toFixed(2);
+        }
+        
+        // Initialize calculations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateGrandTotal();
+        });
+        
+        // Form validation
+        document.getElementById('editQRForm').addEventListener('submit', function(e) {
+            const supplierName = document.getElementById('supplierName').value.trim();
+            if (!supplierName) {
+                e.preventDefault();
+                alert('Supplier name is required');
+                document.getElementById('supplierName').focus();
+                return false;
+            }
+            
+            // Validate quantities
+            const quantities = document.querySelectorAll('.quantity-input');
+            for (let input of quantities) {
+                if (!input.value || parseInt(input.value) < 1) {
+                    e.preventDefault();
+                    alert('All quantities must be at least 1');
+                    input.focus();
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    </script>
+</body>
+</html>

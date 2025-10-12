@@ -294,7 +294,7 @@
                         code: 'PR-2024-001',
                         title: 'Emergency Motor Parts',
                         status: 'SENT_TO_PURCHASE',
-                        poNumber: 'PO-2024-0501',
+                        quotationNumber: 'QR-2024-0501',
                         requestorName: 'John Smith',
                         dateNeeded: '2024-01-20',
                         totalItems: 3,
@@ -307,7 +307,7 @@
                         code: 'PR-2024-002',
                         title: 'Preventive Maintenance Parts',
                         status: 'SENT_TO_PURCHASE',
-                        poNumber: null,
+                        quotationNumber: null,
                         requestorName: 'Jane Doe',
                         dateNeeded: '2024-01-25',
                         totalItems: 5,
@@ -338,9 +338,9 @@
                         '<span class="badge badge-success">Completed</span>' : 
                         '<span class="badge badge-secondary">Sent to Purchase</span>';
                     
-                    const poDisplay = pr.poNumber ? 
-                        `<span class="text-success">${pr.poNumber}</span>` : 
-                        '<span class="text-warning">Awaiting PO</span>';
+                    const qrDisplay = pr.quotationNumber ? 
+                        `<span class="text-success">${pr.quotationNumber}</span>` : 
+                        '<span class="text-warning">Awaiting QR</span>';
 
                     html += `
                         <tr>
@@ -352,12 +352,12 @@
                                 </small>
                             </td>
                             <td class="text-center">
-                                <div><strong>${pr.totalItems}</strong> total items</div>
+                                <div><strong>${pr.totalParts}</strong> total items</div>
                                 <div class="text-success">${pr.receivedItems} received</div>
                                 <div class="text-warning">${pr.pendingItems} pending</div>
                                 ${pr.hasPendingNewParts ? '<small class="text-info">Has new parts</small>' : ''}
                             </td>
-                            <td class="text-center">${poDisplay}</td>
+                            <td class="text-center">${qrDisplay}</td>
                             <td class="text-center">${statusBadge}</td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-primary btn-sm" 

@@ -3,7 +3,7 @@
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
 
 <head>
-    <title>Purchase Requisition Details</title>
+    <title>Purchase Order Details</title>
     <style>
         /* Enhanced Card Styling */
         .section-card {
@@ -110,13 +110,6 @@
             border-radius: 6px;
         }
 
-        .badge-pill {
-            border-radius: 50rem;
-            font-size: 0.75rem;
-            padding: 0.4em 0.8em;
-            font-weight: 500;
-        }
-
         /* Layout Fixes */
         .page-inner {
             padding: 15px;
@@ -168,17 +161,6 @@
             }
         }
 
-        /* Table improvements */
-        .table td {
-            vertical-align: middle;
-            padding: 12px 8px;
-        }
-
-        .table th {
-            vertical-align: middle;
-            padding: 15px 8px;
-        }
-
         /* Part details cell styling */
         .part-details {
             min-width: 200px;
@@ -201,16 +183,6 @@
             color: #868e96;
         }
 
-        /* Form layout improvements */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
         /* Action panel improvements */
         .action-section {
             border-bottom: 1px solid #e9ecef;
@@ -227,6 +199,26 @@
             font-weight: 600;
             margin-bottom: 0.75rem;
         }
+
+        /* Status progress bar */
+        .status-progress {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .status-progress .progress-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Quantity input styling */
+        .quantity-input {
+            max-width: 80px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -237,49 +229,43 @@
                 <h4 class="page-title" th:text="${title}"></h4>
                 <ul class="breadcrumbs">
                     <li class="nav-home">
-                        <i class="fas fa-shopping-cart"></i>
+                        <i class="fas fa-file-invoice"></i>
                     </li>
                     <li class="separator">
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                        <a th:href="@{/purchase-order}">Purchase Order</a>
                     </li>
                     <li class="separator">
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a th:text="${pr.code}"></a>
+                        <a th:text="${po.poNumber}"></a>
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <a th:if="${pr.status.name() == 'SUBMITTED'}" 
-                       th:href="@{/purchase-requisition/{id}/edit(id=${pr.id})}" 
+                    <a th:if="${po.status.name() == 'CREATED'}" 
+                       th:href="@{'/purchase-order/' + ${po.id} + '/edit'}" 
                        class="btn btn-info ml-auto mt-2">
                         <i class="fa fa-edit mr-1"></i> Edit
                     </a>
-                    <a th:href="@{/purchase-requisition/list}" class="btn btn-secondary ml-2 mt-2">
+                    <a th:href="@{/purchase-order/list}" class="btn btn-secondary ml-2 mt-2">
                         <i class="fa fa-list mr-1"></i> Back to List
                     </a>
                 </div>
             </div>
 
             <div class="row">
-                <!-- PR Information -->
+                <!-- PO Information -->
                 <div class="col-md-8">
                     <div class="card section-card">
                         <div class="section-header">
                             <div class="d-flex align-items-center">
-                                <h5 class="mb-0 mr-3" th:text="${pr.code}"></h5>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge badge-pill mr-2" 
-                                          th:class="${pr.statusBadgeClass} + ' badge-pill mr-2'"
-                                          th:text="${pr.statusDisplay}"></span>
-                                    <span th:if="${pr.isApproved != null}" 
-                                          class="badge badge-pill"
-                                          th:class="'badge-' + (${pr.isApproved} ? 'success' : 'danger') + ' badge-pill'"
-                                          th:text="${pr.approvalStatusDisplay}"></span>
-                                </div>
+                                <h5 class="mb-0 mr-3" th:text="${po.poNumber}"></h5>
+                                <span class="badge mr-2" 
+                                      th:class="${po.statusBadgeClass}"
+                                      th:text="${po.statusDisplay}"></span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -287,88 +273,91 @@
                                 <div class="col-md-6">
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td class="font-weight-bold">Title:</td>
-                                            <td th:text="${pr.title}"></td>
+                                            <td class="font-weight-bold">PO Number:</td>
+                                            <td th:text="${po.poNumber}"></td>
                                         </tr>
                                         <tr>
-                                            <td class="font-weight-bold">Requestor:</td>
+                                            <td class="font-weight-bold">Supplier:</td>
                                             <td>
-                                                <span th:text="${pr.requestorName}"></span>
-                                                <span th:if="${pr.requestorEmail}" class="text-muted">
-                                                    (<span th:text="${pr.requestorEmail}"></span>)
-                                                </span>
+                                                <i class="fas fa-truck text-muted mr-2"></i>
+                                                <span th:text="${po.supplierName}"></span>
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td class="font-weight-bold">Date Needed:</td>
-                                            <td th:text="${#temporals.format(pr.dateNeeded, 'MMMM dd, yyyy')}"></td>
+                                        <tr th:if="${po.supplierContact}">
+                                            <td class="font-weight-bold">Contact:</td>
+                                            <td th:text="${po.supplierContact}"></td>
                                         </tr>
-                                        <tr th:if="${pr.targetEquipmentName}">
-                                            <td class="font-weight-bold">Target Equipment:</td>
-                                            <td th:text="${pr.targetEquipmentName}"></td>
+                                        <tr>
+                                            <td class="font-weight-bold">Order Date:</td>
+                                            <td th:text="${po.formattedOrderDate}"></td>
                                         </tr>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
                                     <table class="table table-borderless">
                                         <tr>
+                                            <td class="font-weight-bold">Created By:</td>
+                                            <td th:text="${po.createdByName}"></td>
+                                        </tr>
+                                        <tr>
                                             <td class="font-weight-bold">Created:</td>
-                                            <td th:text="${#temporals.format(pr.createdAt, 'MMMM dd, yyyy HH:mm')}"></td>
+                                            <td th:text="${po.formattedCreatedAt}"></td>
                                         </tr>
-                                        <tr th:if="${pr.reviewedAt}">
-                                            <td class="font-weight-bold">Reviewed:</td>
-                                            <td th:text="${#temporals.format(pr.reviewedAt, 'MMMM dd, yyyy HH:mm')}"></td>
+                                        <tr th:if="${po.expectedDeliveryDate}">
+                                            <td class="font-weight-bold">Expected Delivery:</td>
+                                            <td th:text="${po.formattedExpectedDeliveryDate}"></td>
                                         </tr>
-                                        <tr th:if="${pr.reviewerName}">
-                                            <td class="font-weight-bold">Reviewer:</td>
-                                            <td th:text="${pr.reviewerName}"></td>
-                                        </tr>
-                                        <tr th:if="${pr.quotationNumber}">
-                                            <td class="font-weight-bold">QR Number:</td>
-                                            <td th:text="${pr.quotationNumber}"></td>
+                                        <tr th:if="${po.actualDeliveryDate}">
+                                            <td class="font-weight-bold">Actual Delivery:</td>
+                                            <td th:text="${po.formattedActualDeliveryDate}"></td>
                                         </tr>
                                     </table>
                                 </div>
                             </div>
 
-                            <div th:if="${pr.description}" class="row mt-3">
+                            <div th:if="${po.notes}" class="row mt-3">
                                 <div class="col-md-12">
-                                    <strong>Description:</strong>
-                                    <p th:text="${pr.description}" class="text-muted mt-2"></p>
+                                    <strong>Notes:</strong>
+                                    <p th:text="${po.notes}" class="text-muted mt-2"></p>
                                 </div>
                             </div>
 
-                            <div th:if="${pr.reviewNotes}" class="row mt-3">
+                            <!-- Total Amount -->
+                            <div th:if="${po.totalAmount}" class="row mt-3">
                                 <div class="col-md-12">
-                                    <strong>Review Notes:</strong>
-                                    <p th:text="${pr.reviewNotes}" class="text-muted mt-2"></p>
+                                    <div class="alert alert-info">
+                                        <h6 class="mb-2"><i class="fas fa-dollar-sign mr-2"></i>Total Amount</h6>
+                                        <h4 class="mb-0 text-primary" th:text="${po.formattedTotalAmount}"></h4>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- PR Items -->
+                    <!-- PO Parts -->
                     <div class="card section-card mt-3">
                         <div class="section-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-boxes mr-2"></i>PR Parts (<span th:text="${pr.totalParts ?: 0}"></span> parts)
+                                <i class="fas fa-boxes mr-2"></i>PO Parts (<span th:text="${po.totalParts ?: 0}"></span> parts)
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div th:if="${pr.requisitionParts != null && !pr.requisitionParts.empty}">
+                            <div th:if="${po.parts != null && !po.parts.empty}">
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-hover">
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>Part Details</th>
                                                 <th class="text-center">Quantity</th>
-                                                <th class="text-center">Criticality</th>
-                                                <th>Justification</th>
+                                                <th class="text-center">Unit Price</th>
+                                                <th class="text-center">Total Price</th>
+                                                <th class="text-center">Received</th>
                                                 <th class="text-center">Status</th>
+                                                <th th:if="${po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED'}" class="text-center">Receive</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr th:each="part : ${pr.requisitionParts}">
+                                            <tr th:each="part : ${po.parts}">
                                                 <td class="part-details">
                                                     <div class="part-code" th:text="${part.partCode ?: part.partName}">Part Code</div>
                                                     <div th:if="${part.partName != null && part.partCode != null}" 
@@ -379,40 +368,59 @@
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span th:text="${part.quantityRequested ?: 0}"></span>
-                                                    <div th:if="${part.quantityReceived != null && part.quantityReceived > 0}" class="mt-1">
-                                                        <small class="text-success">
-                                                            Received: <span th:text="${part.quantityReceived}"></span>
-                                                        </small>
-                                                    </div>
+                                                    <span class="font-weight-bold" th:text="${part.quantityOrdered ?: 0}"></span>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge badge-pill" 
-                                                          th:class="${part.criticalityBadgeClass} + ' badge-pill'"
-                                                          th:text="${part.criticalityDisplay ?: 'Medium'}"></span>
-                                                </td>
-                                                <td>
-                                                    <span th:text="${part.justification ?: '-'}"></span>
-                                                    <div th:if="${part.notes}" class="mt-1">
-                                                        <small class="text-muted" th:text="${part.notes}"></small>
-                                                    </div>
+                                                    <span th:text="${part.formattedUnitPrice}"></span>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge badge-pill" 
-                                                          th:class="${part.statusBadgeClass} + ' badge-pill'"
-                                                          th:text="${part.statusDisplay}">Status</span>
-                                                    <div th:if="${part.receivedAt}" class="mt-1">
-                                                        <small class="text-muted" th:text="${part.formattedReceivedAt}"></small>
+                                                    <span class="font-weight-bold" th:text="${part.formattedTotalPrice}"></span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span th:text="${part.quantityReceived ?: 0}"></span>
+                                                    <div class="status-progress">
+                                                        <div class="progress-bar bg-success" 
+                                                             th:style="'width: ' + ${part.receivePercentage} + '%'"></div>
                                                     </div>
+                                                    <small class="text-muted" th:text="${#numbers.formatDecimal(part.receivePercentage, 1, 0)} + '%'"></small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge" 
+                                                          th:class="${part.receiveStatusBadgeClass}"
+                                                          th:text="${part.receiveStatus}"></span>
+                                                </td>
+                                                <td th:if="${po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED'}" class="text-center">
+                                                    <form th:if="${part.canBeReceived()}" 
+                                                          th:action="@{'/purchase-order/' + ${po.id} + '/receive-part'}" 
+                                                          method="post" class="d-inline">
+                                                        <input type="hidden" name="partId" th:value="${part.id}">
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" 
+                                                                   name="receivedQuantity" 
+                                                                   class="form-control quantity-input" 
+                                                                   th:max="${part.remainingQuantity}"
+                                                                   min="1" 
+                                                                   placeholder="Qty">
+                                                            <div class="input-group-append">
+                                                                <button type="submit" class="btn btn-success btn-sm">
+                                                                    <i class="fas fa-check"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted">Max: <span th:text="${part.remainingQuantity}"></span></small>
+                                                    </form>
+                                                    <span th:unless="${part.canBeReceived()}" class="text-success">
+                                                        <i class="fas fa-check-circle"></i> Complete
+                                                    </span>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            <div th:if="${pr.requisitionParts == null || pr.requisitionParts.empty}" class="text-center text-muted py-4">
+                            <div th:if="${po.parts == null || po.parts.empty}" class="text-center text-muted py-4">
                                 <i class="fas fa-box-open fa-3x mb-3"></i>
-                                <p>No parts in this purchase requisition</p>
+                                <p>No parts in this purchase order</p>
                             </div>
                         </div>
                     </div>
@@ -427,149 +435,109 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <!-- Create PO Action -->
-                            <div th:if="${pr.status.name() == 'APPROVED'}" class="action-section">
+                            <!-- Send PO Action -->
+                            <div th:if="${po.status.name() == 'CREATED'}" class="action-section">
                                 <h6 class="text-primary">
-                                    <i class="fas fa-file-invoice mr-2"></i>Purchase Order
+                                    <i class="fas fa-paper-plane mr-2"></i>Send Purchase Order
                                 </h6>
-                                <p class="text-muted small mb-3">Create purchase orders from approved parts.</p>
-                                <a th:href="@{/purchase-order/create-multi}" class="btn btn-primary btn-sm btn-block">
-                                    <i class="fas fa-plus mr-1"></i> Create New PO
-                                </a>
+                                <p class="text-muted small mb-3">Send this PO to the supplier for confirmation.</p>
+                                <form th:action="@{'/purchase-order/' + ${po.id} + '/send'}" method="post">
+                                    <div class="form-group">
+                                        <label for="sendNotes">Notes</label>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
+                                                  placeholder="Optional notes for supplier"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                        <i class="fas fa-paper-plane mr-1"></i> Send PO
+                                    </button>
+                                </form>
                             </div>
 
-                            <!-- Approval Actions -->
-                            <div th:if="${pr.status.name() == 'SUBMITTED' && pr.isApproved == null}" class="action-section">
-                                <h6 class="text-warning">
-                                    <i class="fas fa-clock mr-2"></i>Pending Approval
+                            <!-- Confirm PO Action -->
+                            <div th:if="${po.status.name() == 'SENT'}" class="action-section">
+                                <h6 class="text-success">
+                                    <i class="fas fa-check mr-2"></i>Confirm Purchase Order
                                 </h6>
-                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/approve'}" method="post" class="mb-3">
+                                <p class="text-muted small mb-3">Confirm that supplier has accepted this PO.</p>
+                                <form th:action="@{'/purchase-order/' + ${po.id} + '/confirm'}" method="post">
                                     <div class="form-group">
-                                        <label for="reviewerId">Reviewer <span class="text-danger">*</span></label>
-                                        <select class="form-control form-control-sm" name="reviewerId" required>
-                                            <option value="">Select Reviewer</option>
-                                            <option th:each="user : ${usersList}" 
-                                                    th:value="${user.id}" 
-                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="reviewNotes">Review Notes</label>
-                                        <textarea class="form-control form-control-sm" name="reviewNotes" rows="2" 
-                                                  placeholder="Optional approval notes"></textarea>
+                                        <label for="confirmNotes">Confirmation Notes</label>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
+                                                  placeholder="Optional confirmation notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-sm btn-block">
-                                        <i class="fas fa-check mr-1"></i> Approve
-                                    </button>
-                                </form>
-                                
-                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/reject'}" method="post">
-                                    <div class="form-group">
-                                        <label for="rejectReviewerId">Reviewer <span class="text-danger">*</span></label>
-                                        <select class="form-control form-control-sm" name="reviewerId" required>
-                                            <option value="">Select Reviewer</option>
-                                            <option th:each="user : ${usersList}" 
-                                                    th:value="${user.id}" 
-                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="rejectReviewNotes">Rejection Reason <span class="text-danger">*</span></label>
-                                        <textarea class="form-control form-control-sm" name="reviewNotes" rows="2" 
-                                                  placeholder="Please specify rejection reason" required></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-danger btn-sm btn-block">
-                                        <i class="fas fa-times mr-1"></i> Reject
+                                        <i class="fas fa-check mr-1"></i> Confirm PO
                                     </button>
                                 </form>
                             </div>
 
-                            <!-- Add QR Number -->
-                            <div th:if="${pr.status.name() == 'APPROVED' && (pr.quotationNumber == null || pr.quotationNumber == '')}" class="action-section">
+                            <!-- Receive All Parts -->
+                            <div th:if="${(po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED') && !po.isFullyReceived}" class="action-section">
                                 <h6 class="text-info">
-                                    <i class="fas fa-shipping-fast mr-2"></i>Awaiting QR Number
+                                    <i class="fas fa-truck mr-2"></i>Receive All Parts
                                 </h6>
-                                <p class="text-muted small mb-3">Enter the QR number when parts arrive.</p>
-                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/add-po'}" method="post">
+                                <p class="text-muted small mb-3">Mark all parts as received with full quantities.</p>
+                                <form th:action="@{'/purchase-order/' + ${po.id} + '/receive-all'}" method="post">
                                     <div class="form-group">
-                                        <label for="quotationNumber">QR Number <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm" name="quotationNumber" 
-                                               placeholder="Enter PO number" required>
+                                        <label for="receiveNotes">Receiving Notes</label>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
+                                                  placeholder="Optional receiving notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-info btn-sm btn-block">
-                                        <i class="fas fa-save mr-1"></i> Add PO Number
+                                        <i class="fas fa-truck mr-1"></i> Receive All
                                     </button>
                                 </form>
                             </div>
 
-                            <!-- Complete PR -->
-                            <div th:if="${pr.canBeCompleted}" class="action-section">
+                            <!-- Complete PO -->
+                            <div th:if="${po.canBeCompleted}" class="action-section">
                                 <h6 class="text-primary">
-                                    <i class="fas fa-check-circle mr-2"></i>Ready for Completion
+                                    <i class="fas fa-flag-checkered mr-2"></i>Complete Purchase Order
                                 </h6>
-                                <p class="text-muted small mb-3">All items have been received and can be completed.</p>
-                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/complete'}" method="post">
-                                    <div class="form-group">
-                                        <label for="inspectorId">Inspector <span class="text-danger">*</span></label>
-                                        <select class="form-control form-control-sm" id="inspectorId" name="inspectorId" required>
-                                            <option value="">Select Inspector</option>
-                                            <option th:each="user : ${usersList}" 
-                                                    th:value="${user.id}" 
-                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
-                                        </select>
-                                    </div>
+                                <p class="text-muted small mb-3">Mark this PO as completed.</p>
+                                <form th:action="@{'/purchase-order/' + ${po.id} + '/complete'}" method="post">
                                     <div class="form-group">
                                         <label for="completionNotes">Completion Notes</label>
-                                        <textarea class="form-control form-control-sm" name="completionNotes" rows="2" 
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
                                                   placeholder="Optional completion notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-sm btn-block">
-                                        <i class="fas fa-flag-checkered mr-1"></i> Complete PR
+                                        <i class="fas fa-flag-checkered mr-1"></i> Complete PO
                                     </button>
                                 </form>
                             </div>
 
                             <!-- Completed Status -->
-                            <div th:if="${pr.status.name() == 'COMPLETED'}" class="action-section">
+                            <div th:if="${po.status.name() == 'COMPLETED'}" class="action-section">
                                 <h6 class="text-success">
                                     <i class="fas fa-check-circle mr-2"></i>Completed
                                 </h6>
-                                <div th:if="${pr.inspectorName}" class="mb-2">
+                                <div class="mb-2">
                                     <small class="text-muted">
-                                        Inspector: <span th:text="${pr.inspectorName}"></span>
+                                        Completed: <span th:text="${po.formattedActualDeliveryDate ?: 'Recently'}"></span>
                                     </small>
                                 </div>
-                                <div th:if="${pr.receivedAt}" class="mb-2">
-                                    <small class="text-muted">
-                                        Completed: <span th:text="${#temporals.format(pr.receivedAt, 'MMM dd, yyyy')}"></span>
-                                    </small>
-                                </div>
-                                <div th:if="${pr.completionNotes}" class="mt-2">
-                                    <small class="text-muted" th:text="${pr.completionNotes}"></small>
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    This purchase order has been completed successfully.
                                 </div>
                             </div>
 
-                            <!-- Rejected Status -->
-                            <div th:if="${pr.isApproved != null && !pr.isApproved}" class="action-section">
-                                <h6 class="text-danger">
-                                    <i class="fas fa-times-circle mr-2"></i>Rejected
-                                </h6>
-                                <div th:if="${pr.reviewerName}" class="mb-2">
-                                    <small class="text-muted">
-                                        Reviewer: <span th:text="${pr.reviewerName}"></span>
-                                    </small>
-                                </div>
-                                <div th:if="${pr.reviewNotes}" class="mt-2">
-                                    <small class="text-muted" th:text="${pr.reviewNotes}"></small>
-                                </div>
+                            <!-- Cancel PO -->
+                            <div th:if="${po.status.name() == 'CREATED' || po.status.name() == 'SENT'}" class="action-section">
+                                <h6 class="text-danger">Cancel Purchase Order</h6>
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
+                                        data-toggle="modal" data-target="#cancelModal">
+                                    <i class="fas fa-ban mr-1"></i> Cancel PO
+                                </button>
                             </div>
 
                             <!-- Delete Action -->
-                            <div th:if="${pr.status.name() == 'SUBMITTED'}" class="action-section">
+                            <div th:if="${po.status.name() == 'CREATED'}" class="action-section">
                                 <h6 class="text-danger">Danger Zone</h6>
                                 <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
                                         data-toggle="modal" data-target="#deleteModal">
-                                    <i class="fas fa-trash mr-1"></i> Delete PR
+                                    <i class="fas fa-trash mr-1"></i> Delete PO
                                 </button>
                             </div>
                         </div>
@@ -584,20 +552,24 @@
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Total Items:</span>
-                                <strong th:text="${pr.totalParts}"></strong>
+                                <span>Total Parts:</span>
+                                <strong th:text="${po.totalParts ?: 0}"></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Quantity:</span>
-                                <strong th:text="${pr.totalQuantity}"></strong>
+                                <strong th:text="${po.totalQuantity ?: 0}"></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>New Parts:</span>
-                                <strong th:text="${pr.requisitionParts != null ? #aggregates.sum(pr.requisitionParts.![partId == null ? 1 : 0]) : 0}"></strong>
+                                <span>Received:</span>
+                                <strong class="text-success" th:text="${po.totalReceivedQuantity ?: 0}"></strong>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Critical Items:</span>
-                                <strong class="text-danger" th:text="${pr.requisitionParts != null ? #aggregates.sum(pr.requisitionParts.![criticalityLevel != null and criticalityLevel.name() == 'CRITICAL' ? 1 : 0]) : 0}"></strong>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Completion:</span>
+                                <strong th:text="${#numbers.formatDecimal(po.receivePercentage, 1, 0)} + '%'"></strong>
+                            </div>
+                            <div th:if="${po.totalAmount}" class="d-flex justify-content-between">
+                                <span>Total Amount:</span>
+                                <strong class="text-primary" th:text="${po.formattedTotalAmount}"></strong>
                             </div>
                         </div>
                     </div>
@@ -620,6 +592,34 @@
             </div>
         </div>
         
+        <!-- Cancel Confirmation Modal -->
+        <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancel Purchase Order</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to cancel this purchase order?</p>
+                        <form th:action="@{'/purchase-order/' + ${po.id} + '/cancel'}" method="post">
+                            <div class="form-group">
+                                <label for="cancellationReason">Cancellation Reason <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="cancellationReason" rows="3" 
+                                          placeholder="Please provide reason for cancellation" required></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-danger">Cancel PO</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Delete Confirmation Modal -->
         <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -631,11 +631,11 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to delete this purchase requisition?</p>
+                        <p>Are you sure you want to delete this purchase order?</p>
                         <p class="text-danger"><strong>This action cannot be undone.</strong></p>
                     </div>
                     <div class="modal-footer">
-                        <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/delete'}" method="post">
+                        <form th:action="@{'/purchase-order/' + ${po.id} + '/delete'}" method="post">
                             <button type="submit" class="btn btn-danger">Delete</button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </form>

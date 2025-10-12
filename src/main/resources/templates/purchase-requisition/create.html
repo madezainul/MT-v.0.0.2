@@ -4,6 +4,81 @@
 
 <head>
     <title>Create Purchase Requisition</title>
+    <!-- Include modal styles -->
+    <th:block th:replace="~{purchase-requisition/modal :: modalStyles}"></th:block>
+    
+    <style>
+        .parts-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .parts-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+        }
+        
+        .parts-table td {
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .parts-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .part-row-content {
+            padding: 8px 0;
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-add-part {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-add-part:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+        }
+        
+        .criticality-CRITICAL { background-color: #dc3545 !important; }
+        .criticality-HIGH { background-color: #fd7e14 !important; }
+        .criticality-MEDIUM { background-color: #17a2b8 !important; }
+        .criticality-LOW { background-color: #6c757d !important; }
+    </style>
 </head>
 
 <body>
@@ -33,6 +108,24 @@
                         <i class="fa fa-list mr-1"></i> Back to List
                     </a>
                 </div>
+            </div>
+
+            <!-- Include Add Part Modal BEFORE the button (like in part/index.html) -->
+            <div th:replace="~{purchase-requisition/modal :: addPartModal}"></div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${message}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${error}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="row">
@@ -72,13 +165,13 @@
                                     <!-- Requestor -->
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="requestorId">Requestor <span class="text-danger">*</span></label>
+                                            <label for="requestorId">Requestor (Engineer) <span class="text-danger">*</span></label>
                                             <select class="form-control" id="requestorId" th:field="*{requestorId}" required>
                                                 <option value="">Select Requestor</option>
                                                 <option th:if="${usersList != null}" th:each="user : ${usersList}" 
                                                         th:value="${user.id}" 
                                                         th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
-                                                <option th:if="${usersList == null or usersList.isEmpty()}" disabled>No active users available</option>
+                                                <option th:if="${usersList == null or usersList.isEmpty()}" disabled>No active engineers available</option>
                                             </select>
                                             <div th:if="${#fields.hasErrors('requestorId')}" class="text-danger">
                                                 <small th:errors="*{requestorId}"></small>
@@ -87,6 +180,7 @@
                                                 <i class="fas fa-exclamation-triangle mr-2"></i>
                                                 <span th:text="${warning}"></span>
                                             </div>
+                                            <small class="form-text text-muted">Only engineers can be selected as requestors</small>
                                         </div>
                                     </div>
 
@@ -117,30 +211,47 @@
                                     </div>
                                 </div>
 
-                                <!-- Items Section -->
+                                <!-- Parts Section -->
                                 <div class="row mt-4">
                                     <div class="col-md-12">
                                         <div class="card">
                                             <div class="card-header">
                                                 <div class="card-head-row">
-                                                    <div class="card-title">PR Items</div>
+                                                    <div class="card-title">PR Parts</div>
                                                     <div class="card-tools">
-                                                        <button type="button" class="btn btn-primary btn-sm" onclick="addPRItem()">
-                                                            <i class="fa fa-plus mr-1"></i> Add Item
+                                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addPartModal">
+                                                            <i class="fa fa-plus mr-1"></i> Add Part
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <div id="prItemsContainer">
-                                                    <div class="alert alert-info">
+                                                <div id="prPartsContainer">
+                                                    <div id="emptyPartsMessage" class="alert alert-info">
                                                         <i class="fas fa-info-circle mr-2"></i>
-                                                        Click "Add Item" to add parts to this purchase requisition.
-                                                        You can add both existing parts from inventory and new parts that need to be purchased.
+                                                        Click "Add Part" to select parts for this purchase requisition.
+                                                        You can specify quantity and criticality for each part.
+                                                    </div>
+                                                    <div id="partsTableContainer" style="display: none;">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered" id="partsTable">
+                                                                <thead class="thead-light">
+                                                                    <tr>
+                                                                        <th width="35%">Part Details</th>
+                                                                        <th width="15%" class="text-center">Quantity</th>
+                                                                        <th width="15%" class="text-center">Criticality</th>
+                                                                        <th width="25%">Justification</th>
+                                                                        <th width="10%" class="text-center">Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="partsTableBody">
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
                                                     <div th:if="${partsList == null or partsList.isEmpty()}" class="alert alert-warning">
                                                         <i class="fas fa-exclamation-triangle mr-2"></i>
-                                                        <strong>No parts available in inventory.</strong> You can still add new parts using the "Add Item" button.
+                                                        <strong>No parts available in inventory.</strong> Please ensure parts are created before creating purchase requisitions.
                                                     </div>
                                                 </div>
                                             </div>
@@ -162,50 +273,11 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Include Add Item Modal -->
-        <div th:replace="~{purchase-requisition/modal :: addItemModal}"></div>
-        
-        <!-- Fallback Modal for Testing -->
-        <div class="modal fade" id="testModal" tabindex="-1" role="dialog" style="display: none;">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Test Modal</h5>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>This is a test modal to verify modal functionality.</p>
-                        <p>Parts available: <span th:text="${#lists.size(partsList)}">0</span></p>
-                        <p>If you see this, fragment inclusion is working!</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Success/Error Messages -->
-        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <span th:text="${message}"></span>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <span th:text="${error}"></span>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
     </div>
 </body>
 
 <th:block layout:fragment="scripts">
-    <script th:src="@{/js/purchase-requisition-modal.js}"></script>
+    <!-- Include modal scripts -->
+    <th:block th:replace="~{purchase-requisition/modal :: modalScripts}"></th:block>
 </th:block>
 </html>

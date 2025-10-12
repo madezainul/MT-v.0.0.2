@@ -74,7 +74,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="requestorId">Requestor <span class="text-danger">*</span></label>
+                                            <label for="requestorId">Requestor (Engineer) <span class="text-danger">*</span></label>
                                             <select class="form-control" name="requestorId" id="requestorId" required>
                                                 <option value="">Select Requestor</option>
                                                 <option th:each="user : ${usersList}" 
@@ -82,6 +82,7 @@
                                                         th:text="${user.name + ' (' + user.employeeId + ')'}"
                                                         th:selected="${user.id == pr.requestorId}"></option>
                                             </select>
+                                            <small class="form-text text-muted">Only engineers can be selected as requestors</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -106,18 +107,6 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="urgencyLevel">Urgency Level <span class="text-danger">*</span></label>
-                                            <select class="form-control" name="urgencyLevel" id="urgencyLevel" required>
-                                                <option value="">Select Urgency</option>
-                                                <option value="LOW" th:selected="${pr.urgencyLevel == 'LOW'}">Low</option>
-                                                <option value="MEDIUM" th:selected="${pr.urgencyLevel == 'MEDIUM'}">Medium</option>
-                                                <option value="HIGH" th:selected="${pr.urgencyLevel == 'HIGH'}">High</option>
-                                                <option value="CRITICAL" th:selected="${pr.urgencyLevel == 'CRITICAL'}">Critical</option>
-                                            </select>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div class="form-group">
@@ -127,90 +116,76 @@
                                               th:text="${pr.description}"></textarea>
                                 </div>
 
-                                <!-- Items Section -->
+                                <!-- Parts Section -->
                                 <div class="form-group">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h5>Purchase Requisition Items</h5>
-                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addItemModal">
-                                            <i class="fas fa-plus mr-1"></i> Add Item
+                                        <h5>Purchase Requisition Parts</h5>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="addPRPart()">
+                                            <i class="fas fa-plus mr-1"></i> Add Part
                                         </button>
                                     </div>
 
-                                    <div id="itemsContainer">
-                                        <div th:if="${pr.items == null or pr.items.empty}" class="text-center text-muted py-4">
-                                            <i class="fas fa-box-open fa-3x mb-3"></i>
-                                            <p>No items added yet. Click "Add Item" to get started.</p>
+                                    <div id="prPartsContainer">
+                                        <div th:if="${pr.requisitionParts == null or pr.requisitionParts.empty}" class="alert alert-info">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            Click "Add Part" to select parts for this purchase requisition.
+                                            You can specify quantity and criticality for each part.
                                         </div>
 
-                                        <div th:if="${pr.items != null and !pr.items.empty}">
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered" id="itemsTable">
-                                                    <thead class="thead-light">
-                                                        <tr>
-                                                            <th>Part Details</th>
-                                                            <th class="text-center">Quantity</th>
-                                                            <th class="text-center">Criticality</th>
-                                                            <th>Justification</th>
-                                                            <th class="text-center">Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr th:each="item, iterStat : ${pr.items}" th:data-item-index="${iterStat.index}">
-                                                            <td>
-                                                                <div>
-                                                                    <strong th:if="${!item.isNewPart}" th:text="${item.displayPartCode}"></strong>
-                                                                    <strong th:if="${item.isNewPart}" th:text="${item.partName}"></strong>
-                                                                    <span th:if="${item.isNewPart}" class="badge badge-info ml-2">New Part</span>
-                                                                </div>
-                                                                <div th:text="${item.displayPartName}" class="text-muted"></div>
-                                                                <small class="text-muted">
-                                                                    <span th:text="${item.displayCategory ?: 'N/A'}"></span> | 
-                                                                    <span th:text="${item.displaySupplier ?: 'N/A'}"></span>
-                                                                </small>
-                                                                <!-- Hidden inputs for form submission -->
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].id'" th:value="${item.id}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].partId'" th:value="${item.partId}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].partName'" th:value="${item.partName}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].partDescription'" th:value="${item.partDescription}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].partCategory'" th:value="${item.partCategory}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].partSupplier'" th:value="${item.partSupplier}">
-                                                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].isNewPart'" th:value="${item.isNewPart}">
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <input type="number" class="form-control form-control-sm text-center" 
-                                                                       th:name="'items[' + ${iterStat.index} + '].quantity'" 
-                                                                       th:value="${item.quantity}" min="1" required style="width: 80px;">
-                                                                <input type="text" class="form-control form-control-sm mt-1" 
-                                                                       th:name="'items[' + ${iterStat.index} + '].unitMeasure'" 
-                                                                       th:value="${item.unitMeasure}" 
-                                                                       placeholder="Unit" style="width: 80px;">
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <select class="form-control form-control-sm" 
-                                                                        th:name="'items[' + ${iterStat.index} + '].criticalityLevel'" required>
-                                                                    <option value="LOW" th:selected="${item.criticalityLevel == 'LOW'}">Low</option>
-                                                                    <option value="MEDIUM" th:selected="${item.criticalityLevel == 'MEDIUM'}">Medium</option>
-                                                                    <option value="HIGH" th:selected="${item.criticalityLevel == 'HIGH'}">High</option>
-                                                                    <option value="CRITICAL" th:selected="${item.criticalityLevel == 'CRITICAL'}">Critical</option>
-                                                                </select>
-                                                            </td>
-                                                            <td>
-                                                                <textarea class="form-control form-control-sm" 
-                                                                          th:name="'items[' + ${iterStat.index} + '].justification'" 
-                                                                          rows="2" th:text="${item.justification}"></textarea>
-                                                                <input type="text" class="form-control form-control-sm mt-1" 
-                                                                       th:name="'items[' + ${iterStat.index} + '].notes'" 
-                                                                       th:value="${item.notes}" 
-                                                                       placeholder="Notes (optional)">
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                        <div th:if="${pr.requisitionParts != null and !pr.requisitionParts.empty}">
+                                            <div th:each="prPart, iterStat : ${pr.requisitionParts}" class="part-row border rounded p-3 mb-3">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Part <span class="text-danger">*</span></label>
+                                                            <select class="form-control" th:name="'parts[' + ${iterStat.index} + '].partId'" required>
+                                                                <option value="">Select Part</option>
+                                                                <option th:each="part : ${partsList}" 
+                                                                        th:value="${part.id}" 
+                                                                        th:text="${part.code + ' - ' + part.name + ' (' + part.supplierName + ')'}"
+                                                                        th:selected="${part.id == prPart.part.id}"></option>
+                                                            </select>
+                                                            <input type="hidden" th:name="'parts[' + ${iterStat.index} + '].id'" th:value="${prPart.id}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Quantity <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control" 
+                                                                   th:name="'parts[' + ${iterStat.index} + '].quantityRequested'" 
+                                                                   th:value="${prPart.quantityRequested}"
+                                                                   min="1" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Criticality</label>
+                                                            <select class="form-control" th:name="'parts[' + ${iterStat.index} + '].criticalityLevel'">
+                                                                <option value="LOW" th:selected="${prPart.criticalityLevel == 'LOW'}">Low</option>
+                                                                <option value="MEDIUM" th:selected="${prPart.criticalityLevel == 'MEDIUM'}">Medium</option>
+                                                                <option value="HIGH" th:selected="${prPart.criticalityLevel == 'HIGH'}">High</option>
+                                                                <option value="CRITICAL" th:selected="${prPart.criticalityLevel == 'CRITICAL'}">Critical</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Justification</label>
+                                                            <input type="text" class="form-control" 
+                                                                   th:name="'parts[' + ${iterStat.index} + '].justification'"
+                                                                   th:value="${prPart.justification}"
+                                                                   placeholder="Why is this part needed?">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <div class="form-group">
+                                                            <label>&nbsp;</label>
+                                                            <button type="button" class="btn btn-danger btn-sm d-block" onclick="removePart(this)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -230,347 +205,314 @@
         </div>
     </div>
 
-    <!-- Add Item Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Purchase Requisition Item</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="addItemForm">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Part Type</label>
-                                    <div class="form-check-radio">
-                                        <label class="form-check-label">
-                                            <input class="form-check-input" type="radio" name="partType" value="existing" checked>
-                                            <span class="form-check-sign"></span>
-                                            Existing Part
-                                        </label>
-                                    </div>
-                                    <div class="form-check-radio">
-                                        <label class="form-check-label">
-                                            <input class="form-check-input" type="radio" name="partType" value="new">
-                                            <span class="form-check-sign"></span>
-                                            New Part (Not in inventory)
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="existingPartSection">
-                            <div class="form-group">
-                                <label for="partSelect">Select Part <span class="text-danger">*</span></label>
-                                <select class="form-control" id="partSelect">
-                                    <option value="">Search and select a part...</option>
-                                    <option th:each="part : ${partsList}" 
-                                            th:value="${part.id}" 
-                                            th:text="${part.code + ' - ' + part.name}"
-                                            th:data-category="${part.category}"
-                                            th:data-supplier="${part.supplier}"
-                                            th:data-description="${part.description}"
-                                            th:data-current-stock="${part.currentStock}"></option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="newPartSection" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="newPartName">Part Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="newPartName" maxlength="100">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="newPartCategory">Category</label>
-                                        <input type="text" class="form-control" id="newPartCategory" maxlength="50">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="newPartSupplier">Supplier</label>
-                                        <input type="text" class="form-control" id="newPartSupplier" maxlength="100">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="newPartDescription">Description</label>
-                                        <input type="text" class="form-control" id="newPartDescription" maxlength="255">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="quantity">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="quantity" min="1" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="unitMeasure">Unit of Measure</label>
-                                    <input type="text" class="form-control" id="unitMeasure" placeholder="pcs, kg, m, etc.">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="criticalityLevel">Criticality <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="criticalityLevel" required>
-                                        <option value="">Select Criticality</option>
-                                        <option value="LOW">Low</option>
-                                        <option value="MEDIUM">Medium</option>
-                                        <option value="HIGH">High</option>
-                                        <option value="CRITICAL">Critical</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="form-group">
-                                    <label for="justification">Justification <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="justification" rows="2" 
-                                              placeholder="Explain why this part is needed" required></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="notes">Notes</label>
-                                    <textarea class="form-control" id="notes" rows="2" 
-                                              placeholder="Additional notes (optional)"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="addItem()">Add Item</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div layout:fragment="scripts">
         <script>
-            let itemIndex = parseInt('[[${pr.items != null ? pr.items.size() : 0}]]');
-
-            $(document).ready(function() {
-                $('input[name="partType"]').change(function() {
-                    if ($(this).val() === 'existing') {
-                        $('#existingPartSection').show();
-                        $('#newPartSection').hide();
-                        $('#partSelect').prop('required', true);
-                        $('#newPartName').prop('required', false);
-                    } else {
-                        $('#existingPartSection').hide();
-                        $('#newPartSection').show();
-                        $('#partSelect').prop('required', false);
-                        $('#newPartName').prop('required', true);
-                    }
-                });
-
-                $('#addItemModal').on('hidden.bs.modal', function() {
-                    resetAddItemForm();
-                });
-            });
-
-            function resetAddItemForm() {
-                $('#addItemForm')[0].reset();
-                $('input[name="partType"][value="existing"]').prop('checked', true);
-                $('#existingPartSection').show();
-                $('#newPartSection').hide();
-                $('#partSelect').prop('required', true);
-                $('#newPartName').prop('required', false);
-            }
-
-            function addItem() {
-                const isValid = validateAddItemForm();
-                if (!isValid) return;
-
-                const isNewPart = $('input[name="partType"]:checked').val() === 'new';
-                let itemData = {
-                    quantity: $('#quantity').val(),
-                    unitMeasure: $('#unitMeasure').val(),
-                    criticalityLevel: $('#criticalityLevel').val(),
-                    justification: $('#justification').val(),
-                    notes: $('#notes').val(),
-                    isNewPart: isNewPart
-                };
-
-                if (isNewPart) {
-                    itemData.partName = $('#newPartName').val();
-                    itemData.partDescription = $('#newPartDescription').val();
-                    itemData.partCategory = $('#newPartCategory').val();
-                    itemData.partSupplier = $('#newPartSupplier').val();
-                    itemData.displayPartCode = 'NEW';
-                    itemData.displayPartName = itemData.partName;
-                    itemData.displayCategory = itemData.partCategory || 'N/A';
-                    itemData.displaySupplier = itemData.partSupplier || 'N/A';
-                } else {
-                    const selectedOption = $('#partSelect option:selected');
-                    itemData.partId = selectedOption.val();
-                    itemData.displayPartCode = selectedOption.text().split(' - ')[0];
-                    itemData.displayPartName = selectedOption.text().split(' - ')[1];
-                    itemData.displayCategory = selectedOption.data('category') || 'N/A';
-                    itemData.displaySupplier = selectedOption.data('supplier') || 'N/A';
-                    itemData.currentStock = selectedOption.data('current-stock');
+            let partIndex = parseInt('[[${pr.requisitionParts != null ? pr.requisitionParts.size() : 0}]]');
+            
+            function addPRPart() {
+                const container = document.getElementById('prPartsContainer');
+                const partRow = createPartRow(partIndex++);
+                container.appendChild(partRow);
+                
+                // Remove info alert if this is the first part
+                const infoAlert = container.querySelector('.alert-info');
+                if (infoAlert && container.children.length > 2) {
+                    infoAlert.remove();
                 }
-
-                addItemToTable(itemData);
-                $('#addItemModal').modal('hide');
             }
-
-            function addItemToTable(itemData) {
-                // If table doesn't exist, create it
-                if ($('#itemsTable').length === 0) {
-                    $('#itemsContainer').html(`
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="itemsTable">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Part Details</th>
-                                        <th class="text-center">Quantity</th>
-                                        <th class="text-center">Criticality</th>
-                                        <th>Justification</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
-                    `);
-                }
-
-                const criticalityBadge = getCriticalityBadge(itemData.criticalityLevel);
-                const stockWarning = itemData.currentStock && itemData.currentStock < itemData.quantity ? 
-                    '<small class="text-danger">(⚠ Insufficient stock)</small>' : '';
-
-                const row = `
-                    <tr data-item-index="${itemIndex}">
-                        <td>
-                            <div>
-                                <strong>${itemData.displayPartCode}</strong>
-                                ${itemData.isNewPart ? '<span class="badge badge-info ml-2">New Part</span>' : ''}
+            
+        function createPartRow(index) {
+            const row = document.createElement('div');
+            row.className = 'part-row border rounded p-3 mb-3';
+            row.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Part <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control part-search" 
+                                       placeholder="Type to search parts..." 
+                                       autocomplete="off"
+                                       data-index="${index}">
+                                <input type="hidden" name="parts[${index}].partId" class="part-id-input">
+                                <div class="search-results position-absolute w-100" style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; background: white; border-radius: 4px; margin-top: 2px;">
+                                </div>
                             </div>
-                            <div class="text-muted">${itemData.displayPartName}</div>
-                            <small class="text-muted">${itemData.displayCategory} | ${itemData.displaySupplier}</small>
-                            ${stockWarning}
-                            <!-- Hidden inputs -->
-                            <input type="hidden" name="items[${itemIndex}].partId" value="${itemData.partId || ''}">
-                            <input type="hidden" name="items[${itemIndex}].partName" value="${itemData.partName || ''}">
-                            <input type="hidden" name="items[${itemIndex}].partDescription" value="${itemData.partDescription || ''}">
-                            <input type="hidden" name="items[${itemIndex}].partCategory" value="${itemData.partCategory || ''}">
-                            <input type="hidden" name="items[${itemIndex}].partSupplier" value="${itemData.partSupplier || ''}">
-                            <input type="hidden" name="items[${itemIndex}].isNewPart" value="${itemData.isNewPart}">
-                        </td>
-                        <td class="text-center">
-                            <input type="number" class="form-control form-control-sm text-center" 
-                                   name="items[${itemIndex}].quantity" value="${itemData.quantity}" min="1" required style="width: 80px;">
-                            <input type="text" class="form-control form-control-sm mt-1" 
-                                   name="items[${itemIndex}].unitMeasure" value="${itemData.unitMeasure}" 
-                                   placeholder="Unit" style="width: 80px;">
-                        </td>
-                        <td class="text-center">
-                            <select class="form-control form-control-sm" name="items[${itemIndex}].criticalityLevel" required>
-                                <option value="LOW" ${itemData.criticalityLevel === 'LOW' ? 'selected' : ''}>Low</option>
-                                <option value="MEDIUM" ${itemData.criticalityLevel === 'MEDIUM' ? 'selected' : ''}>Medium</option>
-                                <option value="HIGH" ${itemData.criticalityLevel === 'HIGH' ? 'selected' : ''}>High</option>
-                                <option value="CRITICAL" ${itemData.criticalityLevel === 'CRITICAL' ? 'selected' : ''}>Critical</option>
+                            <small class="form-text text-muted">
+                                <span class="selected-part-info" style="display: none;">
+                                    <strong>Selected:</strong> <span class="part-details"></span>
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="parts[${index}].quantityRequested" 
+                                   min="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Criticality</label>
+                            <select class="form-control" name="parts[${index}].criticalityLevel">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
                             </select>
-                        </td>
-                        <td>
-                            <textarea class="form-control form-control-sm" name="items[${itemIndex}].justification" 
-                                      rows="2">${itemData.justification}</textarea>
-                            <input type="text" class="form-control form-control-sm mt-1" 
-                                   name="items[${itemIndex}].notes" value="${itemData.notes}" 
-                                   placeholder="Notes (optional)">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Justification</label>
+                            <input type="text" class="form-control" name="parts[${index}].justification" 
+                                   placeholder="Why is this part needed?">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-danger btn-sm d-block" onclick="removePart(this)">
                                 <i class="fas fa-trash"></i>
                             </button>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners for the new row
+            setTimeout(() => {
+                initializePartSearch(row, index);
+            }, 100);
+            
+            return row;
+        }
+        
+        function removePart(button) {
+            const partRow = button.closest('.part-row');
+            partRow.remove();
+            
+            // Show info alert if no parts remain
+            const container = document.getElementById('prPartsContainer');
+            const partRows = container.querySelectorAll('.part-row');
+            if (partRows.length === 0) {
+                const infoAlert = document.createElement('div');
+                infoAlert.className = 'alert alert-info';
+                infoAlert.innerHTML = `
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Click "Add Part" to select parts for this purchase requisition.
+                    You can specify quantity and criticality for each part.
                 `;
-
-                $('#itemsTable tbody').append(row);
-                itemIndex++;
+                container.appendChild(infoAlert);
             }
-
-            function removeItem(button) {
-                $(button).closest('tr').remove();
-                reindexItems();
+        }
+        
+        // Enhanced Live Search functionality - Based on code-generator pattern
+        let searchTimeout = null;
+        let searchCache = new Map();
+        
+        function initializePartSearch(row, index) {
+            const searchInput = row.querySelector('.part-search');
+            const hiddenInput = row.querySelector('.part-id-input');
+            const resultsDiv = row.querySelector('.search-results');
+            const partInfo = row.querySelector('.selected-part-info');
+            const partDetails = row.querySelector('.part-details');
+            
+            if (!searchInput || !hiddenInput || !resultsDiv) {
+                console.warn(`Missing elements for part search ${index}`);
+                return;
             }
-
-            function reindexItems() {
-                $('#itemsTable tbody tr').each(function(index) {
-                    $(this).attr('data-item-index', index);
-                    $(this).find('input, select, textarea').each(function() {
-                        const name = $(this).attr('name');
-                        if (name && name.includes('items[')) {
-                            const newName = name.replace(/items\[\d+\]/, `items[${index}]`);
-                            $(this).attr('name', newName);
-                        }
-                    });
+            
+            searchInput.addEventListener('input', function() {
+                const term = this.value.trim();
+                
+                if (term.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    hiddenInput.value = '';
+                    if (partInfo) partInfo.style.display = 'none';
+                    return;
+                }
+                
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // Debounce search
+                searchTimeout = setTimeout(() => {
+                    searchParts(term, resultsDiv, searchInput, hiddenInput, partInfo, partDetails);
+                }, 300);
+            });
+            
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                const items = resultsDiv.querySelectorAll('.search-result-item');
+                if (items.length === 0) return;
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = resultsDiv.querySelector('.search-result-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!row.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+        
+        async function searchParts(query, resultsDiv, searchInput, hiddenInput, partInfo, partDetails) {
+            try {
+                // Check cache first
+                const cacheKey = query.toLowerCase();
+                if (searchCache.has(cacheKey)) {
+                    displaySearchResults(searchCache.get(cacheKey), resultsDiv, searchInput, hiddenInput, partInfo, partDetails, query);
+                    return;
+                }
+                
+                // Show loading
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+                
+                // Make API call
+                const response = await fetch(`/api/parts?keyword=${encodeURIComponent(query)}&size=10`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // Cache results
+                searchCache.set(cacheKey, data.content);
+                
+                displaySearchResults(data.content, resultsDiv, searchInput, hiddenInput, partInfo, partDetails, query);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-danger"><i class="fas fa-exclamation-triangle"></i> Search failed: ' + error.message + '</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+            }
+        }
+        
+        function displaySearchResults(parts, resultsDiv, searchInput, hiddenInput, partInfo, partDetails, searchTerm) {
+            if (parts.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-muted"><i class="fas fa-search"></i> No parts found</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+                return;
+            }
+            
+            // Create highlighted search results
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            
+            const resultsHtml = parts.map(part => {
+                const partCode = (part.code || '').replace(regex, '<strong>$1</strong>');
+                const partName = (part.name || '').replace(regex, '<strong>$1</strong>');
+                const category = (part.categoryName || 'No Category').replace(regex, '<strong>$1</strong>');
+                const supplier = (part.supplierName || 'No Supplier').replace(regex, '<strong>$1</strong>');
+                
+                return `
+                    <div class="search-result-item p-2 border-bottom" style="cursor: pointer;" 
+                         data-part-id="${part.id}"
+                         data-part-code="${part.code || ''}"
+                         data-part-name="${part.name || ''}"
+                         data-supplier="${part.supplierName || ''}"
+                         data-category="${part.categoryName || ''}"
+                         data-stock="${part.stockQuantity || 0}">
+                        <div class="d-flex justify-content-between">
+                            <div style="flex: 1;">
+                                <div>${partCode} - ${partName}</div>
+                                <small class="text-muted">${category} | ${supplier}</small>
+                            </div>
+                            <div class="text-right">
+                                <small class="text-info">Stock: ${part.stockQuantity || 0}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            resultsDiv.innerHTML = resultsHtml;
+            resultsDiv.style.display = 'block';
+            updateDropdownPosition(searchInput, resultsDiv);
+            
+            // Add click handlers
+            resultsDiv.querySelectorAll('.search-result-item').forEach((item, index) => {
+                item.addEventListener('click', function() {
+                    selectPart(this, searchInput, hiddenInput, partInfo, partDetails, resultsDiv);
                 });
-                itemIndex = $('#itemsTable tbody tr').length;
+                
+                // Hover effect and active management
+                item.addEventListener('mouseenter', function() {
+                    resultsDiv.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.classList.remove('active');
+                });
+            });
+        }
+        
+        function selectPart(item, searchInput, hiddenInput, partInfo, partDetails, resultsDiv) {
+            const partId = item.dataset.partId;
+            const partCode = item.dataset.partCode;
+            const partName = item.dataset.partName;
+            const supplier = item.dataset.supplier;
+            const category = item.dataset.category;
+            const stock = item.dataset.stock;
+            
+            // Set values
+            searchInput.value = `${partCode} - ${partName}`;
+            hiddenInput.value = partId;
+            
+            // Show selected part info
+            if (partDetails && partInfo) {
+                partDetails.innerHTML = `${partCode} - ${partName} (${category}, ${supplier}, Stock: ${stock})`;
+                partInfo.style.display = 'block';
             }
-
-            function validateAddItemForm() {
-                const isNewPart = $('input[name="partType"]:checked').val() === 'new';
-                
-                if (!isNewPart && !$('#partSelect').val()) {
-                    alert('Please select a part');
-                    return false;
-                }
-                
-                if (isNewPart && !$('#newPartName').val()) {
-                    alert('Please enter part name');
-                    return false;
-                }
-                
-                if (!$('#quantity').val() || $('#quantity').val() <= 0) {
-                    alert('Please enter a valid quantity');
-                    return false;
-                }
-                
-                if (!$('#criticalityLevel').val()) {
-                    alert('Please select criticality level');
-                    return false;
-                }
-                
-                if (!$('#justification').val()) {
-                    alert('Please enter justification');
-                    return false;
-                }
-                
-                return true;
-            }
-
-            function getCriticalityBadge(level) {
-                switch(level) {
-                    case 'CRITICAL': return '<span class="badge badge-danger">Critical</span>';
-                    case 'HIGH': return '<span class="badge badge-warning">High</span>';
-                    case 'MEDIUM': return '<span class="badge badge-info">Medium</span>';
-                    case 'LOW': return '<span class="badge badge-secondary">Low</span>';
-                    default: return '<span class="badge badge-secondary">Unknown</span>';
-                }
-            }
+            
+            // Hide results
+            resultsDiv.style.display = 'none';
+            
+            // Focus back to input for better UX
+            searchInput.focus();
+        }
+        
+        function updateDropdownPosition(input, dropdown) {
+            // Dynamically set dropdown width and position
+            dropdown.style.width = input.offsetWidth + 'px';
+            
+            // Position relative to input
+            const inputRect = input.getBoundingClientRect();
+            const parentRect = input.offsetParent ? input.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+            
+            dropdown.style.left = (inputRect.left - parentRect.left) + 'px';
+            dropdown.style.top = (input.offsetTop + input.offsetHeight) + 'px';
+        }
         </script>
     </div>
 </body>

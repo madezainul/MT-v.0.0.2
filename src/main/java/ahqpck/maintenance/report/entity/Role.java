@@ -38,7 +38,7 @@ public class Role {
     private Name name;
 
     public enum Name {
-        SUPERADMIN, ADMIN, VIEWER
+        SUPERADMIN, ADMIN, VIEWER, ENGINEER, REVIEWER
     }
 
     @PrePersist

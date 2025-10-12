@@ -1,5 +1,6 @@
 package ahqpck.maintenance.report.controller;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -16,9 +17,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
+import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
 import ahqpck.maintenance.report.entity.PurchaseRequisition.PRStatus;
+import ahqpck.maintenance.report.entity.PurchaseRequisitionPart.CriticalityLevel;
 import ahqpck.maintenance.report.service.EquipmentService;
 import ahqpck.maintenance.report.service.PartService;
+import ahqpck.maintenance.report.service.QuotationRequestService;
 import ahqpck.maintenance.report.service.PurchaseRequisitionService;
 import ahqpck.maintenance.report.service.UserService;
 import jakarta.validation.Valid;
@@ -33,6 +37,7 @@ public class PurchaseRequisitionController {
     private final EquipmentService equipmentService;
     private final PartService partService;
     private final UserService userService;
+    private final QuotationRequestService qrService;
 
     // Smart Dashboard - Entry point
     @GetMapping
@@ -42,19 +47,35 @@ public class PurchaseRequisitionController {
         // Statistics for dashboard cards
         model.addAttribute("totalPRs", prService.getTotalPRsCount());
         model.addAttribute("pendingApproval", prService.getPendingApprovalCount());
-        model.addAttribute("requirePONumber", prService.getRequiringPONumberCount());
-        model.addAttribute("readyForCompletion", prService.getReadyForCompletionCount());
+        model.addAttribute("actionRequired", prService.getActionRequiredCount());
 
-        // Action Required Section
-        Page<PurchaseRequisitionDTO> pendingApprovalPRs = prService.getPendingApproval(0, 5);
-        model.addAttribute("actionRequiredPRs", pendingApprovalPRs.getContent());
+        // Action Required Section (submitted PRs needing approval + rejected PRs)
+        Page<PurchaseRequisitionDTO> actionRequiredPRs = prService.getActionRequired(0, 5);
+        model.addAttribute("actionRequiredPRs", actionRequiredPRs.getContent());
 
-        // Monitoring Section
-        Page<PurchaseRequisitionDTO> sentToPurchasePRs = prService.getPurchaseRequisitionsByStatus(PRStatus.SENT_TO_PURCHASE, 0, 5);
-        model.addAttribute("monitoringPRs", sentToPurchasePRs.getContent());
+        // Monitoring Section (approved PRs)
+        Page<PurchaseRequisitionDTO> approvedPRs = prService.getPurchaseRequisitionsByStatus(PRStatus.APPROVED, 0, 5);
+        model.addAttribute("monitoringPRs", approvedPRs.getContent());
 
-        // Recent Activity Section
-        model.addAttribute("recentPRs", prService.getRecentSubmissions(7));
+        // PO Monitoring Section (replace recent activity)
+        // try {
+        //     // Get recent POs from PO service
+        //     var recentPOs = poService.getRecentPOs(10);
+        //     model.addAttribute("recentPOs", recentPOs);
+            
+        //     // PO statistics
+        //     model.addAttribute("totalPOs", poService.getTotalPOsCount());
+        //     model.addAttribute("pendingPOs", poService.getPendingPOsCount());
+        //     model.addAttribute("inProgressPOs", poService.getInProgressPOsCount());
+        //     model.addAttribute("completedPOs", poService.getCompletedPOsCount());
+        // } catch (Exception e) {
+        //     // Fallback in case PO service is not available
+        //     model.addAttribute("recentPOs", java.util.Collections.emptyList());
+        //     model.addAttribute("totalPOs", 0);
+        //     model.addAttribute("pendingPOs", 0);
+        //     model.addAttribute("inProgressPOs", 0);
+        //     model.addAttribute("completedPOs", 0);
+        // }
 
         return "purchase-requisition/dashboard";
     }
@@ -63,6 +84,7 @@ public class PurchaseRequisitionController {
     @GetMapping("/list")
     public String listPurchaseRequisitions(
             @RequestParam(value = "search", required = false) String searchTerm,
+            @RequestParam(value = "actionRequired", required = false, defaultValue = "false") boolean actionRequired,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
@@ -70,14 +92,24 @@ public class PurchaseRequisitionController {
             Model model) {
 
         try {
-            Page<PurchaseRequisitionDTO> prPage = prService.getAllPurchaseRequisitions(searchTerm, page, size, sortBy, ascending);
+            Page<PurchaseRequisitionDTO> prPage;
+            
+            if (actionRequired) {
+                // Get action required PRs with pagination
+                prPage = prService.getActionRequired(page, size);
+                model.addAttribute("title", "Purchase Requisitions - Action Required");
+            } else {
+                // Get all PRs with search and pagination
+                prPage = prService.getAllPurchaseRequisitions(searchTerm, page, size, sortBy, ascending);
+                model.addAttribute("title", "Purchase Requisitions List");
+            }
 
-            model.addAttribute("title", "Purchase Requisitions List");
             model.addAttribute("prs", prPage.getContent());
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", prPage.getTotalPages());
             model.addAttribute("totalElements", prPage.getTotalElements());
             model.addAttribute("searchTerm", searchTerm);
+            model.addAttribute("actionRequired", actionRequired);
             model.addAttribute("sortBy", sortBy);
             model.addAttribute("ascending", ascending);
 
@@ -97,12 +129,21 @@ public class PurchaseRequisitionController {
             model.addAttribute("title", "Purchase Requisition Details - " + pr.getCode());
             model.addAttribute("pr", pr);
             
-            // Load users list for inspector selection (only active users)
+            // Load users list for reviewer/inspector selection (only active reviewer users)
             var allUsers = userService.getAllUsers(null, 0, Integer.MAX_VALUE, "name", true);
-            var activeUsers = allUsers.getContent().stream()
+            var reviewerUsers = allUsers.getContent().stream()
                     .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                    .filter(user -> user.getRoleNames() != null && user.getRoleNames().contains("REVIEWER"))
                     .collect(java.util.stream.Collectors.toList());
-            model.addAttribute("usersList", activeUsers);
+            
+            // Fallback: if no reviewer users found, show all active users
+            if (reviewerUsers.isEmpty()) {
+                reviewerUsers = allUsers.getContent().stream()
+                        .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                        .collect(java.util.stream.Collectors.toList());
+            }
+            
+            model.addAttribute("usersList", reviewerUsers);
             
             return "purchase-requisition/detail";
 
@@ -150,7 +191,7 @@ public class PurchaseRequisitionController {
         try {
             PurchaseRequisitionDTO createdPR = prService.createPurchaseRequisition(prDTO);
             ra.addFlashAttribute("success", "Purchase Requisition created successfully: " + createdPR.getCode());
-            return "redirect:/purchase-requisition/" + createdPR.getId();
+            return "redirect:/purchase-requisition/list";
 
         } catch (Exception e) {
             model.addAttribute("error", "Failed to create purchase requisition: " + e.getMessage());
@@ -172,7 +213,8 @@ public class PurchaseRequisitionController {
             }
 
             model.addAttribute("title", "Edit Purchase Requisition - " + pr.getCode());
-            model.addAttribute("prDTO", pr);
+            model.addAttribute("pr", pr);  // Add the pr object for template access
+            model.addAttribute("prDTO", pr);  // Keep prDTO for form binding
             loadFormData(model);
             
             return "purchase-requisition/edit";
@@ -203,6 +245,7 @@ public class PurchaseRequisitionController {
 
             model.addAttribute("error", errorMessage.isEmpty() ? "Invalid input" : errorMessage);
             model.addAttribute("title", "Edit Purchase Requisition");
+            model.addAttribute("pr", prDTO);  // Add pr object for template
             loadFormData(model);
             return "purchase-requisition/edit";
         }
@@ -215,6 +258,7 @@ public class PurchaseRequisitionController {
         } catch (Exception e) {
             model.addAttribute("error", "Failed to update purchase requisition: " + e.getMessage());
             model.addAttribute("title", "Edit Purchase Requisition");
+            model.addAttribute("pr", prDTO);  // Add pr object for template
             loadFormData(model);
             return "purchase-requisition/edit";
         }
@@ -224,82 +268,49 @@ public class PurchaseRequisitionController {
     @PostMapping("/{id}/approve")
     public String approvePurchaseRequisition(
             @PathVariable String id,
-            @RequestParam String reviewerName,
+            @RequestParam String reviewerId,
             @RequestParam(required = false) String reviewNotes,
             RedirectAttributes ra) {
 
         try {
-            prService.approvePurchaseRequisition(id, reviewerName, reviewNotes);
-            ra.addFlashAttribute("success", "Purchase Requisition approved successfully");
+            prService.approvePurchaseRequisition(id, reviewerId, reviewNotes);
+            ra.addFlashAttribute("success", "Purchase Requisition approved successfully and ready for purchase");
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to approve purchase requisition: " + e.getMessage());
         }
 
-        return "redirect:/purchase-requisition/" + id;
+        return "redirect:/purchase-requisition";
     }
 
     // Reject PR
     @PostMapping("/{id}/reject")
     public String rejectPurchaseRequisition(
             @PathVariable String id,
-            @RequestParam String reviewerName,
+            @RequestParam String reviewerId,
             @RequestParam String reviewNotes,
             RedirectAttributes ra) {
 
         try {
-            prService.rejectPurchaseRequisition(id, reviewerName, reviewNotes);
-            ra.addFlashAttribute("success", "Purchase Requisition rejected");
+            prService.rejectPurchaseRequisition(id, reviewerId, reviewNotes);
+            ra.addFlashAttribute("success", "Purchase Requisition rejected successfully");
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to reject purchase requisition: " + e.getMessage());
         }
 
-        return "redirect:/purchase-requisition/" + id;
+        return "redirect:/purchase-requisition";
     }
 
-    // Send to Purchase
-    @PostMapping("/{id}/send-to-purchase")
-    public String sendToPurchase(@PathVariable String id, RedirectAttributes ra) {
-        try {
-            prService.sendToPurchase(id);
-            ra.addFlashAttribute("success", "Purchase Requisition sent to purchase department");
-
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Failed to send to purchase: " + e.getMessage());
-        }
-
-        return "redirect:/purchase-requisition/" + id;
-    }
-
-    // Add PO Number
-    @PostMapping("/{id}/add-po")
-    public String addPONumber(
-            @PathVariable String id,
-            @RequestParam String poNumber,
-            RedirectAttributes ra) {
-
-        try {
-            prService.addPONumber(id, poNumber);
-            ra.addFlashAttribute("success", "PO Number added successfully");
-
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Failed to add PO number: " + e.getMessage());
-        }
-
-        return "redirect:/purchase-requisition/" + id;
-    }
-
-    // Complete PR
+    // Complete PR (simplified - no separate inspector)
     @PostMapping("/{id}/complete")
     public String completePurchaseRequisition(
             @PathVariable String id,
-            @RequestParam String inspectorId,
             @RequestParam(required = false) String completionNotes,
             RedirectAttributes ra) {
 
         try {
-            prService.completePurchaseRequisition(id, inspectorId, completionNotes);
+            prService.completePurchaseRequisition(id);
             ra.addFlashAttribute("success", "Purchase Requisition completed successfully");
 
         } catch (Exception e) {
@@ -323,6 +334,75 @@ public class PurchaseRequisitionController {
         return "redirect:/purchase-requisition/list";
     }
 
+    // Part Management Endpoints
+
+    // Add part to PR
+    @PostMapping("/{id}/parts/add")
+    public String addPartToPR(
+            @PathVariable String id,
+            @ModelAttribute PurchaseRequisitionPartDTO partDTO,
+            RedirectAttributes ra) {
+
+        try {
+            prService.addPartToRequisition(id, partDTO);
+            ra.addFlashAttribute("success", "Part added to Purchase Requisition successfully");
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Failed to add part: " + e.getMessage());
+        }
+
+        return "redirect:/purchase-requisition/" + id + "/edit";
+    }
+
+    // Remove part from PR
+    @PostMapping("/{prId}/parts/{partId}/remove")
+    public String removePartFromPR(
+            @PathVariable String prId,
+            @PathVariable String partId,
+            RedirectAttributes ra) {
+
+        try {
+            prService.removePartFromRequisition(prId, partId);
+            ra.addFlashAttribute("success", "Part removed from Purchase Requisition successfully");
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Failed to remove part: " + e.getMessage());
+        }
+
+        return "redirect:/purchase-requisition/" + prId + "/edit";
+    }
+
+    // Update part quantity in PR (we'll add this method to service)
+    @PostMapping("/{prId}/parts/{partId}/update")
+    public String updatePartInPR(
+            @PathVariable String prId,
+            @PathVariable String partId,
+            @RequestParam Integer quantity,
+            @RequestParam(required = false) CriticalityLevel criticality,
+            @RequestParam(required = false) String remarks,
+            RedirectAttributes ra) {
+
+        try {
+            // For now, we'll remove and re-add the part with new details
+            // Later we can implement a proper update method
+            PurchaseRequisitionPartDTO updatedPart = new PurchaseRequisitionPartDTO();
+            updatedPart.setPartId(partId);
+            updatedPart.setQuantityRequested(quantity);
+            updatedPart.setCriticalityLevel(criticality != null ? criticality : CriticalityLevel.MEDIUM);
+            updatedPart.setJustification(remarks);
+            
+            prService.removePartFromRequisition(prId, partId);
+            prService.addPartToRequisition(prId, updatedPart);
+            
+            ra.addFlashAttribute("success", "Part details updated successfully");
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Failed to update part: " + e.getMessage());
+        }
+
+        return "redirect:/purchase-requisition/" + prId + "/edit";
+    }
+
     // Helper method to load form data
     private void loadFormData(Model model) {
         // Load equipment list for target equipment dropdown
@@ -333,22 +413,24 @@ public class PurchaseRequisitionController {
         var allParts = partService.getAllParts(null, 0, Integer.MAX_VALUE, "name", true);
         model.addAttribute("partsList", allParts.getContent());
 
-        // Load users list for requestor selection (only active users)
+        // Load users list for requestor selection (only active ENGINEER users)
         var allUsers = userService.getAllUsers(null, 0, Integer.MAX_VALUE, "name", true);
-        // Filter only active users for the dropdown
-        var activeUsers = allUsers.getContent().stream()
+        var engineerUsers = allUsers.getContent().stream()
                 .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                .filter(user -> user.getRoleNames() != null && user.getRoleNames().contains("ENGINEER"))
                 .collect(java.util.stream.Collectors.toList());
-        model.addAttribute("usersList", activeUsers);
         
-        // Add warning if no active users available
-        if (activeUsers.isEmpty()) {
-            model.addAttribute("warning", "No active users found. Please ensure users are created and activated before creating purchase requisitions.");
+        // Fallback: if no engineer users found, show all active users
+        if (engineerUsers.isEmpty()) {
+            engineerUsers = allUsers.getContent().stream()
+                    .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                    .collect(java.util.stream.Collectors.toList());
+            model.addAttribute("warning", "No active engineers found. Showing all active users. Please ensure engineer users are created and properly assigned roles.");
         }
+        
+        model.addAttribute("usersList", engineerUsers);
 
-        // Load categories and suppliers for new part creation
-        // These should be loaded from your master data services
-        // model.addAttribute("categories", categoryService.getAll());
-        // model.addAttribute("suppliers", supplierService.getAll());
+        // Add criticality levels for part form
+        model.addAttribute("criticalityLevels", Arrays.asList(CriticalityLevel.values()));
     }
 }

@@ -7,8 +7,10 @@ import org.springframework.stereotype.Component;
 import ahqpck.maintenance.report.entity.Category;
 import ahqpck.maintenance.report.entity.MachineType;
 import ahqpck.maintenance.report.entity.Part;
+import ahqpck.maintenance.report.entity.QuotationRequest;
+import ahqpck.maintenance.report.entity.QuotationRequestPart;
 import ahqpck.maintenance.report.entity.PurchaseRequisition;
-import ahqpck.maintenance.report.entity.PurchaseRequisitionItem;
+import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.Section;
 import ahqpck.maintenance.report.entity.SerialNumber;
 import ahqpck.maintenance.report.entity.Subcategory;
@@ -94,62 +96,102 @@ public class DTOMapper {
                 .reviewerName(pr.getReviewerName())
                 .reviewedAt(pr.getReviewedAt())
                 .reviewNotes(pr.getReviewNotes())
-                .poNumber(pr.getPoNumber())
-                .inspectorId(pr.getInspector() != null ? pr.getInspector().getId() : null)
-                .inspectorName(pr.getInspectorName())
-                .inspectorEmail(pr.getInspectorEmail())
-                .inspectorEmployeeId(pr.getInspectorEmployeeId())
-                .receivedAt(pr.getReceivedAt())
-                .completionNotes(pr.getCompletionNotes())
                 .createdAt(pr.getCreatedAt())
                 .updatedAt(pr.getUpdatedAt())
                 .build();
 
-        // Map items
-        if (pr.getItems() != null) {
-            dto.setItems(pr.getItems().stream()
-                    .map(this::mapToPurchaseRequisitionItemDTO)
+        // Map parts
+        if (pr.getRequisitionParts() != null) {
+            dto.setParts(pr.getRequisitionParts().stream()
+                    .map(this::mapToPurchaseRequisitionPartDTO)
                     .collect(Collectors.toList()));
         }
 
         return dto;
     }
 
-    public PurchaseRequisitionItemDTO mapToPurchaseRequisitionItemDTO(PurchaseRequisitionItem item) {
-        PurchaseRequisitionItemDTO dto = PurchaseRequisitionItemDTO.builder()
-                .id(item.getId())
-                .purchaseRequisitionId(item.getPurchaseRequisition().getId())
-                .partId(item.getPart() != null ? item.getPart().getId() : null)
-                .partCode(item.getPartCode())
-                .partName(item.getPartName())
-                .partDescription(item.getPartDescription())
-                .partSpecifications(item.getPartSpecifications())
-                .partCategory(item.getPartCategory())
-                .partSupplier(item.getPartSupplier())
-                .quantity(item.getQuantity())
-                .unitMeasure(item.getUnitMeasure())
-                .justification(item.getJustification())
-                .criticalityLevel(item.getCriticalityLevel())
-                .notes(item.getNotes())
-                .isNewPart(item.getIsNewPart())
-                .isReceived(item.getIsReceived())
-                .receivedQuantity(item.getReceivedQuantity())
-                .receivedAt(item.getReceivedAt())
-                .createdAt(item.getCreatedAt())
-                .updatedAt(item.getUpdatedAt())
+    public PurchaseRequisitionPartDTO mapToPurchaseRequisitionPartDTO(PurchaseRequisitionPart prPart) {
+        PurchaseRequisitionPartDTO dto = PurchaseRequisitionPartDTO.builder()
+                .id(prPart.getId())
+                .purchaseRequisitionId(prPart.getPurchaseRequisition().getId())
+                .prCode(prPart.getPurchaseRequisition().getCode()) // Add PR code
+                .partId(prPart.getPart().getId())
+                .partCode(prPart.getPartCode())
+                .partName(prPart.getPartName())
+                .partSupplier(prPart.getPartSupplier())
+                .partCategory(prPart.getPartCategory())
+                .quantityRequested(prPart.getQuantityRequested())
+                .criticalityLevel(prPart.getCriticalityLevel())
+                .justification(prPart.getJustification())
+                .notes(prPart.getNotes())
+                .quotationNumber(prPart.getQuotationNumber())
+                .quantityOrdered(prPart.getQuantityOrdered())
+                .quantityReceived(prPart.getQuantityReceived())
+                .receivedAt(prPart.getReceivedAt())
+                .status(prPart.getStatus())
+                .createdAt(prPart.getCreatedAt())
+                .updatedAt(prPart.getUpdatedAt())
                 .build();
 
-        // Set display fields
-        dto.setDisplayPartCode(item.getDisplayPartCode());
-        dto.setDisplayPartName(item.getDisplayPartName());
-        dto.setDisplaySupplier(item.getDisplaySupplier());
-        dto.setDisplayCategory(item.getDisplayCategory());
-        dto.setCanBeReceived(item.canBeReceived());
+        // Map part details
+        if (prPart.getPart() != null) {
+            dto.setPart(mapToPartDTO(prPart.getPart()));
+        }
 
-        // Map existing part if available
-        if (item.getPart() != null) {
-            dto.setExistingPart(mapToPartDTO(item.getPart()));
-            dto.setCurrentStock(item.getPart().getStockQuantity());
+        return dto;
+    }
+
+    // Quotation Request Mappings
+    public QuotationRequestDTO mapToQuotationRequestDTO(QuotationRequest qr) {
+        QuotationRequestDTO dto = QuotationRequestDTO.builder()
+                .id(qr.getId())
+                .quotationNumber(qr.getQuotationNumber())
+                .supplierName(qr.getSupplierName())
+                .supplierContact(qr.getSupplierContact())
+                .totalAmount(qr.getTotalAmount())
+                .currency(qr.getCurrency())
+                .requestDate(qr.getRequestDate())
+                .expectedDeliveryDate(qr.getExpectedDeliveryDate())
+                .actualDeliveryDate(qr.getActualDeliveryDate())
+                .status(qr.getStatus())
+                .notes(qr.getNotes())
+                .createdById(qr.getCreatedBy() != null ? qr.getCreatedBy().getId() : null)
+                .createdByName(qr.getCreatedByName())
+                .createdByEmail(qr.getCreatedByEmail())
+                .createdAt(qr.getCreatedAt())
+                .updatedAt(qr.getUpdatedAt())
+                .build();
+
+        // Map parts
+        if (qr.getRequestParts() != null) {
+            dto.setParts(qr.getRequestParts().stream()
+                    .map(this::mapToQuotationRequestPartDTO)
+                    .collect(Collectors.toList()));
+        }
+
+        return dto;
+    }
+
+    public QuotationRequestPartDTO mapToQuotationRequestPartDTO(QuotationRequestPart qrPart) {
+        QuotationRequestPartDTO dto = QuotationRequestPartDTO.builder()
+                .id(qrPart.getId())
+                .quotationRequestId(qrPart.getQuotationRequest().getId())
+                .partId(qrPart.getPart().getId())
+                .partCode(qrPart.getPartCode())
+                .partName(qrPart.getPartName())
+                .partSupplier(qrPart.getPartSupplier())
+                .partCategory(qrPart.getPartCategory())
+                .quantityRequested(qrPart.getQuantityRequested())
+                .unitPrice(qrPart.getUnitPrice())
+                .totalPrice(qrPart.getTotalPrice())
+                .quantityReceived(qrPart.getQuantityReceived())
+                .notes(qrPart.getNotes())
+                .createdAt(qrPart.getCreatedAt())
+                .build();
+
+        // Map part details
+        if (qrPart.getPart() != null) {
+            dto.setPart(mapToPartDTO(qrPart.getPart()));
         }
 
         return dto;
@@ -166,7 +208,6 @@ public class DTOMapper {
         dto.setDescription(part.getDescription());
         dto.setImage(part.getImage());
         dto.setStockQuantity(part.getStockQuantity());
-        dto.setEquipmentCount(part.getEquipmentCount());
 
         return dto;
     }

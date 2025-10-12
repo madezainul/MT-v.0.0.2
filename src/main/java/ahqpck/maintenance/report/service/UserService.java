@@ -327,6 +327,11 @@ public class UserService {
         dto.setRoles(user.getRoles().stream()
                 .map(RoleDTO::new)
                 .collect(Collectors.toSet()));
+                
+        // Populate roleNames from the roles
+        dto.setRoleNames(user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toSet()));
 
         return dto;
     }

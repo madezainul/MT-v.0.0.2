@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Create Purchase Order - Select Parts</title>
+    <style>
+        .supplier-section {
+            border: 1px solid #e3e6f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .supplier-header {
+            background-color: #f8f9fc;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+        }
+        .parts-table {
+            margin: 0;
+        }
+        .select-all-checkbox {
+            margin-right: 8px;
+        }
+        .part-checkbox {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-file-invoice"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-order}">Purchase Orders</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Create PO</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
+                        <i class="fa fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <form th:action="@{/purchase-order/create}" method="post" id="createPOForm">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fas fa-boxes mr-2"></i>Available Parts from Approved PRs
+                                </div>
+                                <div class="card-tools">
+                                    <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-check-square mr-1"></i> Select All
+                                    </button>
+                                    <button type="button" id="clearAllBtn" class="btn btn-sm btn-outline-secondary ml-2">
+                                        <i class="fas fa-times mr-1"></i> Clear All
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${partsGroupedBySupplier != null && !partsGroupedBySupplier.empty}">
+                                    <div th:each="supplierEntry : ${partsGroupedBySupplier}" class="supplier-section">
+                                        <div class="supplier-header">
+                                            <input type="checkbox" class="supplier-checkbox select-all-checkbox" 
+                                                   th:data-supplier="${supplierEntry.key}">
+                                            <i class="fas fa-truck mr-2"></i>
+                                            <span th:text="${supplierEntry.key}"></span>
+                                            <span class="badge badge-pill badge-info ml-2" th:text="${supplierEntry.value.size()} + ' parts'"></span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover parts-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="50">Select</th>
+                                                        <th>Part Details</th>
+                                                        <th>PR Code</th>
+                                                        <th class="text-center">Quantity</th>
+                                                        <th class="text-center">Criticality</th>
+                                                        <th>Justification</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr th:each="part : ${supplierEntry.value}">
+                                                        <td class="text-center">
+                                                            <input type="checkbox" name="selectedPartIds" 
+                                                                   th:value="${part.id}" 
+                                                                   th:data-supplier="${supplierEntry.key}"
+                                                                   class="part-checkbox form-check-input">
+                                                        </td>
+                                                        <td>
+                                                            <div>
+                                                                <strong th:text="${part.partCode ?: part.partName}"></strong>
+                                                                <span th:if="${part.partCode != null && part.partName != null && part.partCode != part.partName}" 
+                                                                      class="text-muted ml-2" 
+                                                                      th:text="'(' + ${part.partName} + ')'"></span>
+                                                            </div>
+                                                            <small class="text-muted">
+                                                                Category: <span th:text="${part.partCategory ?: 'N/A'}"></span>
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <span th:text="${part.prCode}" class="badge badge-pill badge-light"></span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span th:text="${part.quantityRequested ?: 0}" class="font-weight-bold"></span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span class="badge badge-pill" 
+                                                                  th:class="'badge badge-pill ' + ${part.criticalityBadgeClass}"
+                                                                  th:text="${part.criticalityDisplay ?: 'Medium'}"></span>
+                                                        </td>
+                                                        <td>
+                                                            <span th:text="${part.justification ?: '-'}" class="text-muted"></span>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div th:if="${partsGroupedBySupplier == null || partsGroupedBySupplier.empty}" 
+                                     class="text-center text-muted py-5">
+                                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                                    <h5>No Available Parts</h5>
+                                    <p>There are no approved parts available for purchase order creation.</p>
+                                    <a th:href="@{/purchase-requisition}" class="btn btn-primary">
+                                        <i class="fas fa-arrow-left mr-1"></i> Back to PRs
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fas fa-cog mr-2"></i>Purchase Order Details
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="creatorId">Created By <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="creatorId" required>
+                                        <option value="">Select Creator</option>
+                                        <option th:each="user : ${usersList}" 
+                                                th:value="${user.id}" 
+                                                th:text="${user.name + ' (' + user.employeeId + ')'}"
+                                                th:selected="${user.id == currentUserId}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="notes">Notes</label>
+                                    <textarea class="form-control" name="notes" rows="3" 
+                                              placeholder="Optional notes for the purchase order"></textarea>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle mr-1"></i> Information</h6>
+                                    <ul class="mb-0">
+                                        <li>Parts will be grouped by supplier</li>
+                                        <li>Separate POs will be created for each supplier</li>
+                                        <li>Parts are sorted alphabetically by name</li>
+                                        <li>Only approved PR parts are shown</li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-flex flex-column">
+                                    <button type="submit" class="btn btn-success btn-block mb-2" id="createPOBtn" disabled>
+                                        <i class="fas fa-plus mr-1"></i> Create Purchase Order(s)
+                                    </button>
+                                    <a th:href="@{/purchase-requisition}" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-times mr-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selection Summary -->
+                        <div class="card mt-3" id="selectionSummary" style="display: none;">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fas fa-list-check mr-2"></i>Selection Summary
+                                </div>
+                            </div>
+                            <div class="card-body" id="summaryContent">
+                                <!-- Dynamic content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <span th:text="${success}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <span th:text="${error}"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const partCheckboxes = document.querySelectorAll('input[name="selectedPartIds"]');
+                const supplierCheckboxes = document.querySelectorAll('.supplier-checkbox');
+                const selectAllBtn = document.getElementById('selectAllBtn');
+                const clearAllBtn = document.getElementById('clearAllBtn');
+                const createPOBtn = document.getElementById('createPOBtn');
+                const selectionSummary = document.getElementById('selectionSummary');
+                const summaryContent = document.getElementById('summaryContent');
+
+                // Update button state and summary
+                function updateUI() {
+                    const selectedParts = document.querySelectorAll('input[name="selectedPartIds"]:checked');
+                    createPOBtn.disabled = selectedParts.length === 0;
+                    
+                    if (selectedParts.length > 0) {
+                        // Show summary
+                        selectionSummary.style.display = 'block';
+                        updateSummary(selectedParts);
+                    } else {
+                        selectionSummary.style.display = 'none';
+                    }
+                }
+
+                // Update selection summary
+                function updateSummary(selectedParts) {
+                    const supplierCounts = {};
+                    selectedParts.forEach(checkbox => {
+                        const supplier = checkbox.dataset.supplier;
+                        supplierCounts[supplier] = (supplierCounts[supplier] || 0) + 1;
+                    });
+
+                    let summaryHTML = '<div class="d-flex justify-content-between mb-2"><span><strong>Total Parts:</strong></span><span>' + selectedParts.length + '</span></div>';
+                    summaryHTML += '<hr><h6>By Supplier:</h6>';
+                    
+                    Object.entries(supplierCounts).forEach(([supplier, count]) => {
+                        summaryHTML += '<div class="d-flex justify-content-between"><span>' + supplier + '</span><span class="badge badge-pill badge-primary">' + count + '</span></div>';
+                    });
+
+                    summaryContent.innerHTML = summaryHTML;
+                }
+
+                // Part checkbox change handler
+                partCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        updateUI();
+                        updateSupplierCheckbox(this.dataset.supplier);
+                    });
+                });
+
+                // Supplier checkbox change handler
+                supplierCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const supplier = this.dataset.supplier;
+                        const supplierParts = document.querySelectorAll(`input[name="selectedPartIds"][data-supplier="${supplier}"]`);
+                        
+                        supplierParts.forEach(partCheckbox => {
+                            partCheckbox.checked = this.checked;
+                        });
+                        
+                        updateUI();
+                    });
+                });
+
+                // Update supplier checkbox based on part selections
+                function updateSupplierCheckbox(supplier) {
+                    const supplierParts = document.querySelectorAll(`input[name="selectedPartIds"][data-supplier="${supplier}"]`);
+                    const checkedParts = document.querySelectorAll(`input[name="selectedPartIds"][data-supplier="${supplier}"]:checked`);
+                    const supplierCheckbox = document.querySelector(`.supplier-checkbox[data-supplier="${supplier}"]`);
+                    
+                    if (supplierCheckbox) {
+                        supplierCheckbox.checked = checkedParts.length === supplierParts.length;
+                        supplierCheckbox.indeterminate = checkedParts.length > 0 && checkedParts.length < supplierParts.length;
+                    }
+                }
+
+                // Select all button
+                selectAllBtn.addEventListener('click', function() {
+                    partCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    supplierCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                        checkbox.indeterminate = false;
+                    });
+                    updateUI();
+                });
+
+                // Clear all button
+                clearAllBtn.addEventListener('click', function() {
+                    partCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    supplierCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                        checkbox.indeterminate = false;
+                    });
+                    updateUI();
+                });
+
+                // Form submission validation
+                document.getElementById('createPOForm').addEventListener('submit', function(e) {
+                    const selectedParts = document.querySelectorAll('input[name="selectedPartIds"]:checked');
+                    if (selectedParts.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one part to create a purchase order.');
+                        return false;
+                    }
+                });
+
+                // Initialize UI
+                updateUI();
+            });
+        </script>
+    </div>
+</body>
+</html>

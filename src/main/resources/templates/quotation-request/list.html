@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Quotation Requests List</title>
+    <style>
+        .section-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            background: #2196F3;
+            color: white;
+            border-radius: 10px 10px 0 0;
+            padding: 15px 20px;
+        }
+        .section-header .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.5em 0.75em;
+            border-radius: 6px;
+        }
+        .section-header .card-title {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}">Quotation Requests List</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-file-invoice"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/quotation-request}">Quotation Requests</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>List</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary ml-auto mt-2">
+                        <i class="fa fa-plus mr-1"></i> Create New PO
+                    </a>
+                    <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
+                        <i class="fa fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card section-card">
+                        <div class="section-header">
+                            <div class="card-head-row d-flex justify-content-between align-items-center w-100">
+                                <div class="card-title mb-0">
+                                    <i class="fas fa-file-invoice mr-2"></i>Quotation Request
+                                </div>
+                                <div class="card-tools">
+                                    <!-- Search Form -->
+                                    <form th:action="@{/quotation-request/list}" method="get" class="form-inline">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="search" 
+                                                   th:value="${searchTerm}" placeholder="Search Quotations..." />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-light" type="submit">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                                        <input type="hidden" name="ascending" th:value="${ascending}" />
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th data-sort="poNumber">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='poNumber', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    QR Number
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="supplierName">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='supplierName', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    Supplier
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="createdByName">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdByName', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    Created By
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="status">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='status', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    Status
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th>Parts</th>
+                                            <th>Total Amount</th>
+                                            <th data-sort="orderDate">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='orderDate', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    Order Date
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="createdAt">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdAt', ascending=${!ascending})}" 
+                                                   class="text-decoration-none">
+                                                    Created
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="po : ${pos}">
+                                            <td>
+                                                <a th:href="@{'/quotation-request/' + ${po.id}}" 
+                                                   th:text="${po.poNumber}" class="text-decoration-none font-weight-bold text-primary"></a>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-truck text-muted mr-2"></i>
+                                                    <span th:text="${po.supplierName}"></span>
+                                                </div>
+                                            </td>
+                                            <td th:text="${po.createdByName}"></td>
+                                            <td>
+                                                <span class="badge status-badge" 
+                                                      th:class="${po.status.name() == 'CREATED'} ? 'badge-warning' : 
+                                                                 (${po.status.name() == 'SENT'} ? 'badge-info' : 
+                                                                 (${po.status.name() == 'CONFIRMED'} ? 'badge-primary' : 
+                                                                 (${po.status.name() == 'DELIVERED'} ? 'badge-success' : 
+                                                                 (${po.status.name() == 'COMPLETED'} ? 'badge-success' : 'badge-secondary'))))"
+                                                      th:text="${po.status.displayName}"></span>
+                                            </td>
+                                            <td>
+                                                <span class="font-weight-bold" th:text="${po.totalParts ?: 0}"></span> parts
+                                                <br>
+                                                <small class="text-muted" th:text="${po.totalQuantity ?: 0} + ' qty'"></small>
+                                            </td>
+                                            <td>
+                                                <div th:if="${po.totalAmount != null}">
+                                                    <span class="font-weight-bold" th:text="${po.currency + ' ' + #numbers.formatDecimal(po.totalAmount, 1, 2)}"></span>
+                                                </div>
+                                                <div th:unless="${po.totalAmount != null}">
+                                                    <span class="text-muted">-</span>
+                                                </div>
+                                            </td>
+                                            <td th:text="${po.orderDate != null ? #temporals.format(po.orderDate, 'MMM dd, yyyy') : '-'}"></td>
+                                            <td th:text="${#temporals.format(po.createdAt, 'MMM dd, yyyy')}"></td>
+                                            <td>
+                                                <div class="form-button-action">
+                                                    <a th:href="@{'/quotation-request/' + ${po.id}}" 
+                                                       class="btn btn-link btn-primary btn-lg" 
+                                                       data-original-title="View Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    <a th:if="${po.status.name() == 'CREATED'}"
+                                                       th:href="@{'/quotation-request/' + ${po.id} + '/edit'}" 
+                                                       class="btn btn-link btn-info btn-lg" 
+                                                       data-original-title="Edit">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                    <button th:if="${po.status.name() == 'CREATED'}"
+                                                            type="button" 
+                                                            class="btn btn-link btn-danger btn-lg" 
+                                                            data-toggle="modal" 
+                                                            th:data-target="'#deleteModal' + ${po.id}"
+                                                            data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <small class="text-muted">
+                                        Showing <span th:text="${currentPage * 10 + 1}"></span> to 
+                                        <span th:text="${currentPage * 10 + pos.size()}"></span> of 
+                                        <span th:text="${totalElements}"></span> entries
+                                    </small>
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <!-- Previous -->
+                                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/quotation-request/list(search=${searchTerm}, page=${currentPage - 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Previous
+                                            </a>
+                                        </li>
+
+                                        <!-- Page Numbers -->
+                                        <li class="page-item" 
+                                            th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                            th:classappend="${i == currentPage} ? 'active'">
+                                            <a class="page-link" 
+                                               th:href="@{/quotation-request/list(search=${searchTerm}, page=${i}, sortBy=${sortBy}, ascending=${ascending})}"
+                                               th:text="${i + 1}"></a>
+                                        </li>
+
+                                        <!-- Next -->
+                                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/quotation-request/list(search=${searchTerm}, page=${currentPage + 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Next
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
+                            <!-- No Results -->
+                            <div th:if="${pos == null or pos.empty}" class="text-center text-muted py-5">
+                                <i class="fas fa-file-invoice fa-3x mb-3"></i>
+                                <h5>No Quotations Found</h5>
+                                <p th:if="${searchTerm}">
+                                    No results found for "<span th:text="${searchTerm}"></span>".
+                                    <a th:href="@{/quotation-request/list}">Clear search</a>
+                                </p>
+                                <p th:unless="${searchTerm}">
+                                    <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary">
+                                        <i class="fas fa-plus mr-2"></i>Create your first Quotation Request
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Options -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card section-card">
+                        <div class="section-header">
+                            <div class="card-title mb-0">
+                                <i class="fas fa-filter mr-2"></i>Quick Filters
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list}" 
+                                       class="btn btn-outline-primary btn-block" 
+                                       th:classappend="${currentFilter == null} ? 'active' : ''">
+                                        <i class="fas fa-list mr-1"></i>All POs
+                                    </a>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list(status='CREATED')}" 
+                                       class="btn btn-outline-warning btn-block"
+                                       th:classappend="${currentFilter == 'CREATED'} ? 'active' : ''">
+                                        <i class="fas fa-clock mr-1"></i>Created
+                                    </a>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list(status='SENT')}" 
+                                       class="btn btn-outline-info btn-block"
+                                       th:classappend="${currentFilter == 'SENT'} ? 'active' : ''">
+                                        <i class="fas fa-paper-plane mr-1"></i>Sent
+                                    </a>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list(status='CONFIRMED')}" 
+                                       class="btn btn-outline-success btn-block"
+                                       th:classappend="${currentFilter == 'CONFIRMED'} ? 'active' : ''">
+                                        <i class="fas fa-check mr-1"></i>Confirmed
+                                    </a>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list(status='DELIVERED')}" 
+                                       class="btn btn-outline-primary btn-block"
+                                       th:classappend="${currentFilter == 'DELIVERED'} ? 'active' : ''">
+                                        <i class="fas fa-truck mr-1"></i>Delivered
+                                    </a>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <a th:href="@{/quotation-request/list(status='COMPLETED')}" 
+                                       class="btn btn-outline-success btn-block"
+                                       th:classappend="${currentFilter == 'COMPLETED'} ? 'active' : ''">
+                                        <i class="fas fa-check-circle mr-1"></i>Completed
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modals -->
+        <div th:each="po : ${pos}" class="modal fade" th:id="'deleteModal' + ${po.id}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete Quotation Request <strong th:text="${po.poNumber}"></strong>?</p>
+                        <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <form th:action="@{'/quotation-request/' + ${po.id} + '/delete'}" method="post">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</body>
+</html>

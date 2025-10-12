@@ -36,12 +36,13 @@ public class PurchaseRequisition {
     @Column(length = 22, updatable = false, nullable = false)
     private String id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String code;
 
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -51,14 +52,14 @@ public class PurchaseRequisition {
     @Column(name = "date_needed", nullable = false)
     private LocalDate dateNeeded;
 
-    @Column(name = "target_equipment_id")
+    @Column(name = "target_equipment_id", length = 50)
     private String targetEquipmentId;
 
     @Column(name = "target_equipment_name")
     private String targetEquipmentName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     @Builder.Default
     private PRStatus status = PRStatus.SUBMITTED;
 
@@ -71,21 +72,8 @@ public class PurchaseRequisition {
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
-    @Column(name = "review_notes")
+    @Column(name = "review_notes", columnDefinition = "TEXT")
     private String reviewNotes;
-
-    @Column(name = "po_number")
-    private String poNumber;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inspector_id")
-    private User inspector;
-
-    @Column(name = "received_at")
-    private LocalDateTime receivedAt;
-
-    @Column(name = "completion_notes")
-    private String completionNotes;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -93,9 +81,10 @@ public class PurchaseRequisition {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Many-to-Many relationship with Parts through bridge table
     @OneToMany(mappedBy = "purchaseRequisition", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Builder.Default
-    private List<PurchaseRequisitionItem> items = new ArrayList<>();
+    private List<PurchaseRequisitionPart> requisitionParts = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
@@ -111,23 +100,23 @@ public class PurchaseRequisition {
     }
 
     // Helper methods
-    public void addItem(PurchaseRequisitionItem item) {
-        items.add(item);
-        item.setPurchaseRequisition(this);
+    public void addPart(PurchaseRequisitionPart prPart) {
+        requisitionParts.add(prPart);
+        prPart.setPurchaseRequisition(this);
     }
 
-    public void removeItem(PurchaseRequisitionItem item) {
-        items.remove(item);
-        item.setPurchaseRequisition(null);
+    public void removePart(PurchaseRequisitionPart prPart) {
+        requisitionParts.remove(prPart);
+        prPart.setPurchaseRequisition(null);
     }
 
-    public int getTotalItems() {
-        return items.size();
+    public int getTotalParts() {
+        return requisitionParts.size();
     }
 
     public long getTotalQuantity() {
-        return items.stream()
-                .mapToLong(PurchaseRequisitionItem::getQuantity)
+        return requisitionParts.stream()
+                .mapToLong(PurchaseRequisitionPart::getQuantityRequested)
                 .sum();
     }
 
@@ -144,39 +133,50 @@ public class PurchaseRequisition {
         return requestor != null ? requestor.getEmployeeId() : null;
     }
 
-    // Inspector helper methods
-    public String getInspectorName() {
-        return inspector != null ? inspector.getName() : null;
-    }
-
-    public String getInspectorEmail() {
-        return inspector != null ? inspector.getEmail() : null;
-    }
-
-    public String getInspectorEmployeeId() {
-        return inspector != null ? inspector.getEmployeeId() : null;
-    }
-
+    // Business logic methods
     public boolean canBeApproved() {
-        return status == PRStatus.SUBMITTED;
+        return status == PRStatus.SUBMITTED && !requisitionParts.isEmpty();
     }
 
-    public boolean canBeSentToPurchase() {
+    public boolean canCreatePO() {
         return status == PRStatus.APPROVED && Boolean.TRUE.equals(isApproved);
     }
 
-    public boolean canBeReceived() {
-        return status == PRStatus.SENT_TO_PURCHASE;
+    public boolean canBeCompleted() {
+        return status == PRStatus.APPROVED && 
+               requisitionParts.stream().allMatch(rp -> rp.getStatus() == PurchaseRequisitionPart.PRPartStatus.RECEIVED);
     }
 
-    public boolean canBeCompleted() {
-        return status == PRStatus.SENT_TO_PURCHASE && poNumber != null && !poNumber.trim().isEmpty();
+    // Get parts grouped by supplier for PO creation
+    public List<String> getSuppliers() {
+        return requisitionParts.stream()
+                .map(rp -> rp.getPart().getSupplierName())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    // Get QR number if all parts have the same QR number
+    public String getQuotationNumber() {
+        if (requisitionParts == null || requisitionParts.isEmpty()) {
+            return null;
+        }
+        
+        String firstQrNumber = requisitionParts.get(0).getQuotationNumber();
+        if (firstQrNumber == null) {
+            return null;
+        }
+        
+        // Check if all parts have the same QR number
+        boolean allSameQr = requisitionParts.stream()
+                .allMatch(part -> firstQrNumber.equals(part.getQuotationNumber()));
+        
+        return allSameQr ? firstQrNumber : null;
     }
 
     public enum PRStatus {
         SUBMITTED("Submitted"),
         APPROVED("Approved"), 
-        SENT_TO_PURCHASE("Sent to Purchase"),
         COMPLETED("Completed");
 
         private final String displayName;
