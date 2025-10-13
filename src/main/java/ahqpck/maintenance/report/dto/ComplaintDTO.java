@@ -29,7 +29,10 @@ public class ComplaintDTO {
     private LocalDateTime updatedAt;
 
     private String subject;
+
+    @NotNull(message = "Description is mandatory")
     private String description;
+
     private String actionTaken;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")

@@ -30,7 +30,8 @@
                 </ul>
 
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <button class="btn btn-primary mt-2 mr-2" data-toggle="modal" data-target="#importModal">
+                    <button class="btn btn-primary mt-2 mr-2" data-toggle="modal" data-target="#importModal"
+                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                         <i class="fa fa-download mr-1"></i> Import
                     </button>
                     <button class="btn btn-primary dropdown-toggle mt-2 mr-2" type="button" id="exportDropdown"
@@ -45,7 +46,8 @@
                             <i class="fa fa-file-pdf mr-2 text-danger"></i> PDF
                         </a>
                     </div>
-                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal">
+                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal"
+                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                         <i class="fa fa-plus-circle mr-2"></i> Add
                     </button>
                 </div>
@@ -122,70 +124,148 @@
                                     <thead class="bg-primary text-white">
                                         <tr>
                                             <th style="min-width: 50px;">Image</th>
-                                            <th style="min-width: 150px;">Code</th>
-                                            <th style="min-width: 175px;">Name</th>
-                                            <th style="min-width: 125px;">Model</th>
-                                            <th style="min-width: 50px;">Unit</th>
-                                            <th style="min-width: 50px;">Qty</th>
-                                            <th style="min-width: 125px;">Manufacturer</th>
-                                            <th style="min-width: 125px;">Serial No.</th>
-                                            <th style="min-width: 135px;">Manufactured Date</th>
-                                            <th style="min-width: 135px;">Commissioned Date</th>
-                                            <th style="min-width: 125px;">Capacity</th>
-                                            <th style="min-width: 80px;">Parts Count</th>
-                                            <th style="min-width: 50px;">Remarks</th>
+                                            <th style="min-width: 150px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="code">
+                                                Code <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 175px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="name">
+                                                Name <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="model">
+                                                Model <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="unit">
+                                                Status <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="unit">
+                                                Unit <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="quantity">
+                                                Qty <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="manufacturer">
+                                                Manufacturer <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="serialNo">
+                                                Serial No. <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 135px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="manufacturedDate">
+                                                Manufactured Date <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 135px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="commissionedDate">
+                                                Commissioned Date <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="capacity">
+                                                Capacity <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="remarks">
+                                                Remarks <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
                                             <th style="min-width: 50px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="equipment : ${equipments.content}" class="table-row-hover">
+                                        <tr th:each="equipment : ${equipments.content}" th:data-id="${equipment.id}"
+                                            class="table-row-hover">
                                             <td data-field="image">
                                                 <div class="avatar-lg my-2" th:if="${equipment.image != null}">
                                                     <img th:src="@{/upload/equipment/image/__${equipment.image}__}"
                                                         class="rounded avatar-img" alt="Equipment Image" />
                                                 </div>
-                                                <span th:unless="${equipment.image != null}">-</span>
+                                                <span th:unless="${equipment.image != null}"></span>
                                             </td>
-                                            <td data-field="code" th:text="${equipment.code ?: '-'}"></td>
-                                            <td data-field="name" th:text="${equipment.name ?: '-'}"></td>
-                                            <td data-field="model" th:text="${equipment.model ?: '-'}"></td>
-                                            <td data-field="unit" th:text="${equipment.unit ?: '-'}"></td>
+                                            <td data-field="code" th:text="${equipment.code ?: ''}"></td>
+                                            <td data-field="name" th:text="${equipment.name ?: ''}"></td>
+                                            <td data-field="model" th:text="${equipment.model ?: ''}"></td>
+                                            <td data-field="status">
+                                                <th:block
+                                                    th:if="${equipment.totalOpenWorkReports != null and equipment.totalOpenWorkReports > 0}">
+                                                    <a th:href="@{/work-reports(state='OPEN', equipmentCode=${equipment.code})}"
+                                                        class="badge badge-warning mr-1" style="text-decoration: none;">
+                                                        WR Open (
+                                                        <th:block th:text="${equipment.totalOpenWorkReports}" />)
+                                                    </a>
+                                                </th:block>
+                                                <th:block
+                                                    th:if="${equipment.totalPendingWorkReports != null and equipment.totalPendingWorkReports > 0}">
+                                                    <a th:href="@{/work-reports(state='PENDING', equipmentCode=${equipment.code})}"
+                                                        class="badge badge-danger mr-1" style="text-decoration: none;">
+                                                        WR Pending (
+                                                        <th:block th:text="${equipment.totalPendingWorkReports}" />)
+                                                    </a>
+                                                </th:block>
+                                                <th:block
+                                                    th:if="${equipment.totalOpenComplaints != null and equipment.totalOpenComplaints > 0}">
+                                                    <a th:href="@{/complaints(state='OPEN', equipmentCode=${equipment.code})}"
+                                                        class="badge badge-warning mr-1" style="text-decoration: none;">
+                                                        CP Open (
+                                                        <th:block th:text="${equipment.totalOpenComplaints}" />)
+                                                    </a>
+                                                </th:block>
+                                                <th:block
+                                                    th:if="${equipment.totalPendingComplaints != null and equipment.totalPendingComplaints > 0}">
+                                                    <a th:href="@{/complaints(state='PENDING', equipmentCode=${equipment.code})}"
+                                                        class="badge badge-danger mr-1" style="text-decoration: none;">
+                                                        CP Pending (
+                                                        <th:block th:text="${equipment.totalPendingComplaints}" />)
+                                                    </a>
+                                                </th:block>
+                                                <th:block
+                                                    th:if="${equipment.totalOpenWorkReports == 0 and equipment.totalPendingWorkReports == 0 and 
+                                                    equipment.totalOpenComplaints == 0 and equipment.totalPendingComplaints == 0}">
+                                                    <span class="badge badge-success mr-1">Good</span>
+                                                </th:block>
+                                            </td>
+                                            <td data-field="unit" th:text="${equipment.unit ?: ''}"></td>
                                             <td data-field="qty" class="text-center"
-                                                th:text="${equipment.qty != null ? equipment.qty : '-'}"></td>
-                                            <td data-field="manufacturer" th:text="${equipment.manufacturer ?: '-'}">
+                                                th:text="${equipment.qty != null ? equipment.qty : ''}"></td>
+                                            <td data-field="manufacturer" th:text="${equipment.manufacturer ?: ''}">
                                             </td>
-                                            <td data-field="serialNo" th:text="${equipment.serialNo ?: '-'}"></td>
+                                            <td data-field="serialNo" th:text="${equipment.serialNo ?: ''}"></td>
                                             <td data-field="manufacturedDate"
-                                                th:text="${equipment.manufacturedDate != null ? #temporals.format(equipment.manufacturedDate, 'yyyy-MM-dd') : '-'}">
+                                                th:text="${equipment.manufacturedDate != null ? #temporals.format(equipment.manufacturedDate, 'yyyy-MM-dd') : ''}">
                                             </td>
                                             <td data-field="commissionedDate"
-                                                th:text="${equipment.commissionedDate != null ? #temporals.format(equipment.commissionedDate, 'yyyy-MM-dd') : '-'}">
+                                                th:text="${equipment.commissionedDate != null ? #temporals.format(equipment.commissionedDate, 'yyyy-MM-dd') : ''}">
                                             </td>
-                                            <td data-field="capacity" th:text="${equipment.capacity ?: '-'}"></td>
-                                            <td data-field="partsCount" class="text-center">
-                                                <span class="badge" 
-                                                      th:classappend="${equipment.partsCount > 0 ? 'badge-info' : 'badge-secondary'}"
-                                                      th:text="${equipment.partsCount ?: 0} + ' parts'"></span>
-                                            </td>
-                                            <td data-field="remarks" th:text="${equipment.remarks ?: '-'}"></td>
+                                            <td data-field="capacity" th:text="${equipment.capacity ?: ''}"></td>
+                                            <td data-field="remarks" th:text="${equipment.remarks ?: ''}"></td>
                                             <td>
                                                 <div class="form-button-action">
                                                     <button type="button"
                                                         class="btn btn-link btn-primary btn-lg edit-row"
                                                         th:data-id="${equipment.id}"
-                                                        th:data-name="${equipment.name ?: '-'}">
+                                                        th:data-name="${equipment.name ?: ''}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                                                         <i class="fa fa-edit"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-link btn-danger delete-row"
                                                         th:data-id="${equipment.id}"
-                                                        th:data-name="${equipment.name ?: '-'}">
+                                                        th:data-name="${equipment.name ?: ''}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN')">
                                                         <i class="fa fa-times"></i>
                                                     </button>
+                                                    <span sec:authorize="!hasAnyRole('SUPERADMIN', 'ADMIN')"
+                                                        class="badge badge-danger mr-1">No Access</span>
                                                 </div>
                                             </td>
                                         </tr>
                                         <tr th:if="${equipments.totalElements == 0}">
-                                            <td colspan="14" class="text-center">No equipment found</td>
+                                            <td colspan="13" class="text-center">No equipment found</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -209,7 +289,7 @@
                                             <li class="page-item"
                                                 th:classappend="${!equipments.hasPrevious} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/equipments(keyword=${param.keyword}, page=${equipments.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:href="@{/equipments(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${equipments.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
                                                     th:if="${equipments.hasPrevious}">Prev</a>
                                                 <span class="page-link" th:if="${!equipments.hasPrevious}">Prev</span>
                                             </li>
@@ -217,7 +297,7 @@
                                             <li class="page-item" th:if="${equipments.number > 0}"
                                                 th:classappend="${!equipments.hasPrevious} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/equipments(keyword=${param.keyword}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
+                                                    th:href="@{/equipments(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
                                             </li>
 
                                             <li class="page-item"
@@ -238,14 +318,14 @@
                                                 th:if="${equipments.number + 1 < equipments.totalPages}"
                                                 th:classappend="${!equipments.hasNext} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/equipments(keyword=${param.keyword}, page=${equipments.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
+                                                    th:href="@{/equipments(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${equipments.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
                                                     <span th:text="${equipments.totalPages}">20</span>
                                                 </a>
                                             </li>
 
                                             <li class="page-item" th:classappend="${!equipments.hasNext} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/equipments(keyword=${param.keyword}, page=${equipments.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:href="@{/equipments(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${equipments.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
                                                     th:if="${equipments.hasNext}">Next</a>
                                                 <span class="page-link" th:if="${!equipments.hasNext}">Next</span>
                                             </li>
@@ -272,7 +352,102 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
 
-                // --- Edit Modal Trigger ---
+                // --- UI Helpers ---
+
+                // Update all pagination links to include current hiddenColumns
+                function updatePaginationLinks() {
+                    const currentUrl = new URL(window.location);
+                    const hiddenColumns = currentUrl.searchParams.get('hiddenColumns');
+
+                    document.querySelectorAll('.pagination .page-item a.page-link').forEach(link => {
+                        try {
+                            const linkUrl = new URL(link.href, window.location.origin);
+
+                            // Only update hiddenColumns — leave everything else as-is
+                            if (hiddenColumns !== null) {
+                                linkUrl.searchParams.set('hiddenColumns', hiddenColumns);
+                            } else {
+                                linkUrl.searchParams.delete('hiddenColumns');
+                            }
+
+                            link.href = linkUrl.toString();
+                        } catch (e) {
+                            console.warn('Failed to update pagination link:', link.href, e);
+                        }
+                    });
+                }
+
+                // --- Date Helpers ---
+
+                // Formats date string to YYYY-MM-DD
+                function toIsoDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+
+                // Formats datetime string to YYYY-MM-DDTHH:mm
+                function toIsoDateTime(dateTimeStr) {
+                    if (!dateTimeStr) return '';
+                    const d = new Date(dateTimeStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+
+                // --- URL Helpers ---
+
+                // Gets URL query parameter by name
+                function findGetParam(name) {
+                    const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+                    return m ? decodeURIComponent(m[1]) : '';
+                }
+
+                // Builds URL with current params and new sort
+                function buildSortUrl(sortByValue) {
+                    const base = '/equipments';
+                    const params = [];
+
+                    ['keyword', 'size']
+                        .forEach(k => params.push(`${k}=${encodeURIComponent(findGetParam(k))}`));
+
+                    const hidden = findGetParam('hiddenColumns');
+                    if (hidden) {
+                        params.push(`hiddenColumns=${encodeURIComponent(hidden)}`);
+                    }
+
+                    params.push(`sortBy=${encodeURIComponent(sortByValue)}`);
+                    params.push(`asc=${encodeURIComponent(ascInput.value)}`);
+
+                    return `${base}?${params.join('&')}`;
+                }
+
+                // --- Table Helpers ---
+
+                // Sorts table rows by field (client-side)
+                function sortTable(field, direction) {
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+                    const noDataRow = tbody.querySelector('tr:not([data-id])');
+                    if (noDataRow) noDataRow.remove();
+
+                    rows.sort((a, b) => {
+                        let aVal = a.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+                        let bVal = b.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                }
+
+                // --- Edit & Delete Event Handlers ---
+
+                // Handles click on "Edit" buttons to populate modal with row data
                 document.querySelectorAll('.edit-row').forEach(button => {
                     button.addEventListener('click', function () {
                         const row = this.closest('tr');
@@ -280,17 +455,17 @@
 
                         // Populate fields
                         document.getElementById('editId').value = currentId;
-                        document.getElementById('editCode').value = row.querySelector('[data-field="code"]')?.textContent.trim() || '-';
-                        document.getElementById('editName').value = row.querySelector('[data-field="name"]')?.textContent.trim() || '-';
-                        document.getElementById('editModel').value = row.querySelector('[data-field="model"]')?.textContent.trim() || '-';
-                        document.getElementById('editUnit').value = row.querySelector('[data-field="unit"]')?.textContent.trim() || '-';
+                        document.getElementById('editCode').value = row.querySelector('[data-field="code"]')?.textContent.trim() || '';
+                        document.getElementById('editName').value = row.querySelector('[data-field="name"]')?.textContent.trim() || '';
+                        document.getElementById('editModel').value = row.querySelector('[data-field="model"]')?.textContent.trim() || '';
+                        document.getElementById('editUnit').value = row.querySelector('[data-field="unit"]')?.textContent.trim() || '';
                         document.getElementById('editQty').value = row.querySelector('[data-field="qty"]')?.textContent.trim() || '';
-                        document.getElementById('editManufacturer').value = row.querySelector('[data-field="manufacturer"]')?.textContent.trim() || '-';
-                        document.getElementById('editSerialNo').value = row.querySelector('[data-field="serialNo"]')?.textContent.trim() || '-';
-                        document.getElementById('editManufacturedDate').value = row.querySelector('[data-field="manufacturedDate"]')?.textContent.trim() || '-';
-                        document.getElementById('editCommissionedDate').value = row.querySelector('[data-field="commissionedDate"]')?.textContent.trim() || '-';
-                        document.getElementById('editCapacity').value = row.querySelector('[data-field="capacity"]')?.textContent.trim() || '-';
-                        document.getElementById('editRemarks').value = row.querySelector('[data-field="remarks"]')?.textContent.trim() || '-';
+                        document.getElementById('editManufacturer').value = row.querySelector('[data-field="manufacturer"]')?.textContent.trim() || '';
+                        document.getElementById('editSerialNo').value = row.querySelector('[data-field="serialNo"]')?.textContent.trim() || '';
+                        document.getElementById('editManufacturedDate').value = row.querySelector('[data-field="manufacturedDate"]')?.textContent.trim() || '';
+                        document.getElementById('editCommissionedDate').value = row.querySelector('[data-field="commissionedDate"]')?.textContent.trim() || '';
+                        document.getElementById('editCapacity').value = row.querySelector('[data-field="capacity"]')?.textContent.trim() || '';
+                        document.getElementById('editRemarks').value = row.querySelector('[data-field="remarks"]')?.textContent.trim() || '';
 
                         // Set image preview if exists
                         const img = row.querySelector('[data-field="image"] img');
@@ -308,7 +483,7 @@
                     });
                 });
 
-                // --- Delete Modal Trigger ---
+                // Handle Delete button click
                 document.querySelectorAll('.delete-row').forEach(button => {
                     button.addEventListener('click', function () {
                         const name = this.dataset.name;
@@ -322,98 +497,40 @@
                     });
                 });
 
-                // Lets user show/hide table columns dynamically
-                const table = document.getElementById("equipment-table");
-                const headerRow = table.querySelector("thead tr");
-                const dataRows = table.querySelectorAll("tbody tr");
-                const container = document.getElementById("column-toggle-list");
+                // --- Client-Side Sorting ---
 
-                // Define initial visibility state for each column
-                const columnSettings = [
-                    { key: "image", label: "Image", visible: false },
-                    { key: "code", label: "Code", visible: true },
-                    { key: "name", label: "Name", visible: true },
-                    { key: "model", label: "Model", visible: true },
-                    { key: "unit", label: "Unit", visible: false },
-                    { key: "qty", label: "Qty", visible: true },
-                    { key: "manufacturer", label: "Manufacturer", visible: false },
-                    { key: "serialNo", label: "Serial No.", visible: true },
-                    { key: "manufacturedDate", label: "Manufactured Date", visible: false },
-                    { key: "commissionedDate", label: "Commissioned Date", visible: false },
-                    { key: "capacity", label: "Capacity", visible: true },
-                    { key: "partsCount", label: "Parts Count", visible: true },
-                    { key: "remarks", label: "Remarks", visible: false }
-                ];
+                // Enables interactive column sorting in the table (client-side)
+                const table = document.getElementById('equipment-table');
+                const headers = table.querySelectorAll('th[data-sort]');
+                let currentSort = { field: null, direction: 'asc' };
 
-                // Render toggle UI and sync with table columns
-                columnSettings.forEach((col, index) => {
-                    const div = document.createElement("div");
-                    div.className = "px-3 py-1";
-                    div.style.cursor = "pointer";
-                    div.style.userSelect = "none";
+                headers.forEach(header => {
+                    header.addEventListener('click', () => {
+                        const field = header.dataset.sort;
+                        const isAsc = (currentSort.field === field && currentSort.direction === 'asc');
+                        const direction = isAsc ? 'desc' : 'asc';
 
-                    div.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <span class="column-checkbox" data-index="${index}" 
-                            style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
-                            ${col.visible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
-                            ${col.visible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
-                        </span>
-                        <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
-                    </div>`;
-
-                    const checkboxSpan = div.querySelector(".column-checkbox");
-                    const th = headerRow.children[index];
-                    const tds = dataRows.length > 0
-                        ? Array.from(dataRows).map(row => row.children[index])
-                        : [];
-
-                    if (th && !col.visible) {
-                        th.style.display = "none";
-                    }
-
-                    if (!col.visible) {
-                        if (th) th.style.display = "none";
-                        tds.forEach(td => {
-                            if (td && !td.hasAttribute('colspan')) {
-                                td.style.display = "none";
+                        headers.forEach(h => {
+                            const icon = h.querySelector('.sort-indicator');
+                            if (icon) {
+                                icon.className = 'fas fa-sort text-white-50 ml-1 sort-indicator';
                             }
                         });
-                    }
 
-                    div.addEventListener("click", function (e) {
-                        e.stopPropagation();
-                        const isChecked = checkboxSpan.innerHTML.trim() !== "";
-                        if (isChecked) {
-                            checkboxSpan.style.backgroundColor = "";
-                            checkboxSpan.innerHTML = "";
-                            th.style.display = "none";
-                            tds.forEach(td => td.style.display = "none");
-                        } else {
-                            checkboxSpan.style.backgroundColor = "#007bff";
-                            checkboxSpan.style.borderColor = "#007bff";
-                            checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
-                            th.style.display = "";
-                            tds.forEach(td => td.style.display = "");
+                        // Update active sort indicator
+                        const activeIcon = header.querySelector('.sort-indicator');
+                        if (activeIcon) {
+                            activeIcon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-white ml-1 sort-indicator`;
                         }
+
+                        currentSort = { field, direction };
+                        sortTable(field, direction);
                     });
-
-                    container.appendChild(div);
                 });
 
-                // Search on Enter
-                document.getElementById('equipmentSearchInput').addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const keyword = this.value.trim();
-                        const url = new URL(window.location);
-                        url.searchParams.set('keyword', keyword);
-                        url.searchParams.set('page', '1');
-                        window.location.href = url.toString();
-                    }
-                });
+                // --- Server-Side Sorting UI ---
 
-                // Preserve all params when sorting
+                // Maps sort fields to human-readable labels for the sort dropdown
                 const sortFieldLabels = {
                     'code': 'Code',
                     'name': 'Name',
@@ -428,21 +545,6 @@
                     'remarks': 'Remarks'
                 };
 
-                function findGetParam(name) {
-                    const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
-                    return m ? decodeURIComponent(m[1]) : '';
-                }
-
-                function buildUrl(sortByValue) {
-                    const base = '/equiments';
-                    const p = [
-                        'keyword', 'size'
-                    ].map(k => k + '=' + encodeURIComponent(findGetParam(k)));
-                    p.push('sortBy=' + encodeURIComponent(sortByValue));
-                    p.push('asc=' + encodeURIComponent(ascInput.value));
-                    return base + '?' + p.join('&');
-                }
-
                 const sortContainer = document.getElementById('sort-column-container');
                 const currentSortBy = sortByInput.value;
 
@@ -450,11 +552,12 @@
                     const a = document.createElement('a');
                     a.className = 'dropdown-item sort-column';
                     a.textContent = label;
-                    a.href = buildUrl(field);
+                    a.href = buildSortUrl(field);
                     if (field === currentSortBy) a.classList.add('active');
                     sortContainer.appendChild(a);
                 }
 
+                // Handle ascending/descending toggle in sort direction dropdown
                 document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
                     item.addEventListener('click', function (e) {
                         e.preventDefault();
@@ -465,20 +568,143 @@
                         document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
                         this.classList.add('active');
 
-                        // Navigate
-                        window.location.href = buildUrl(sortByInput.value);
+                        window.location.href = buildSortUrl(sortByInput.value);
                     });
                 });
 
-                // Preserve all params when apply filter
+                // --- Search Equipment ---
+
+                // Search on Enter
+                document.getElementById('equipmentSearchInput').addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const keyword = this.value.trim();
+                        const url = new URL(window.location);
+                        url.searchParams.set('keyword', keyword);
+                        url.searchParams.set('page', '1');
+                        window.location.href = url.toString();
+                    }
+                });
+
+                // --- Column Visibility Toggle ---
+
+                // Initialize column visibility: use defaults from columnSettings, overridden by URL
+                const headerRow = table.querySelector("thead tr");
+                const dataRows = table.querySelectorAll("tbody tr");
+                const container = document.getElementById("column-toggle-list");
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const hiddenColumnsParam = urlParams.get('hiddenColumns');
+                const hiddenSet = hiddenColumnsParam ? new Set(hiddenColumnsParam.split(',')) : null;
+
+                const columnSettings = [
+                    { key: "image", label: "Image", visible: false },
+                    { key: "code", label: "Code", visible: true },
+                    { key: "name", label: "Name", visible: true },
+                    { key: "model", label: "Model", visible: true },
+                    { key: "status", label: "Status", visible: true },
+                    { key: "unit", label: "Unit", visible: false },
+                    { key: "qty", label: "Qty", visible: true },
+                    { key: "manufacturer", label: "Manufacturer", visible: false },
+                    { key: "serialNo", label: "Serial No.", visible: true },
+                    { key: "manufacturedDate", label: "Manufactured Date", visible: false },
+                    { key: "commissionedDate", label: "Commissioned Date", visible: false },
+                    { key: "capacity", label: "Capacity", visible: true },
+                    { key: "remarks", label: "Remarks", visible: false }
+                ];
+
+                columnSettings.forEach((col, index) => {
+                    let isVisible = col.visible;
+                    // Override if URL specifies hidden state
+                    if (hiddenSet !== null) {
+                        isVisible = !hiddenSet.has(col.key);
+                    }
+
+                    const div = document.createElement("div");
+                    div.className = "px-3 py-1";
+                    div.style.cursor = "pointer";
+                    div.style.userSelect = "none";
+                    div.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="column-checkbox" data-index="${index}" 
+                            style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
+                            ${isVisible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
+                            ${isVisible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
+                        </span>
+                        <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
+                    </div>`;
+
+                    const checkboxSpan = div.querySelector(".column-checkbox");
+                    const th = headerRow.children[index];
+                    const tds = Array.from(dataRows).map(row => row.children[index]);
+
+                    // Apply initial visibility
+                    if (!isVisible) {
+                        if (th) th.style.display = "none";
+                        tds.forEach(td => {
+                            if (td && !td.hasAttribute('colspan')) {
+                                td.style.display = "none";
+                            }
+                        });
+                    }
+
+                    // Toggle visibility on click
+                    div.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        const wasVisible = checkboxSpan.innerHTML.trim() !== "";
+                        const newVisible = !wasVisible;
+
+                        if (newVisible) {
+                            checkboxSpan.style.backgroundColor = "#007bff";
+                            checkboxSpan.style.borderColor = "#007bff";
+                            checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
+                            th.style.display = "";
+                            tds.forEach(td => td.style.display = "");
+                        } else {
+                            checkboxSpan.style.backgroundColor = "";
+                            checkboxSpan.innerHTML = "";
+                            th.style.display = "none";
+                            tds.forEach(td => td.style.display = "none");
+                        }
+
+                        // Build list of currently hidden columns
+                        const currentlyHidden = [];
+                        columnSettings.forEach((c, idx) => {
+                            const thEl = headerRow.children[idx];
+                            if (thEl && thEl.style.display === "none") {
+                                currentlyHidden.push(c.key);
+                            }
+                        });
+
+                        // Update URL without reload
+                        const url = new URL(window.location);
+                        if (currentlyHidden.length > 0) {
+                            url.searchParams.set('hiddenColumns', currentlyHidden.join(','));
+                        } else {
+                            url.searchParams.delete('hiddenColumns');
+                        }
+                        window.history.replaceState({}, '', url);
+                        updatePaginationLinks();
+                    });
+
+                    container.appendChild(div);
+                });
+
+                // --- Page Size Control ---
+
+                // Reload page with new page size
                 document.getElementById('pageSizeSelect').addEventListener('change', function () {
-                    const size = this.value;
                     const url = new URL(window.location);
-                    url.searchParams.set('size', size);
+                    url.searchParams.set('size', this.value);
+
+                    const hidden = new URLSearchParams(window.location.search).get('hiddenColumns');
+                    if (hidden) url.searchParams.set('hiddenColumns', hidden);
                     window.location.href = url.toString();
                 });
 
-                // Auto-show Flash Modal
+                // --- Flash Message Modal ---
+
+                // Auto-show flash message modal if present
                 const flashModalContainer = document.getElementById('flashMessageModalContainer');
                 if (flashModalContainer) {
                     const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
@@ -520,6 +746,168 @@
                     e.preventDefault();
                     exportWizard.exportToPdf('Equipments List');
                 });
+
+
+
+
+
+
+
+
+                // // Lets user show/hide table columns dynamically
+                // const table = document.getElementById("equipment-table");
+                // const headerRow = table.querySelector("thead tr");
+                // const dataRows = table.querySelectorAll("tbody tr");
+                // const container = document.getElementById("column-toggle-list");
+
+                // // Define initial visibility state for each column
+                // const columnSettings = [
+                //     { key: "image", label: "Image", visible: false },
+                //     { key: "code", label: "Code", visible: true },
+                //     { key: "name", label: "Name", visible: true },
+                //     { key: "model", label: "Model", visible: true },
+                //     { key: "unit", label: "Unit", visible: false },
+                //     { key: "qty", label: "Qty", visible: true },
+                //     { key: "manufacturer", label: "Manufacturer", visible: false },
+                //     { key: "serialNo", label: "Serial No.", visible: true },
+                //     { key: "manufacturedDate", label: "Manufactured Date", visible: false },
+                //     { key: "commissionedDate", label: "Commissioned Date", visible: false },
+                //     { key: "capacity", label: "Capacity", visible: true },
+                //     { key: "remarks", label: "Remarks", visible: false }
+                // ];
+
+                // // Render toggle UI and sync with table columns
+                // columnSettings.forEach((col, index) => {
+                //     const div = document.createElement("div");
+                //     div.className = "px-3 py-1";
+                //     div.style.cursor = "pointer";
+                //     div.style.userSelect = "none";
+
+                //     div.innerHTML = `
+                //     <div class="d-flex align-items-center">
+                //         <span class="column-checkbox" data-index="${index}" 
+                //             style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
+                //             ${col.visible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
+                //             ${col.visible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
+                //         </span>
+                //         <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
+                //     </div>`;
+
+                //     const checkboxSpan = div.querySelector(".column-checkbox");
+                //     const th = headerRow.children[index];
+                //     const tds = dataRows.length > 0
+                //         ? Array.from(dataRows).map(row => row.children[index])
+                //         : [];
+
+                //     if (th && !col.visible) {
+                //         th.style.display = "none";
+                //     }
+
+                //     if (!col.visible) {
+                //         if (th) th.style.display = "none";
+                //         tds.forEach(td => {
+                //             if (td && !td.hasAttribute('colspan')) {
+                //                 td.style.display = "none";
+                //             }
+                //         });
+                //     }
+
+                //     div.addEventListener("click", function (e) {
+                //         e.stopPropagation();
+                //         const isChecked = checkboxSpan.innerHTML.trim() !== "";
+                //         if (isChecked) {
+                //             checkboxSpan.style.backgroundColor = "";
+                //             checkboxSpan.innerHTML = "";
+                //             th.style.display = "none";
+                //             tds.forEach(td => td.style.display = "none");
+                //         } else {
+                //             checkboxSpan.style.backgroundColor = "#007bff";
+                //             checkboxSpan.style.borderColor = "#007bff";
+                //             checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
+                //             th.style.display = "";
+                //             tds.forEach(td => td.style.display = "");
+                //         }
+                //     });
+
+                //     container.appendChild(div);
+                // });
+
+                // // Search on Enter
+                // document.getElementById('equipmentSearchInput').addEventListener('keypress', function (e) {
+                //     if (e.key === 'Enter') {
+                //         e.preventDefault();
+                //         const keyword = this.value.trim();
+                //         const url = new URL(window.location);
+                //         url.searchParams.set('keyword', keyword);
+                //         url.searchParams.set('page', '1');
+                //         window.location.href = url.toString();
+                //     }
+                // });
+
+                // // Preserve all params when sorting
+                // const sortFieldLabels = {
+                //     'code': 'Code',
+                //     'name': 'Name',
+                //     'model': 'Model',
+                //     'unit': 'Unit',
+                //     'qty': 'Qty',
+                //     'manufacturer': 'Manufacturer',
+                //     'serialNo': 'Serial No.',
+                //     'manufacturedDate': 'Manufactured Date',
+                //     'commissionedDate': 'Commissioned Date',
+                //     'capacity': 'Capacity',
+                //     'remarks': 'Remarks'
+                // };
+
+                // function findGetParam(name) {
+                //     const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+                //     return m ? decodeURIComponent(m[1]) : '';
+                // }
+
+                // function buildUrl(sortByValue) {
+                //     const base = '/equiments';
+                //     const p = [
+                //         'keyword', 'size'
+                //     ].map(k => k + '=' + encodeURIComponent(findGetParam(k)));
+                //     p.push('sortBy=' + encodeURIComponent(sortByValue));
+                //     p.push('asc=' + encodeURIComponent(ascInput.value));
+                //     return base + '?' + p.join('&');
+                // }
+
+                // const sortContainer = document.getElementById('sort-column-container');
+                // const currentSortBy = sortByInput.value;
+
+                // for (const [field, label] of Object.entries(sortFieldLabels)) {
+                //     const a = document.createElement('a');
+                //     a.className = 'dropdown-item sort-column';
+                //     a.textContent = label;
+                //     a.href = buildUrl(field);
+                //     if (field === currentSortBy) a.classList.add('active');
+                //     sortContainer.appendChild(a);
+                // }
+
+                // document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
+                //     item.addEventListener('click', function (e) {
+                //         e.preventDefault();
+                //         const asc = this.dataset.asc;
+                //         document.getElementById('ascInput').value = asc;
+
+                //         // Update active class
+                //         document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
+                //         this.classList.add('active');
+
+                //         // Navigate
+                //         window.location.href = buildUrl(sortByInput.value);
+                //     });
+                // });
+
+                // // Preserve all params when apply filter
+                // document.getElementById('pageSizeSelect').addEventListener('change', function () {
+                //     const size = this.value;
+                //     const url = new URL(window.location);
+                //     url.searchParams.set('size', size);
+                //     window.location.href = url.toString();
+                // });
 
             });
 

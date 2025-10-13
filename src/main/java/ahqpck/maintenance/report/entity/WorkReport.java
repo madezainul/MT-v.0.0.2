@@ -88,15 +88,15 @@ public class WorkReport {
     private Scope scope;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "area_code", referencedColumnName = "code", nullable = true)
+    @JoinColumn(name = "area_code", referencedColumnName = "id", nullable = true)
     private Area area;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_code", referencedColumnName = "code", nullable = true)
+    @JoinColumn(name = "equipment_code", referencedColumnName = "id", nullable = true)
     private Equipment equipment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supervisor", referencedColumnName = "employee_id", nullable = true)
+    @JoinColumn(name = "supervisor", referencedColumnName = "id", nullable = true)
     private User supervisor;
 
     @ManyToMany(fetch = FetchType.LAZY)

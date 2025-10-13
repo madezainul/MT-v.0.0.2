@@ -26,8 +26,9 @@ public class PartDTO {
 
     @NotBlank(message = "Section is mandatory")
     private String sectionCode;
-
     private String description;
+    private String category;
+    private String supplier;
     private String image;
 
     @NotNull(message = "Stock quantity is required")

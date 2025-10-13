@@ -46,6 +46,10 @@ public class Part {
 
     private String description;
 
+    private String category;
+
+    private String supplier;
+
     private String image;
 
     @Builder.Default

@@ -1,7 +1,7 @@
 package ahqpck.maintenance.report.controller;
 
+import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.dto.AreaDTO;
-import ahqpck.maintenance.report.dto.ComplaintDTO;
 import ahqpck.maintenance.report.dto.EquipmentDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.dto.WorkReportDTO;
@@ -17,10 +17,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -30,11 +31,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 @Controller
@@ -47,38 +46,60 @@ public class WorkReportController {
     private final EquipmentService equipmentService;
     private final UserService userService;
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping
     public String listWorkReports(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDateTo,
+            @RequestParam(required = false) WorkReport.Status state,
             @RequestParam(required = false) WorkReport.Category group,
+            @RequestParam(required = false) WorkReport.Scope field,
             @RequestParam(required = false) String equipmentCode,
+            @RequestParam(required = false) String hiddenColumns,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") String size,
             @RequestParam(defaultValue = "reportDate") String sortBy,
             @RequestParam(defaultValue = "false") boolean asc,
+            Authentication authentication,
             Model model) {
 
         try {
-
             int zeroBasedPage = page - 1;
             int parsedSize = "All".equalsIgnoreCase(size) ? Integer.MAX_VALUE : Integer.parseInt(size);
 
             LocalDateTime from = reportDateFrom != null ? reportDateFrom.atStartOfDay() : null;
             LocalDateTime to = reportDateTo != null ? reportDateTo.atTime(LocalTime.MAX) : null;
 
-            Page<WorkReportDTO> reportPage = workReportService.getAllWorkReports(keyword, from, to,
-                    group, equipmentCode, zeroBasedPage, parsedSize, sortBy, asc);
-            System.out.println(reportPage);
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                UserDTO currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
+            Page<WorkReportDTO> reportPage = workReportService.getAllWorkReports(keyword, from, to, state,
+                    group, field, equipmentCode, zeroBasedPage, parsedSize, sortBy, asc);
+            
             model.addAttribute("workReports", reportPage);
             model.addAttribute("keyword", keyword);
             model.addAttribute("reportDateFrom", reportDateFrom);
+            model.addAttribute("hiddenColumns", hiddenColumns);
             model.addAttribute("reportDateTo", reportDateTo);
             model.addAttribute("currentPage", page);
             model.addAttribute("pageSize", size);
             model.addAttribute("sortBy", sortBy);
             model.addAttribute("asc", asc);
+
+            model.addAttribute("equipmentCode", equipmentCode);
+            model.addAttribute("group", group);
+            model.addAttribute("field", field);
+            model.addAttribute("state", state);
 
             model.addAttribute("title", "Work Report");
 
@@ -90,17 +111,19 @@ public class WorkReportController {
 
         } catch (Exception e) {
             model.addAttribute("error", "Failed to load work reports: " + e.getMessage());
-            // return "error/500";
-            e.printStackTrace();
+            return "error/500";
+            // e.printStackTrace();
         }
 
         return "work-report/index";
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping
     public String createWorkReport(
             @Valid @ModelAttribute WorkReportDTO workReportDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
             RedirectAttributes ra) {
 
         if (workReportDTO.getTechnicianEmpIds() != null && !workReportDTO.getTechnicianEmpIds().isEmpty()) {
@@ -116,25 +139,26 @@ public class WorkReportController {
 
         if (WebUtil.hasErrors(bindingResult)) {
             ra.addFlashAttribute("error", WebUtil.getErrorMessage(bindingResult));
-            return "redirect:/work-reports";
         }
 
         try {
             workReportService.createWorkReport(workReportDTO);
             ra.addFlashAttribute("success", "Work report created successfully.");
-            return "redirect:/work-reports";
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to create work report: " + e.getMessage());
             ra.addFlashAttribute("workReportDTO", workReportDTO);
-            return "redirect:/work-reports";
         }
+
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/work-reports");
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping("/update")
     public String updateWorkReport(
             @Valid @ModelAttribute WorkReportDTO workReportDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
             RedirectAttributes ra) {
 
         if (workReportDTO.getTechnicianEmpIds() != null && !workReportDTO.getTechnicianEmpIds().isEmpty()) {
@@ -150,31 +174,33 @@ public class WorkReportController {
 
         if (WebUtil.hasErrors(bindingResult)) {
             ra.addFlashAttribute("error", WebUtil.getErrorMessage(bindingResult));
-            return "redirect:/work-reports";
         }
 
         try {
             workReportService.updateWorkReport(workReportDTO);
             ra.addFlashAttribute("success", "Work report updated successfully.");
-            return "redirect:/work-reports";
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to update work report: " + e.getMessage());
             ra.addFlashAttribute("workReportDTO", workReportDTO);
-            return "redirect:/work-reports";
         }
+
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/work-reports");
     }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN')")
     @GetMapping("/delete/{id}")
-    public String deleteWorkReport(@PathVariable String id, RedirectAttributes ra) {
+    public String deleteWorkReport(@PathVariable String id, @RequestParam(required = false) String redirectUrl, RedirectAttributes ra) {
         try {
             workReportService.deleteWorkReport(id);
             ra.addFlashAttribute("success", "Work report deleted successfully.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to delete work report: " + e.getMessage());
         }
-        return "redirect:/work-reports";
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/work-reports");
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/import")
     public String importWorkReports(
             @RequestParam("data") String dataJson,

@@ -2,12 +2,14 @@ package ahqpck.maintenance.report.service;
 
 import ahqpck.maintenance.report.dto.AssigneeDailyStatusDTO;
 import ahqpck.maintenance.report.dto.AssigneeDailyStatusDetailDTO;
+import ahqpck.maintenance.report.dto.AssigneeTotalStatusDTO;
 import ahqpck.maintenance.report.dto.DailyBreakdownDTO;
 import ahqpck.maintenance.report.dto.DailyComplaintDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportEquipmentDTO;
 import ahqpck.maintenance.report.dto.EquipmentComplaintCountDTO;
 import ahqpck.maintenance.report.dto.EquipmentCountDTO;
+import ahqpck.maintenance.report.dto.EquipmentStatusDTO;
 import ahqpck.maintenance.report.dto.EquipmentWorkReportDTO;
 import ahqpck.maintenance.report.dto.MonthlyBreakdownDTO;
 import ahqpck.maintenance.report.dto.MonthlyComplaintDTO;
@@ -67,7 +69,7 @@ public class DashboardService {
 
         if (from == null || to == null) {
             to = LocalDateTime.now().with(LocalTime.MAX);
-            from = to.minusDays(2);
+            from = to.minusDays(6);
         }
 
         LocalDate fromDate = from.toLocalDate();
@@ -150,8 +152,40 @@ public class DashboardService {
         return response;
     }
 
-    public List<EquipmentComplaintCountDTO> getEquipmentComplaintCount() {
-        return dashboardRepository.getEquipmentComplaintCount();
+    public List<AssigneeTotalStatusDTO> getAssigneeTotalStatus() {
+        List<Object[]> results = dashboardRepository.getAssigneeTotalStatus();
+
+        Map<String, AssigneeTotalStatusDTO> assigneeMap = new LinkedHashMap<>();
+
+        // Initialize all assignees
+        for (Object[] row : results) {
+            String assigneeName = (String) row[0];
+            String assigneeEmpId = (String) row[1];
+            String key = assigneeName + "|" + assigneeEmpId;
+
+            assigneeMap.computeIfAbsent(key, k -> new AssigneeTotalStatusDTO(assigneeName, assigneeEmpId, 0, 0, 0));
+        }
+
+        // Populate counts
+        for (Object[] row : results) {
+            String assigneeName = (String) row[0];
+            String assigneeEmpId = (String) row[1];
+            String status = (String) row[2];
+            int count = Math.toIntExact(((Number) row[3]).longValue());
+
+            String key = assigneeName + "|" + assigneeEmpId;
+            AssigneeTotalStatusDTO dto = assigneeMap.get(key);
+
+            if (dto != null) {
+                switch (status) {
+                    case "OPEN" -> dto.setTotalOpen(count);
+                    case "PENDING" -> dto.setTotalPending(count);
+                    case "CLOSED" -> dto.setTotalClosed(count);
+                }
+            }
+        }
+
+        return new ArrayList<>(assigneeMap.values());
     }
 
     public List<DailyBreakdownDTO> getDailyBreakdownTime(LocalDate from, LocalDate to) {
@@ -211,5 +245,9 @@ public class DashboardService {
 
     public List<EquipmentCountDTO> getEquipmentCount() {
         return dashboardRepository.getEquipmentCount();
+    }
+
+    public List<EquipmentStatusDTO> getEquipmentStatus() {
+        return dashboardRepository.getEquipmentStatus();
     }
 }

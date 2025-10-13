@@ -8,6 +8,8 @@
 
 <body>
     <div layout:fragment="content">
+        <div th:replace="~{fragments/part-modal :: part-modal}"></div>
+        <div th:replace="~{fragments/error-modal :: error-modal}"></div>
         <div class="page-inner">
             <div class="page-header">
                 <h4 class="page-title" th:text="${title}"></h4>
@@ -56,12 +58,12 @@
 
                                 <!-- Editable subject field -->
                                 <h3 class="mb-3 pb-2" contenteditable="true" th:id="${'subject-field'}"
-                                    th:data-original="${complaint.subject ?: '-'}" th:text="${complaint.subject ?: '-'}"
+                                    th:data-original="${complaint.subject ?: ''}" th:text="${complaint.subject ?: ''}"
                                     style="cursor: text; border-bottom: 2px dashed #ccc; transition: border-color 0.2s;"
                                     onfocus="this.style.borderBottom = '2px dashed #007bff';"
                                     onblur="this.style.borderBottom = '2px dashed #ccc'; updateHiddenInput(this, 'subject-input');">
                                 </h3>
-                                <input type="hidden" name="subject" th:value="${complaint.subject ?: '-'}"
+                                <input type="hidden" name="subject" th:value="${complaint.subject ?: ''}"
                                     id="subject-input" />
 
                                 <!-- Priority & category badges -->
@@ -200,9 +202,7 @@
                                         <!-- Report Date -->
                                         <p class="mb-2">
                                             <strong>Report Date:</strong>
-                                            <span id="report-date-field" class="ml-2 editable-field"
-                                                style="cursor: pointer; border-bottom: 1px dashed #ccc;"
-                                                title="Click to edit"
+                                            <span th:id="${'report-date-field'}"
                                                 th:data-original="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'yyyy-MM-dd HH:mm') : '-'}"
                                                 th:text="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'MMM d, yyyy HH:mm') : '-'}">
                                             </span>
@@ -241,13 +241,11 @@
                                         <i class="fas fa-align-left mr-2 text-primary"></i> Description
                                     </h5>
                                     <textarea id="description-field" class="form-control" rows="6" readonly
-                                        th:data-original="${complaint.description ?: '-'}"
-                                        th:text="${complaint.description ?: '-'}"
-                                        style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;"
-                                        onclick="this.readOnly = false; this.style.backgroundColor = '#fff'; this.style.boxShadow = '0 0 0 0.2rem rgba(0,123,255,.1)'; this.focus();"
-                                        onblur="updateHiddenInput(this, 'description-input')">
-                        </textarea>
-                                    <input type="hidden" name="description" th:value="${complaint.description ?: '-'}"
+                                        th:data-original="${complaint.description ?: ''}"
+                                        th:text="${complaint.description ?: ''}"
+                                        style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;">
+                                    </textarea>
+                                    <input type="hidden" name="description" th:value="${complaint.description ?: ''}"
                                         id="description-input" />
                                 </div>
 
@@ -257,13 +255,13 @@
                                         <i class="fas fa-wrench mr-2 text-success"></i> Action Taken
                                     </h5>
                                     <textarea id="action-taken-field" class="form-control" rows="6" readonly
-                                        th:data-original="${complaint.actionTaken ?: '-'}"
-                                        th:text="${complaint.actionTaken ?: '-'}"
+                                        th:data-original="${complaint.actionTaken ?: ''}"
+                                        th:text="${complaint.actionTaken ?: ''}"
                                         style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;"
                                         onclick="this.readOnly = false; this.style.backgroundColor = '#fff'; this.style.boxShadow = '0 0 0 0.2rem rgba(0,123,255,.1)'; this.focus();"
                                         onblur="updateHiddenInput(this, 'action-taken-input')">
-                        </textarea>
-                                    <input type="hidden" name="actionTaken" th:value="${complaint.actionTaken ?: '-'}"
+                                    </textarea>
+                                    <input type="hidden" name="actionTaken" th:value="${complaint.actionTaken ?: ''}"
                                         id="action-taken-input" />
                                 </div>
 
@@ -375,10 +373,6 @@
                                         </button>
                                     </div>
 
-                                    <!-- Include Modal -->
-                                    <div th:replace="~{fragments/delete-modal :: delete-modal}"></div>
-                                    <div th:replace="~{fragments/part-modal :: part-modal}"></div>
-
                                     <!-- Parts Table -->
                                     <div class="table-responsive">
                                         <table class="table table-hover table-sm" id="partsTable">
@@ -454,6 +448,7 @@
         </script>
 
         <script>
+
             function setupLiveSearchInput(inputId, dropdownId, hiddenNameId, hiddenIdId, datalistId, labelField = 'item', dataAttr) {
                 const input = document.getElementById(inputId);
                 const dropdown = document.getElementById(dropdownId);
@@ -533,7 +528,8 @@
 
                         div.innerHTML = `
                 ${highlightedLabel}
-                <small class="text-muted ms-1">(${highlightedId})</small>`;
+                <small class="text-muted ms-1">(${highlightedId})</small>
+            `;
 
                         div.addEventListener('click', () => {
                             input.value = opt.fullText;
@@ -602,21 +598,33 @@
                 input.setAttribute('list', '');
             }
 
+
+
             document.addEventListener("DOMContentLoaded", function () {
-                // --- Delete Modal Trigger ---
+
+                // Handle Delete button click
                 document.querySelectorAll('.delete-row').forEach(button => {
                     button.addEventListener('click', function () {
                         const name = this.dataset.name;
                         const id = this.dataset.id;
+                        console.log('Delete button clicked for ID:', id, 'Name:', name);
 
-                        console.log(name, id)
-                        document.getElementById('deleteDocName').textContent = name;
-                        document.getElementById('confirmDeleteButton').href = '/complaints/delete/' + encodeURIComponent(id);
+                        document.getElementById('deleteComplaintName').textContent = name;
+                        document.getElementById('confirmDeleteComplaintButton').href = '/complaints/delete/' + encodeURIComponent(id);
 
-                        const modal = new bootstrap.Modal(document.getElementById('deleteRowModal'));
+                        const modal = new bootstrap.Modal(document.getElementById('deleteComplaintModal'));
                         modal.show();
                     });
                 });
+
+                // --- Flash Message Modal ---
+
+                // Auto-show flash message modal if present
+                const flashModalContainer = document.getElementById('flashMessageModalContainer');
+                if (flashModalContainer) {
+                    const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
+                    flashModal.show();
+                }
 
                 setupLiveSearchInput('assigneeInput', 'assigneeDropdown', 'assigneeName', 'assigneeEmployeeId', 'userOptions', 'Assignee', 'employeeId');
                 setupLiveSearchInput('areaInput', 'areaDropdown', 'areaName', 'areaCode', 'areaOptions', 'Area', 'code');
@@ -863,7 +871,7 @@
                 }
 
                 // Initialize
-                makeDateEditable('report-date-field', 'reportDateInput', 'datetime-local');
+                // makeDateEditable('report-date-field', 'reportDateInput', 'datetime-local');
 
                 // === 6. Update Badge Class ===
                 function updateBadgeClass(badge, value) {

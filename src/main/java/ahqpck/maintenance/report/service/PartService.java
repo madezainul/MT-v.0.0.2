@@ -7,6 +7,10 @@ import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.repository.EquipmentPartBOMRepository;
 import ahqpck.maintenance.report.specification.PartSpecification;
 import ahqpck.maintenance.report.util.FileUploadUtil;
+import ahqpck.maintenance.report.specification.PartSpecification;
+import ahqpck.maintenance.report.util.FileUploadUtil;
+import ahqpck.maintenance.report.util.ImportUtil;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +35,10 @@ public class PartService {
     private final EquipmentPartBOMRepository equipmentPartBOMRepository;
 
     private final FileUploadUtil fileUploadUtil;
+    private final Validator validator;
+
+    private final FileUploadUtil fileUploadUtil;
+    private final ImportUtil importUtil;
 
     public Page<PartDTO> getAllParts(String keyword, int page, int size, String sortBy, boolean asc) {
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -49,6 +57,7 @@ public class PartService {
     }
 
     public void createPart(PartDTO dto, MultipartFile imageFile) {
+
         if (partRepository.existsByCodeIgnoreCase(dto.getCode())) {
             throw new IllegalArgumentException("Part with this code already exists.");
         }
@@ -60,6 +69,8 @@ public class PartService {
         part.setCategoryName(dto.getCategoryName());
         part.setSupplierName(dto.getSupplierName());
         part.setSectionCode(dto.getSectionCode());
+        part.setCategory(dto.getCategory());
+        part.setSupplier(dto.getSupplier());
         part.setStockQuantity(dto.getStockQuantity() != null ? dto.getStockQuantity() : 0);
 
         if (imageFile != null && !imageFile.isEmpty()) {
@@ -119,6 +130,8 @@ public class PartService {
         part.setCategoryName(dto.getCategoryName());
         part.setSupplierName(dto.getSupplierName());
         part.setSectionCode(dto.getSectionCode());
+        part.setCategory(dto.getCategory());
+        part.setSupplier(dto.getSupplier());
         part.setStockQuantity(dto.getStockQuantity() != null ? dto.getStockQuantity() : 0);
     }
 
@@ -138,6 +151,10 @@ public class PartService {
         long equipmentCount = equipmentPartBOMRepository.countEquipmentByPartId(part.getId());
         dto.setEquipmentCount((int) equipmentCount);
         
+        dto.setCategory(part.getCategory());
+        dto.setSupplier(part.getSupplier());
+        dto.setImage(part.getImage());
+        dto.setStockQuantity(part.getStockQuantity());
         return dto;
     }
 }

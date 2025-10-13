@@ -42,4 +42,9 @@ public class EquipmentDTO {
     
     // BOM related fields
     private Integer partsCount = 0; // Number of parts in this equipment's BOM
+
+    private Long totalOpenWorkReports;
+    private Long totalOpenComplaints;
+    private Long totalPendingWorkReports;
+    private Long totalPendingComplaints;
 }

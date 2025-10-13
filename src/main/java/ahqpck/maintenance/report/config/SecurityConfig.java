@@ -13,43 +13,43 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // ← Add this!
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsServiceImpl userDetailsServiceImpl;
-    private final LoginFailureHandler loginFailureHandler;
+	private final UserDetailsServiceImpl userDetailsServiceImpl;
+	private final LoginFailureHandler loginFailureHandler;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login", "/forgot-password", "/css/**", "/js/**", "/assets/**",
-                                "/users/**", "/**")
-                        .permitAll()
-                        // .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .formLogin(form -> form
-                        .loginPage("/login") // Custom login URL
-                        .loginProcessingUrl("/login") // Default POST endpoint
-                        .usernameParameter("usernameOrEmployeeId") // ← matches your input name
-                        .passwordParameter("password")
-                        .failureHandler(loginFailureHandler)
-                        .defaultSuccessUrl("/", true) // After login, go to home
-                        // .failureUrl("/login?error") // On fail, back to login with ?error
-                        .permitAll())
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
-                        .permitAll())
-                .userDetailsService(userDetailsServiceImpl);
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+				.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(
+								"/**", "/register", "/login", "/forgot-password",
+								"/reset-password",
+								"/css/**", "/js/**", "/assets/**")
+						.permitAll()
+						.anyRequest().authenticated())
+				.formLogin(form -> form
+						.loginPage("/login")
+						.loginProcessingUrl("/login")
+						.usernameParameter("usernameOrEmployeeId")
+						.passwordParameter("password")
+						.failureHandler(loginFailureHandler)
+						.defaultSuccessUrl("/", true)
+						.permitAll())
+				.logout(logout -> logout
+						.logoutUrl("/logout")
+						.logoutSuccessUrl("/login?logout")
+						.permitAll())
+				.userDetailsService(userDetailsServiceImpl);
 
-        return http.build();
-    }
+		return http.build();
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 }

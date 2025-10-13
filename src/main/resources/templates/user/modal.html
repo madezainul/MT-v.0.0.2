@@ -13,7 +13,7 @@
                 <div class="modal-body p-4">
                     <form th:action="@{/users}" th:object="${userDTO}" method="post" enctype="multipart/form-data"
                         id="formAdd">
-                        
+
                         <div class="form-row">
                             <div class="col-md-12">
                                 <div class="form-group">
@@ -25,7 +25,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -46,7 +46,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -57,22 +57,22 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Role(s) <span class="text-danger">*</span></label>
-                                    
+
                                     <select id="roleSelect" name="roleNames" multiple style="display: none;">
                                         <option th:each="role : ${roles}" th:value="${role.name}"
                                             th:text="${role.name}"></option>
                                     </select>
-                                    
+
                                     <div class="tag-input" id="tagInput">
                                         <div class="tag-list" id="tagList"></div>
                                         <input type="text" id="tagSearch" class="tag-input-field"
                                             placeholder="Add role..." list="roleOptions">
                                     </div>
-                                    
+
                                     <datalist id="roleOptions">
                                         <option th:each="role : ${roles}" th:value="${role.name}"></option>
                                     </datalist>
-                                    
+
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('roleNames')}"
                                         th:errors="*{roleNames}">
                                         Please select at least one role.
@@ -103,7 +103,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -173,6 +173,7 @@
                     <form th:action="@{/users/update}" th:object="${user}" method="post" enctype="multipart/form-data"
                         id="formEdit">
                         <input type="hidden" name="id" id="editId">
+                        <input type="hidden" name="redirectUrl" id="redirectUrl">
 
                         <div class="form-group">
                             <label>Full Name <span class="text-danger">*</span></label>
@@ -211,7 +212,7 @@
                                     <label>Role(s) <span class="text-danger">*</span></label>
                                     <select id="editRoleSelect" name="roleNames" multiple
                                         style="display: none;"></select>
-                                        
+
                                     <div class="tag-input" id="editTagInput">
                                         <div class="tag-list" id="editTagList"></div>
                                         <input type="text" id="editTagSearch" class="tag-input-field"
@@ -512,6 +513,11 @@
 
         // Unified Tag Input Logic
         document.addEventListener("DOMContentLoaded", function () {
+            const redirectUrlInput = document.getElementById('redirectUrl');
+            if (redirectUrlInput) {
+                redirectUrlInput.value = window.location.href;
+            }
+
             const datalist = document.getElementById("roleOptions");
             const options = Array.from(datalist?.options || []).map(opt => opt.value);
 
@@ -590,6 +596,27 @@
             setupTagInput("editTagInput", "editTagList", "editTagSearch", "editRoleSelect");
 
             // Status Switch Toggle
+            // Status Switch Toggle for ADD form
+            const addSwitchEl = document.getElementById("statusSwitch");
+            const addStatusText = document.getElementById("statusText");
+            const addStatusHidden = document.getElementById("statusTextHidden");
+
+            if (addSwitchEl && addStatusText && addStatusHidden) {
+                // Set default state (optional)
+                addStatusText.textContent = "ACTIVE";
+                addStatusHidden.value = "ACTIVE";
+
+                addSwitchEl.addEventListener("change", () => {
+                    if (addSwitchEl.checked) {
+                        addStatusText.textContent = "ACTIVE";
+                        addStatusHidden.value = "ACTIVE";
+                    } else {
+                        addStatusText.textContent = "INACTIVE";
+                        addStatusHidden.value = "INACTIVE";
+                    }
+                });
+            }
+
             const switchEl = document.getElementById("editStatusSwitch");
             const statusText = document.getElementById("editStatusText");
             const statusHidden = document.getElementById("editStatusTextHidden");
@@ -597,10 +624,10 @@
             if (switchEl && statusText && statusHidden) {
                 switchEl.addEventListener("change", () => {
                     if (switchEl.checked) {
-                        statusText.textContent = "Active";
+                        statusText.textContent = "ACTIVE";
                         statusHidden.value = "ACTIVE";
                     } else {
-                        statusText.textContent = "Inactive";
+                        statusText.textContent = "INACTIVE";
                         statusHidden.value = "INACTIVE";
                     }
                 });

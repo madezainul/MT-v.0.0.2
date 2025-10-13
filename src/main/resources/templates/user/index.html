@@ -30,7 +30,7 @@
                 </ul>
 
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <button class="btn btn-primary mt-2 mr-2" data-toggle="modal" data-target="#importModal">
+                    <button class="btn btn-primary mt-2 mr-2" data-toggle="modal" data-target="#importModal" sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                         <i class="fa fa-download mr-1"></i> Import
                     </button>
                     <button class="btn btn-primary dropdown-toggle mt-2 mr-2" type="button" id="exportDropdown"
@@ -45,7 +45,7 @@
                             <i class="fa fa-file-pdf mr-2 text-danger"></i> PDF
                         </a>
                     </div>
-                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal">
+                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal" sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                         <i class="fa fa-plus-circle mr-2"></i> Add
                     </button>
                 </div>
@@ -123,39 +123,79 @@
                                 <table id="user-table" class="display table table-striped table-hover">
                                     <thead class="bg-primary text-white">
                                         <tr>
-                                            <th style="width: 50px;">Image</th>
-                                            <th style="min-width: 135px;">Full Name</th>
-                                            <th style="min-width: 50px;">Employee ID</th>
-                                            <th style="min-width: 50px;">Email</th>
-                                            <th style="min-width: 50px;">Designation</th>
-                                            <th style="min-width: 50px;">Role(s)</th>
-                                            <th style="min-width: 50px;">Nationality</th>
-                                            <th style="min-width: 135px;">Join Date</th>
-                                            <th style="min-width: 150px;">Phone Number</th>
-                                            <th style="min-width: 50px;">Status</th>
-                                            <th style="min-width: 125px;">Created At</th>
-                                            <th style="min-width: 125px;">Activated At</th>
+                                            <th style="min-width: 50px;">
+                                                Image</i>
+                                            </th>
+                                            <th style="min-width: 135px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="name">
+                                                Full Name <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="employeeId">
+                                                Employee ID <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="email">
+                                                Email <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="designation">
+                                                Designation <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="role">
+                                                Role(s) <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="nationality">
+                                                Nationality <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 135px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="joinDate">
+                                                Join Date <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 150px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="phoneNumber">
+                                                Phone Number <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="status">
+                                                Status <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="createdAt">
+                                                Created At <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="activatedAt">
+                                                Activated At <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
                                             <th style="min-width: 50px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="user : ${users.content}" class="table-row-hover">
+                                        <tr th:each="user : ${users.content}" th:data-id="${user.id}" class="table-row-hover">
                                             <td data-field="image">
                                                 <div class="avatar-lg my-2">
                                                     <img th:src="${user.image != null} ? @{/upload/user/image/__${user.image}__} : @{/assets/img/arashmil.jpg}"
                                                         class="rounded-circle avatar-img" alt="User Avatar" />
                                                 </div>
                                             </td>
-                                            <td data-field="name" th:text="${user.name ?: '-'}"></td>
-                                            <td data-field="employeeId" th:text="${user.employeeId ?: '-'}"></td>
-                                            <td data-field="email" th:text="${user.email ?: '-'}"></td>
-                                            <td data-field="designation" th:text="${user.designation ?: '-'}"></td>
+                                            <td data-field="name" th:text="${user.name ?: ''}"></td>
+                                            <td data-field="employeeId" th:text="${user.employeeId ?: ''}"></td>
+                                            <td data-field="email" th:text="${user.email ?: ''}"></td>
+                                            <td data-field="designation" th:text="${user.designation ?: ''}"></td>
                                             <td data-field="role">
                                                 <th:block
                                                     th:if="${user.roles != null and not #lists.isEmpty(user.roles)}">
                                                     <th:block th:each="role : ${user.roles}">
                                                         <span class="badge badge-secondary"
-                                                            th:text="${role.name ?: '-'}"></span>
+                                                            th:text="${role.name ?: ''}"></span>
                                                     </th:block>
                                                 </th:block>
                                                 <th:block
@@ -163,33 +203,36 @@
                                                     -
                                                 </th:block>
                                             </td>
-                                            <td data-field="nationality" th:text="${user.nationality ?: '-'}"></td>
+                                            <td data-field="nationality" th:text="${user.nationality ?: ''}"></td>
                                             <td data-field="joinDate"
-                                                th:text="${user.joinDate != null ? #temporals.format(user.joinDate, 'yyyy-MM-dd') : '-'}">
+                                                th:text="${user.joinDate != null ? #temporals.format(user.joinDate, 'yyyy-MM-dd') : ''}">
                                             </td>
-                                            <td data-field="phoneNumber" th:text="${user.phoneNumber ?: '-'}"></td>
+                                            <td data-field="phoneNumber" th:text="${user.phoneNumber ?: ''}"></td>
                                             <td data-field="status">
                                                 <span class="badge badge-pill px-3 py-2"
                                                     th:classappend="${user.status == user.status.ACTIVE ? 'badge-success' : 'badge-danger'}"
-                                                    th:text="${user.status != null ? user.status : '-'}"></span>
+                                                    th:text="${user.status != null ? user.status : ''}"></span>
                                             </td>
                                             <td data-field="createdAt"
-                                                th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">
+                                                th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : ''}">
                                             </td>
                                             <td data-field="activatedAt"
-                                                th:text="${user.activatedAt != null ? #temporals.format(user.activatedAt, 'yyyy-MM-dd HH:mm') : '-'}">
+                                                th:text="${user.activatedAt != null ? #temporals.format(user.activatedAt, 'yyyy-MM-dd HH:mm') : ''}">
                                             </td>
                                             <td>
                                                 <div class="form-button-action">
                                                     <button type="button"
                                                         class="btn btn-link btn-primary btn-lg edit-row"
-                                                        th:data-id="${user.id}" th:data-name="${user.name ?: '-'}">
+                                                        th:data-id="${user.id}" th:data-name="${user.name ?: ''}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
                                                         <i class="fa fa-edit"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-link btn-danger delete-row"
-                                                        th:data-id="${user.id}" th:data-name="${user.name ?: '-'}">
+                                                        th:data-id="${user.id}" th:data-name="${user.name ?: ''}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN')">
                                                         <i class="fa fa-times"></i>
                                                     </button>
+                                                    <span sec:authorize="!hasAnyRole('SUPERADMIN', 'ADMIN')" class="badge badge-danger mr-1">No Access</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -217,7 +260,7 @@
                                         <ul class="pagination mb-0">
                                             <li class="page-item" th:classappend="${!users.hasPrevious} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/users(keyword=${param.keyword}, page=${users.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:href="@{/users(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${users.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
                                                     th:if="${users.hasPrevious}">Prev</a>
                                                 <span class="page-link" th:if="${!users.hasPrevious}">Prev</span>
                                             </li>
@@ -225,7 +268,7 @@
                                             <li class="page-item" th:if="${users.number > 0}"
                                                 th:classappend="${!users.hasPrevious} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/users(keyword=${param.keyword}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
+                                                    th:href="@{/users(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
                                             </li>
 
                                             <li class="page-item" th:if="${users.totalPages >= 3 and users.number > 1}">
@@ -244,14 +287,14 @@
                                             <li class="page-item" th:if="${users.number + 1 < users.totalPages}"
                                                 th:classappend="${!users.hasNext} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/users(keyword=${param.keyword}, page=${users.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
+                                                    th:href="@{/users(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${users.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
                                                     <span th:text="${users.totalPages}">20</span>
                                                 </a>
                                             </li>
 
                                             <li class="page-item" th:classappend="${!users.hasNext} ? 'disabled'">
                                                 <a class="page-link"
-                                                    th:href="@{/users(keyword=${param.keyword}, page=${users.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:href="@{/users(keyword=${param.keyword}, hiddenColumns=${hiddenColumns}, page=${users.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
                                                     th:if="${users.hasNext}">Next</a>
                                                 <span class="page-link" th:if="${!users.hasNext}">Next</span>
                                             </li>
@@ -277,10 +320,7 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
 
-                // Elements for status switch
-                const checkbox = document.getElementById('editStatusSwitch');
-                const textSpan = document.getElementById('editStatusText');
-                const hiddenInput = document.getElementById('editStatusTextHidden');
+                // --- UI Helpers ---
 
                 // Update UI based on checkbox
                 function updateStatus() {
@@ -324,12 +364,11 @@
                         tag.dataset.value = role;
 
                         tag.innerHTML = `
-                ${role}
-                <span class="remove-tag" 
-                      onclick="window.removeTag(this, 'editRoleSelect', 'editTagList')">
-                    ×
-                </span>
-            `;
+                        ${role}
+                        <span class="remove-tag" 
+                            onclick="window.removeTag(this, 'editRoleSelect', 'editTagList')">
+                            ×
+                        </span>`;
                         tagList.appendChild(tag);
 
                         const option = document.createElement("option");
@@ -339,7 +378,105 @@
                     });
                 }
 
-                // Handle Edit button click
+                // Update all pagination links to include current hiddenColumns
+                function updatePaginationLinks() {
+                    const currentUrl = new URL(window.location);
+                    const hiddenColumns = currentUrl.searchParams.get('hiddenColumns');
+
+                    document.querySelectorAll('.pagination .page-item a.page-link').forEach(link => {
+                        try {
+                            const linkUrl = new URL(link.href, window.location.origin);
+
+                            // Only update hiddenColumns — leave everything else as-is
+                            if (hiddenColumns !== null) {
+                                linkUrl.searchParams.set('hiddenColumns', hiddenColumns);
+                            } else {
+                                linkUrl.searchParams.delete('hiddenColumns');
+                            }
+
+                            link.href = linkUrl.toString();
+                        } catch (e) {
+                            console.warn('Failed to update pagination link:', link.href, e);
+                        }
+                    });
+                }
+
+                // --- Date Helpers ---
+
+                // Formats date string to YYYY-MM-DD
+                function toIsoDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+
+                // Formats datetime string to YYYY-MM-DDTHH:mm
+                function toIsoDateTime(dateTimeStr) {
+                    if (!dateTimeStr) return '';
+                    const d = new Date(dateTimeStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+
+                // --- URL Helpers ---
+
+                // Gets URL query parameter by name
+                function findGetParam(name) {
+                    const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+                    return m ? decodeURIComponent(m[1]) : '';
+                }
+
+                // Builds URL with current params and new sort
+                function buildSortUrl(sortByValue) {
+                    const base = '/users';
+                    const params = [];
+
+                    ['keyword', 'size']
+                        .forEach(k => params.push(`${k}=${encodeURIComponent(findGetParam(k))}`));
+
+                    const hidden = findGetParam('hiddenColumns');
+                    if (hidden) {
+                        params.push(`hiddenColumns=${encodeURIComponent(hidden)}`);
+                    }
+
+                    params.push(`sortBy=${encodeURIComponent(sortByValue)}`);
+                    params.push(`asc=${encodeURIComponent(ascInput.value)}`);
+
+                    return `${base}?${params.join('&')}`;
+                }
+
+                // --- Table Helpers ---
+
+                // Sorts table rows by field (client-side)
+                function sortTable(field, direction) {
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+                    const noDataRow = tbody.querySelector('tr:not([data-id])');
+                    if (noDataRow) noDataRow.remove();
+
+                    rows.sort((a, b) => {
+                        let aVal = a.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+                        let bVal = b.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                }
+
+                // --- Edit & Delete Event Handlers ---
+
+                // Elements for status switch
+                const checkbox = document.getElementById('editStatusSwitch');
+                const textSpan = document.getElementById('editStatusText');
+                const hiddenInput = document.getElementById('editStatusTextHidden');
+
+                // Handles click on "Edit" buttons to populate modal with row data
                 document.querySelectorAll('.edit-row').forEach(button => {
                     button.addEventListener('click', function () {
                         const currentId = this.dataset.id;
@@ -399,13 +536,106 @@
                     });
                 });
 
-                // Lets user show/hide table columns dynamically
-                const table = document.getElementById("user-table");
+                // --- Client-Side Sorting ---
+
+                // Enables interactive column sorting in the table (client-side)
+                const table = document.getElementById('user-table');
+                const headers = table.querySelectorAll('th[data-sort]');
+                let currentSort = { field: null, direction: 'asc' };
+
+                headers.forEach(header => {
+                    header.addEventListener('click', () => {
+                        const field = header.dataset.sort;
+                        const isAsc = (currentSort.field === field && currentSort.direction === 'asc');
+                        const direction = isAsc ? 'desc' : 'asc';
+
+                        headers.forEach(h => {
+                            const icon = h.querySelector('.sort-indicator');
+                            if (icon) {
+                                icon.className = 'fas fa-sort text-white-50 ml-1 sort-indicator';
+                            }
+                        });
+
+                        // Update active sort indicator
+                        const activeIcon = header.querySelector('.sort-indicator');
+                        if (activeIcon) {
+                            activeIcon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-white ml-1 sort-indicator`;
+                        }
+
+                        currentSort = { field, direction };
+                        sortTable(field, direction);
+                    });
+                });
+
+                // --- Server-Side Sorting UI ---
+
+                // Maps sort fields to human-readable labels for the sort dropdown
+                const sortFieldLabels = {
+                    'name': 'Full Name',
+                    'employeeId': 'Employee ID',
+                    'email': 'Email',
+                    'designation': 'Designation',
+                    'role': 'Role',
+                    'nationality': 'Nationality',
+                    'joinDate': 'Join Date',
+                    'phoneNumber': 'Phone Number',
+                    'status': 'Status',
+                    'createdAt': 'Created At',
+                    'activatedAt': 'Activated At'
+                };
+
+                const sortContainer = document.getElementById('sort-column-container');
+                const currentSortBy = sortByInput.value;
+
+                for (const [field, label] of Object.entries(sortFieldLabels)) {
+                    const a = document.createElement('a');
+                    a.className = 'dropdown-item sort-column';
+                    a.textContent = label;
+                    a.href = buildSortUrl(field);
+                    if (field === currentSortBy) a.classList.add('active');
+                    sortContainer.appendChild(a);
+                }
+
+                // Handle ascending/descending toggle in sort direction dropdown
+                document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const asc = this.dataset.asc;
+                        document.getElementById('ascInput').value = asc;
+
+                        // Update active class
+                        document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
+                        this.classList.add('active');
+
+                        window.location.href = buildSortUrl(sortByInput.value);
+                    });
+                });
+
+                // --- Search User ---
+
+                // Search on Enter
+                document.getElementById('userSearchInput').addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const keyword = this.value.trim();
+                        const url = new URL(window.location);
+                        url.searchParams.set('keyword', keyword);
+                        url.searchParams.set('page', '1');
+                        window.location.href = url.toString();
+                    }
+                });
+
+                // --- Column Visibility Toggle ---
+
+                // Initialize column visibility: use defaults from columnSettings, overridden by URL
                 const headerRow = table.querySelector("thead tr");
                 const dataRows = table.querySelectorAll("tbody tr");
                 const container = document.getElementById("column-toggle-list");
 
-                // Define initial visibility state for each column
+                const urlParams = new URLSearchParams(window.location.search);
+                const hiddenColumnsParam = urlParams.get('hiddenColumns');
+                const hiddenSet = hiddenColumnsParam ? new Set(hiddenColumnsParam.split(',')) : null;
+
                 const columnSettings = [
                     { key: "image", label: "Image", visible: true },
                     { key: "name", label: "Full Name", visible: true },
@@ -421,34 +651,33 @@
                     { key: "activatedAt", label: "Activated At", visible: false }
                 ];
 
-                // Render toggle UI and sync with table columns
                 columnSettings.forEach((col, index) => {
+                    let isVisible = col.visible;
+                    // Override if URL specifies hidden state
+                    if (hiddenSet !== null) {
+                        isVisible = !hiddenSet.has(col.key);
+                    }
+
                     const div = document.createElement("div");
                     div.className = "px-3 py-1";
                     div.style.cursor = "pointer";
                     div.style.userSelect = "none";
-
                     div.innerHTML = `
                     <div class="d-flex align-items-center">
                         <span class="column-checkbox" data-index="${index}" 
                             style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
-                            ${col.visible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
-                            ${col.visible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
+                            ${isVisible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
+                            ${isVisible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
                         </span>
                         <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
                     </div>`;
 
                     const checkboxSpan = div.querySelector(".column-checkbox");
                     const th = headerRow.children[index];
-                    const tds = dataRows.length > 0
-                        ? Array.from(dataRows).map(row => row.children[index])
-                        : [];
+                    const tds = Array.from(dataRows).map(row => row.children[index]);
 
-                    if (th && !col.visible) {
-                        th.style.display = "none";
-                    }
-
-                    if (!col.visible) {
+                    // Apply initial visibility
+                    if (!isVisible) {
                         if (th) th.style.display = "none";
                         tds.forEach(td => {
                             if (td && !td.hasAttribute('colspan')) {
@@ -457,110 +686,70 @@
                         });
                     }
 
+                    // Toggle visibility on click
                     div.addEventListener("click", function (e) {
                         e.stopPropagation();
-                        const isChecked = checkboxSpan.innerHTML.trim() !== "";
-                        if (isChecked) {
-                            checkboxSpan.style.backgroundColor = "";
-                            checkboxSpan.innerHTML = "";
-                            th.style.display = "none";
-                            tds.forEach(td => td.style.display = "none");
-                        } else {
+                        const wasVisible = checkboxSpan.innerHTML.trim() !== "";
+                        const newVisible = !wasVisible;
+
+                        if (newVisible) {
                             checkboxSpan.style.backgroundColor = "#007bff";
                             checkboxSpan.style.borderColor = "#007bff";
                             checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
                             th.style.display = "";
                             tds.forEach(td => td.style.display = "");
+                        } else {
+                            checkboxSpan.style.backgroundColor = "";
+                            checkboxSpan.innerHTML = "";
+                            th.style.display = "none";
+                            tds.forEach(td => td.style.display = "none");
                         }
+
+                        // Build list of currently hidden columns
+                        const currentlyHidden = [];
+                        columnSettings.forEach((c, idx) => {
+                            const thEl = headerRow.children[idx];
+                            if (thEl && thEl.style.display === "none") {
+                                currentlyHidden.push(c.key);
+                            }
+                        });
+
+                        // Update URL without reload
+                        const url = new URL(window.location);
+                        if (currentlyHidden.length > 0) {
+                            url.searchParams.set('hiddenColumns', currentlyHidden.join(','));
+                        } else {
+                            url.searchParams.delete('hiddenColumns');
+                        }
+                        window.history.replaceState({}, '', url);
+                        updatePaginationLinks();
                     });
 
                     container.appendChild(div);
                 });
 
-                // Search on Enter
-                document.getElementById('userSearchInput').addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const keyword = this.value.trim();
-                        const url = new URL(window.location);
-                        url.searchParams.set('keyword', keyword);
-                        url.searchParams.set('page', '1');
-                        window.location.href = url.toString();
-                    }
-                });
+                // --- Page Size Control ---
 
-                // Preserve all params when sorting
-                const sortFieldLabels = {
-                    'name': 'Full Name',
-                    'employeeId': 'Employee ID',
-                    'email': 'Email',
-                    'designation': 'Designation',
-                    'role': 'Role',
-                    'nationality': 'Nationality',
-                    'joinDate': 'Join Date',
-                    'phoneNumber': 'Phone Number',
-                    'status': 'Status',
-                    'createdAt': 'Created At',
-                    'activatedAt': 'Activated At'
-                };
-
-                function findGetParam(name) {
-                    const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
-                    return m ? decodeURIComponent(m[1]) : '';
-                }
-
-                function buildUrl(sortByValue) {
-                    const base = '/users';
-                    const p = [
-                        'keyword', 'size'
-                    ].map(k => k + '=' + encodeURIComponent(findGetParam(k)));
-                    p.push('sortBy=' + encodeURIComponent(sortByValue));
-                    p.push('asc=' + encodeURIComponent(ascInput.value));
-                    return base + '?' + p.join('&');
-                }
-
-                const sortContainer = document.getElementById('sort-column-container');
-                const currentSortBy = sortByInput.value;
-
-                for (const [field, label] of Object.entries(sortFieldLabels)) {
-                    const a = document.createElement('a');
-                    a.className = 'dropdown-item sort-column';
-                    a.textContent = label;
-                    a.href = buildUrl(field);
-                    if (field === currentSortBy) a.classList.add('active');
-                    sortContainer.appendChild(a);
-                }
-
-                document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
-                    item.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const asc = this.dataset.asc;
-                        document.getElementById('ascInput').value = asc;
-
-                        // Update active class
-                        document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
-                        this.classList.add('active');
-
-                        // Navigate
-                        window.location.href = buildUrl(sortByInput.value);
-                    });
-                });
-
-                // Preserve all params when apply filter
+                // Reload page with new page size
                 document.getElementById('pageSizeSelect').addEventListener('change', function () {
-                    const size = this.value;
                     const url = new URL(window.location);
-                    url.searchParams.set('size', size);
+                    url.searchParams.set('size', this.value);
+
+                    const hidden = new URLSearchParams(window.location.search).get('hiddenColumns');
+                    if (hidden) url.searchParams.set('hiddenColumns', hidden);
                     window.location.href = url.toString();
                 });
 
-                // Auto-show Flash Modal
+                // --- Flash Message Modal ---
+
+                // Auto-show flash message modal if present
                 const flashModalContainer = document.getElementById('flashMessageModalContainer');
                 if (flashModalContainer) {
                     const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
                     flashModal.show();
                 }
 
+                // --- Import & Export ---
 
                 // Configures Excel import mapping for backend fields
                 const fieldMapping = {
@@ -586,6 +775,7 @@
                     }
                 });
 
+                // Handles PDF & Excel exports using ExportWizard class
                 const exportWizard = new ExportWizard('user-table');
 
                 document.getElementById('exportExcel')?.addEventListener('click', function (e) {
@@ -597,6 +787,176 @@
                     e.preventDefault();
                     exportWizard.exportToPdf('Users List');
                 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                // // Lets user show/hide table columns dynamically
+                // const table = document.getElementById("user-table");
+                // const headerRow = table.querySelector("thead tr");
+                // const dataRows = table.querySelectorAll("tbody tr");
+                // const container = document.getElementById("column-toggle-list");
+
+                // // Define initial visibility state for each column
+                // const columnSettings = [
+                //     { key: "image", label: "Image", visible: true },
+                //     { key: "name", label: "Full Name", visible: true },
+                //     { key: "employeeId", label: "Employee ID", visible: true },
+                //     { key: "email", label: "Email", visible: false },
+                //     { key: "designation", label: "Designation", visible: true },
+                //     { key: "role", label: "role", visible: true },
+                //     { key: "nationality", label: "Nationality", visible: false },
+                //     { key: "joinDate", label: "Join Date", visible: false },
+                //     { key: "phoneNumber", label: "Phone Number", visible: false },
+                //     { key: "status", label: "Status", visible: true },
+                //     { key: "createdAt", label: "Created At", visible: false },
+                //     { key: "activatedAt", label: "Activated At", visible: false }
+                // ];
+
+                // // Render toggle UI and sync with table columns
+                // columnSettings.forEach((col, index) => {
+                //     const div = document.createElement("div");
+                //     div.className = "px-3 py-1";
+                //     div.style.cursor = "pointer";
+                //     div.style.userSelect = "none";
+
+                //     div.innerHTML = `
+                //     <div class="d-flex align-items-center">
+                //         <span class="column-checkbox" data-index="${index}" 
+                //             style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
+                //             ${col.visible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
+                //             ${col.visible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
+                //         </span>
+                //         <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
+                //     </div>`;
+
+                //     const checkboxSpan = div.querySelector(".column-checkbox");
+                //     const th = headerRow.children[index];
+                //     const tds = dataRows.length > 0
+                //         ? Array.from(dataRows).map(row => row.children[index])
+                //         : [];
+
+                //     if (th && !col.visible) {
+                //         th.style.display = "none";
+                //     }
+
+                //     if (!col.visible) {
+                //         if (th) th.style.display = "none";
+                //         tds.forEach(td => {
+                //             if (td && !td.hasAttribute('colspan')) {
+                //                 td.style.display = "none";
+                //             }
+                //         });
+                //     }
+
+                //     div.addEventListener("click", function (e) {
+                //         e.stopPropagation();
+                //         const isChecked = checkboxSpan.innerHTML.trim() !== "";
+                //         if (isChecked) {
+                //             checkboxSpan.style.backgroundColor = "";
+                //             checkboxSpan.innerHTML = "";
+                //             th.style.display = "none";
+                //             tds.forEach(td => td.style.display = "none");
+                //         } else {
+                //             checkboxSpan.style.backgroundColor = "#007bff";
+                //             checkboxSpan.style.borderColor = "#007bff";
+                //             checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
+                //             th.style.display = "";
+                //             tds.forEach(td => td.style.display = "");
+                //         }
+                //     });
+
+                //     container.appendChild(div);
+                // });
+
+                // // Search on Enter
+                // document.getElementById('userSearchInput').addEventListener('keypress', function (e) {
+                //     if (e.key === 'Enter') {
+                //         e.preventDefault();
+                //         const keyword = this.value.trim();
+                //         const url = new URL(window.location);
+                //         url.searchParams.set('keyword', keyword);
+                //         url.searchParams.set('page', '1');
+                //         window.location.href = url.toString();
+                //     }
+                // });
+
+                // // Preserve all params when sorting
+                // const sortFieldLabels = {
+                //     'name': 'Full Name',
+                //     'employeeId': 'Employee ID',
+                //     'email': 'Email',
+                //     'designation': 'Designation',
+                //     'role': 'Role',
+                //     'nationality': 'Nationality',
+                //     'joinDate': 'Join Date',
+                //     'phoneNumber': 'Phone Number',
+                //     'status': 'Status',
+                //     'createdAt': 'Created At',
+                //     'activatedAt': 'Activated At'
+                // };
+
+                // function findGetParam(name) {
+                //     const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+                //     return m ? decodeURIComponent(m[1]) : '';
+                // }
+
+                // function buildUrl(sortByValue) {
+                //     const base = '/users';
+                //     const p = [
+                //         'keyword', 'size'
+                //     ].map(k => k + '=' + encodeURIComponent(findGetParam(k)));
+                //     p.push('sortBy=' + encodeURIComponent(sortByValue));
+                //     p.push('asc=' + encodeURIComponent(ascInput.value));
+                //     return base + '?' + p.join('&');
+                // }
+
+                // const sortContainer = document.getElementById('sort-column-container');
+                // const currentSortBy = sortByInput.value;
+
+                // for (const [field, label] of Object.entries(sortFieldLabels)) {
+                //     const a = document.createElement('a');
+                //     a.className = 'dropdown-item sort-column';
+                //     a.textContent = label;
+                //     a.href = buildUrl(field);
+                //     if (field === currentSortBy) a.classList.add('active');
+                //     sortContainer.appendChild(a);
+                // }
+
+                // document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
+                //     item.addEventListener('click', function (e) {
+                //         e.preventDefault();
+                //         const asc = this.dataset.asc;
+                //         document.getElementById('ascInput').value = asc;
+
+                //         // Update active class
+                //         document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
+                //         this.classList.add('active');
+
+                //         // Navigate
+                //         window.location.href = buildUrl(sortByInput.value);
+                //     });
+                // });
+
+                // // Preserve all params when apply filter
+                // document.getElementById('pageSizeSelect').addEventListener('change', function () {
+                //     const size = this.value;
+                //     const url = new URL(window.location);
+                //     url.searchParams.set('size', size);
+                //     window.location.href = url.toString();
+                // });
+
+                
 
             });
         </script>

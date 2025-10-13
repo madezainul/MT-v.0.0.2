@@ -31,11 +31,11 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
                 CAST(COALESCE(SUM(CASE WHEN (:from IS NULL OR DATE(c.report_date) >= DATE(:from))
                                        AND (:to IS NULL OR DATE(c.report_date) < DATE(:to))
                                   THEN 1 ELSE 0 END), 0) AS SIGNED) AS totalComplaints,
-                CAST(COALESCE(SUM(CASE WHEN c.status IN ('OPEN', 'IN_PROGRESS')
+                CAST(COALESCE(SUM(CASE WHEN c.status IN ('OPEN')
                                        AND (:from IS NULL OR DATE(c.report_date) >= DATE(:from))
                                        AND (:to IS NULL OR DATE(c.report_date) < DATE(:to))
                                   THEN 1 ELSE 0 END), 0) AS SIGNED) AS totalOpen,
-                CAST(COALESCE(SUM(CASE WHEN c.status IN ('DONE', 'CLOSED')
+                CAST(COALESCE(SUM(CASE WHEN c.status IN ('CLOSED')
                                        AND (:from IS NULL OR DATE(c.report_date) >= DATE(:from))
                                        AND (:to IS NULL OR DATE(c.report_date) < DATE(:to))
                                   THEN 1 ELSE 0 END), 0) AS SIGNED) AS totalClosed,
@@ -156,19 +156,52 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
     List<MonthlyComplaintDTO> getMonthlyComplaint(@Param("year") Integer year);
 
     @Query(value = """
+            -- OPENED complaints (all complaints reported in the period, labeled as 'OPEN')
             SELECT
-                u.name AS assignee_name,
-                u.employee_id AS assignee_id,
-                c.status,
-                DATE(c.report_date) AS report_date,
+                u.name,
+                u.employee_id,
+                'OPEN' AS status,
+                DATE(c.report_date) AS date,
                 COUNT(*) AS count
             FROM complaints c
-            JOIN users u ON c.assignee = u.employee_id
-            WHERE DATE(c.report_date) >= :from
-              AND DATE(c.report_date) < DATE_ADD(:to, INTERVAL 1 DAY)
-              AND c.status IN ('OPEN', 'PENDING', 'CLOSED')
-            GROUP BY u.name, u.employee_id, c.status, DATE(c.report_date)
-            ORDER BY u.name, report_date
+            JOIN users u ON c.assignee = u.id
+            WHERE c.report_date >= :from
+              AND c.report_date < DATE_ADD(:to, INTERVAL 1 DAY)
+            GROUP BY u.name, u.employee_id, DATE(c.report_date)
+
+            UNION ALL
+
+            -- PENDING complaints (only those still pending and reported in the period)
+            SELECT
+                u.name,
+                u.employee_id,
+                c.status,
+                DATE(c.report_date) AS date,
+                COUNT(*) AS count
+            FROM complaints c
+            JOIN users u ON c.assignee = u.id
+            WHERE c.status = 'PENDING'
+              AND c.report_date >= :from
+              AND c.report_date < DATE_ADD(:to, INTERVAL 1 DAY)
+            GROUP BY u.name, u.employee_id, DATE(c.report_date)
+
+            UNION ALL
+
+            -- CLOSED complaints (closed in the period)
+            SELECT
+                u.name,
+                u.employee_id,
+                c.status,
+                DATE(c.close_time) AS date,
+                COUNT(*) AS count
+            FROM complaints c
+            JOIN users u ON c.assignee = u.id
+            WHERE c.status = 'CLOSED'
+              AND c.close_time >= :from
+              AND c.close_time < DATE_ADD(:to, INTERVAL 1 DAY)
+            GROUP BY u.name, u.employee_id, DATE(c.close_time)
+
+            ORDER BY name, date
             """, nativeQuery = true)
     List<Object[]> getAssigneeDailyStatus(
             @Param("from") LocalDate from,
@@ -176,15 +209,17 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
 
     @Query(value = """
             SELECT
-                e.name AS equipment_name,
-                e.code AS equipment_code,
-                CAST(COUNT(c.id) AS SIGNED) AS total_complaints
-            FROM equipments e
-            LEFT JOIN complaints c ON e.code = c.equipment_code
-            GROUP BY e.id, e.code, e.name
-            ORDER BY total_complaints DESC
+                u.name,
+                u.employee_id,
+                c.status,
+                COUNT(*)
+            FROM complaints c
+            JOIN users u ON c.assignee = u.id
+            WHERE c.status IN ('OPEN', 'PENDING', 'CLOSED')
+            GROUP BY u.name, u.employee_id, c.status
+            ORDER BY u.name
             """, nativeQuery = true)
-    List<EquipmentComplaintCountDTO> getEquipmentComplaintCount();
+    List<Object[]> getAssigneeTotalStatus();
 
     // Daily breakdown: last N days
     @Query(value = """
@@ -262,10 +297,10 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
     @Query(value = """
             SELECT
                 d.day AS date,
-                COALESCE(SUM(CASE WHEN wr.category = 'CORRECTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS correctiveMaintenanceCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'PREVENTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS preventiveMaintenanceCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'BREAKDOWN' THEN 1 ELSE 0 END), 0) AS breakdownCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'OTHER' THEN 1 ELSE 0 END), 0) AS otherCount
+                COALESCE(SUM(CASE WHEN wr.category = 'CORRECTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS correctiveMaintenance,
+                COALESCE(SUM(CASE WHEN wr.category = 'PREVENTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS preventiveMaintenance,
+                COALESCE(SUM(CASE WHEN wr.category = 'BREAKDOWN' THEN 1 ELSE 0 END), 0) AS breakdown,
+                COALESCE(SUM(CASE WHEN wr.category = 'OTHER' THEN 1 ELSE 0 END), 0) AS other
             FROM (
                 -- Generate continuous date range from :from to :to
                 SELECT DATE_SUB(:to, INTERVAL (units.a + tens.a * 10) DAY) AS day
@@ -293,10 +328,10 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
             SELECT
                 YEAR(d.month_start) AS year,
                 MONTH(d.month_start) AS month,
-                COALESCE(SUM(CASE WHEN wr.category = 'CORRECTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS correctiveMaintenanceCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'PREVENTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS preventiveMaintenanceCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'BREAKDOWN' THEN 1 ELSE 0 END), 0) AS breakdownCount,
-                COALESCE(SUM(CASE WHEN wr.category = 'OTHER' THEN 1 ELSE 0 END), 0) AS otherCount
+                COALESCE(SUM(CASE WHEN wr.category = 'CORRECTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS correctiveMaintenance,
+                COALESCE(SUM(CASE WHEN wr.category = 'PREVENTIVE_MAINTENANCE' THEN 1 ELSE 0 END), 0) AS preventiveMaintenance,
+                COALESCE(SUM(CASE WHEN wr.category = 'BREAKDOWN' THEN 1 ELSE 0 END), 0) AS breakdown,
+                COALESCE(SUM(CASE WHEN wr.category = 'OTHER' THEN 1 ELSE 0 END), 0) AS other
             FROM (
                 -- Generate 12 months of the target year
                 SELECT DATE_ADD(
@@ -397,10 +432,34 @@ public interface DashboardRepository extends JpaRepository<Complaint, String> {
                 COUNT(DISTINCT c.id) AS total_complaints,
                 (COUNT(DISTINCT wr.id) + COUNT(DISTINCT c.id)) AS total_occurrences
             FROM equipments e
-            LEFT JOIN work_reports wr ON e.code = wr.equipment_code
-            LEFT JOIN complaints c ON e.code = c.equipment_code
+            LEFT JOIN work_reports wr ON e.id = wr.equipment_code
+            LEFT JOIN complaints c ON e.id = c.equipment_code
             GROUP BY e.id, e.code, e.name
             ORDER BY total_occurrences DESC, total_time DESC
             """, nativeQuery = true)
     List<EquipmentCountDTO> getEquipmentCount();
+
+    @Query(value = """
+            SELECT
+                e.id AS id,
+                e.code AS code,
+                e.name AS name,
+                COUNT(DISTINCT CASE WHEN wr.status = 'OPEN' THEN wr.id END) AS openWr,
+                COUNT(DISTINCT CASE WHEN wr.status = 'PENDING' THEN wr.id END) AS pendingWr,
+                COUNT(DISTINCT CASE WHEN c.status = 'OPEN' THEN c.id END) AS openCp,
+                COUNT(DISTINCT CASE WHEN c.status = 'PENDING' THEN c.id END) AS pendingCp
+            FROM equipments e
+            LEFT JOIN work_reports wr ON e.id = wr.equipment_code
+                AND wr.status IN ('OPEN', 'PENDING')
+            LEFT JOIN complaints c ON e.id = c.equipment_code
+                AND c.status IN ('OPEN', 'PENDING')
+            GROUP BY e.id, e.code
+            ORDER BY
+                (COUNT(DISTINCT CASE WHEN wr.status = 'OPEN' THEN wr.id END) +
+                 COUNT(DISTINCT CASE WHEN wr.status = 'PENDING' THEN wr.id END) +
+                 COUNT(DISTINCT CASE WHEN c.status = 'OPEN' THEN c.id END) +
+                 COUNT(DISTINCT CASE WHEN c.status = 'PENDING' THEN c.id END)) DESC,
+                e.code ASC
+            """, nativeQuery = true)
+    List<EquipmentStatusDTO> getEquipmentStatus();
 }

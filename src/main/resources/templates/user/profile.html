@@ -36,7 +36,9 @@
                             <div class="profile-picture"
                                 style="position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); z-index: 2;">
                                 <div class="avatar avatar-xxl">
-                                    <img id="profileImagePreview" src="/assets/img/profile.jpg" alt="Foto Profil"
+                                    <img id="profileImagePreview"
+                                        th:src="${currentUser.image != null} ? @{/upload/user/image/__${currentUser.image}__} : @{/assets/img/arashmil.jpg}"
+                                        alt="Foto Profil"
                                         class="avatar-img rounded-circle border border-white border-3">
                                 </div>
                             </div>
@@ -65,59 +67,141 @@
                             <div class="tab-pane fade show active" id="profile" role="tabpanel"
                                 aria-labelledby="profile-tab">
                                 <div class="card-body pt-4">
-                                    <form class="contact-form" action="/icbsstaff/profile" method="POST"
+                                    <form class="contact-form" th:action="@{/users/update}" method="POST"
                                         enctype="multipart/form-data">
-                                        <input type="hidden" name="pk" id="pk" value="12345">
+                                        <!-- Hidden ID (use 'id' from UserDTO) -->
+                                        <input type="hidden" name="id" th:value="${currentUser.id}">
+                                        <input type="hidden" name="redirectUrl" id="redirectUrl">
 
                                         <div class="form-row">
+                                            <!-- Name -->
                                             <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label for="name">Nama <span class="text-danger">*</span></label>
-                                                    <input name="name" id="name" type="text" class="form-control"
-                                                        value="John Doe" required>
+                                                    <input type="text" class="form-control" id="name" name="name"
+                                                        th:value="${currentUser.name}" required>
                                                 </div>
                                             </div>
+
+                                            <!-- Employee ID -->
                                             <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label for="employeeId">Employee ID <span
                                                             class="text-danger">*</span></label>
-                                                    <input name="employeeId" id="employeeId" type="text"
-                                                        class="form-control" value="12345" required>
+                                                    <input type="text" class="form-control" id="employeeId"
+                                                        name="employeeId" th:value="${currentUser.employeeId}" required>
                                                 </div>
                                             </div>
+
+                                            <!-- Email -->
                                             <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label for="email">Email <span class="text-danger">*</span></label>
-                                                    <input name="email" id="email" type="email" class="form-control"
-                                                        value="john@example.com" required>
+                                                    <input type="email" class="form-control" id="email" name="email"
+                                                        th:value="${currentUser.email}" required>
                                                 </div>
                                             </div>
+
+                                            <!-- Role (display only — disabled) -->
                                             <div class="col-md-12">
                                                 <div class="form-group">
-                                                    <label for="role">Role <span class="text-danger">*</span></label>
-                                                    <select name="role" class="form-control" id="role" disabled>
-                                                        <option value="Staff">Staff</option>
-                                                        <option value="Admin" selected>Admin</option>
-                                                        <option value="Librarian">Librarian</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <div class="form-group">
-                                                    <label for="avatar">Foto Profil</label>
-                                                    <div class="custom-file">
-                                                        <input type="file" class="custom-file-input" id="avatar"
-                                                            name="avatar" accept="image/*">
-                                                        <label class="custom-file-label" for="avatar">Pilih file</label>
+                                                    <label>Role <span class="text-danger">*</span></label>
+                                                    <div class="mt-1">
+                                                        <!-- Display current roles -->
+                                                        <span th:if="${#sets.isEmpty(currentUser.roles)}" class="text-muted">No
+                                                            roles assigned</span>
+                                                        <span th:unless="${#sets.isEmpty(currentUser.roles)}">
+                                                            <span th:each="role : ${currentUser.roles}"
+                                                                class="badge badge-primary rounded-pill px-3 py-2 mr-2 mb-1"
+                                                                th:text="${role.name}">
+                                                            </span>
+                                                        </span>
+
+                                                        <!-- Hidden inputs to preserve roles during form submission -->
+                                                        <input type="hidden" th:each="role : ${currentUser.roles}"
+                                                            name="roleNames" th:value="${role.name}" />
                                                     </div>
-                                                    <small class="form-text text-muted mt-1">Maksimal ukuran file
-                                                        5MB</small>
+                                                </div>
+                                            </div>
+
+                                            <!-- Status (display only — disabled) -->
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label>Status <span class="text-danger">*</span></label>
+                                                    <div class="mt-1">
+                                                        <span class="badge badge-primary rounded-pill px-3 py-2"
+                                                            th:text="${currentUser.status}">
+                                                        </span>
+                                                        <!-- Hidden input for form submission (immutable) -->
+                                                        <input type="hidden" name="status" th:value="${currentUser.status}" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Optional: Add more fields if needed (e.g., phone, designation) -->
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="phoneNumber">Phone Number</label>
+                                                    <input type="text" class="form-control" id="phoneNumber"
+                                                        name="phoneNumber" th:value="${currentUser.phoneNumber}">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="designation">Designation</label>
+                                                    <input type="text" class="form-control" id="designation"
+                                                        name="designation" th:value="${currentUser.designation}">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="joinDate">Join Date</label>
+                                                    <input type="date" class="form-control" id="joinDate"
+                                                        name="joinDate"
+                                                        th:value="${#temporals.format(currentUser.joinDate, 'yyyy-MM-dd')}">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="nationality">Nationality</label>
+                                                    <input type="text" class="form-control" id="nationality"
+                                                        name="nationality" th:value="${currentUser.nationality}">
+                                                </div>
+                                            </div>
+
+                                            <!-- Profile Picture -->
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label>Image</label>
+                                                    <div class="mb-2">
+                                                        <img id="editImagePreview" src="" alt="No image"
+                                                            class="img-thumbnail"
+                                                            style="max-height: 150px; display: none;">
+                                                    </div>
+
+                                                    <div class="custom-control custom-checkbox mb-2">
+                                                        <input type="checkbox" class="custom-control-input"
+                                                            id="deleteImage" name="deleteImage" value="true">
+                                                        <label class="custom-control-label" for="deleteImage">
+                                                            <small>Remove current image</small>
+                                                        </label>
+                                                    </div>
+
+                                                    <div class="custom-file">
+                                                        <input type="file" class="custom-file-input" id="editImageInput"
+                                                            name="imageFile" accept="image/*">
+                                                        <label class="custom-file-label" for="editImageInput">Change
+                                                            image...</label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="text-center mt-4 mb-3">
-                                            <button type="submit" class="btn btn-primary btn-round px-4">
+                                            <button type="submit" class="btn btn-primary px-4">
                                                 <i class="fas fa-save mr-1"></i> Save Changes
                                             </button>
                                         </div>
@@ -174,19 +258,24 @@
     <th:block layout:fragment="scripts">
         <!-- Update file input label -->
         <script>
-            $('#avatar').on('change', function () {
-                const fileName = $(this).val().split('\\').pop();
-                $(this).next('.custom-file-label').text(fileName || 'Pilih file');
+            document.addEventListener('DOMContentLoaded', function () {
+                const redirectUrlInput = document.getElementById('redirectUrl');
+                if (redirectUrlInput) {
+                    redirectUrlInput.value = window.location.href;
+                }
+                document.getElementById('editImageInput')?.addEventListener('change', function (evt) {
+                    const preview = document.getElementById('editImagePreview');
+                    const file = evt.target.files[0];
+                    if (file && file.type.match('image.*')) {
+                        const reader = new FileReader();
+                        reader.onload = function () {
+                            preview.src = reader.result;
+                            preview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             });
-
-            // Optional: Image preview on upload
-            document.getElementById('avatar').onchange = function (e) {
-                const reader = new FileReader();
-                reader.onload = function () {
-                    document.getElementById('profileImagePreview').src = reader.result;
-                };
-                if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
-            };
         </script>
     </th:block>
 </body>

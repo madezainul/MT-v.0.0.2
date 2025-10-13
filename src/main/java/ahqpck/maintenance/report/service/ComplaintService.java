@@ -67,15 +67,17 @@ public class ComplaintService {
     private final ZeroPaddedCodeGenerator codeGenerator;
 
     public Page<ComplaintDTO> getAllComplaints(String keyword, LocalDateTime reportDateFrom, LocalDateTime reportDateTo,
-            String assigneeEmpId, Complaint.Status status, String equipmentCode, int page, int size, String sortBy,
-            boolean asc) {
+            LocalDateTime closeTime, String assigneeEmpId, Complaint.Status status, Complaint.Category category,
+            String equipmentCode, int page, int size, String sortBy, boolean asc) {
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<Complaint> spec = ComplaintSpecification.search(keyword)
                 .and(ComplaintSpecification.withReportDateRange(reportDateFrom, reportDateTo))
+                .and(ComplaintSpecification.withCloseTime(closeTime))
                 .and(ComplaintSpecification.withAssignee(assigneeEmpId))
                 .and(ComplaintSpecification.withStatus(status))
+                .and(ComplaintSpecification.withCategory(category))
                 .and(ComplaintSpecification.withEquipment(equipmentCode));
         Page<Complaint> complaintPage = complaintRepository.findAll(spec, pageable);
 
@@ -89,14 +91,17 @@ public class ComplaintService {
     }
 
     public void createComplaint(ComplaintDTO dto, MultipartFile imageBefore) {
+
         Complaint complaint = new Complaint();
+
+        validateAreaOrEquipment(
+                dto.getArea() != null ? dto.getArea().getCode() : null,
+                dto.getEquipment() != null ? dto.getEquipment().getCode() : null);
 
         if (dto.getCode() == null || dto.getCode().trim().isEmpty()) {
             String generatedCode = codeGenerator.generate(Complaint.class, "code", "CP");
             complaint.setCode(generatedCode);
         }
-
-        System.out.println("check dto " + dto);
 
         mapToEntity(complaint, dto);
 
@@ -115,8 +120,19 @@ public class ComplaintService {
     public void updateComplaint(ComplaintDTO dto, MultipartFile imageBefore, MultipartFile imageAfter,
             Boolean deleteImageBefore,
             Boolean deleteImageAfter) {
+
         Complaint complaint = complaintRepository.findById(dto.getId())
                 .orElseThrow(() -> new NotFoundException("Complaint not found with ID: " + dto.getId()));
+
+        validateAreaOrEquipment(
+                dto.getArea() != null ? dto.getArea().getCode() : null,
+                dto.getEquipment() != null ? dto.getEquipment().getCode() : null);
+
+        if (dto.getStatus() == Complaint.Status.CLOSED) {
+            if (dto.getActionTaken() == null || dto.getActionTaken().trim().isEmpty()) {
+                throw new IllegalArgumentException("Action taken is required before closing the complaint.");
+            }
+        }
 
         mapToEntity(complaint, dto);
 
@@ -276,6 +292,15 @@ public class ComplaintService {
         return new ImportUtil.ImportResult(importedCount, errorMessages);
     }
 
+    private void validateAreaOrEquipment(String areaId, String equipmentId) {
+        boolean areaExists = areaId != null && areaRepository.existsByCodeIgnoreCase(areaId);
+        boolean equipmentExists = equipmentId != null && equipmentRepository.existsByCodeIgnoreCase(equipmentId);
+
+        if (!areaExists && !equipmentExists) {
+            throw new IllegalArgumentException("Either Area or Equipment must be specified and must exist");
+        }
+    }
+
     /**
      * Handle side effects of status transitions:
      * - Closing: set closeTime, deduct inventory
@@ -283,26 +308,37 @@ public class ComplaintService {
      */
 
     protected void handleStatusTransition(Complaint complaint, Complaint.Status oldStatus, Complaint.Status newStatus) {
+        if (newStatus == null)
+            return;
+
+        // Transitioning TO CLOSED
         if (newStatus == Complaint.Status.CLOSED && oldStatus != Complaint.Status.CLOSED) {
-            // Transitioning TO CLOSED
             LocalDateTime now = LocalDateTime.now();
             complaint.setCloseTime(now);
-            // totalResolutionTimeMinutes will be calculated in @PreUpdate or @PrePersist
 
+            // Calculate total time from reportDate to now
+            if (complaint.getReportDate() != null) {
+                long minutes = java.time.Duration.between(complaint.getReportDate(), now).toMinutes();
+                complaint.setTotalTimeMinutes((int) minutes);
+            }
+
+            // Deduct parts from inventory
             log.info("Complaint {} CLOSED: Deducting {} parts from inventory",
                     complaint.getId(), complaint.getPartsUsed().size());
             deductPartsFromInventory(complaint);
-
-        } else if (oldStatus == Complaint.Status.CLOSED && newStatus != Complaint.Status.CLOSED) {
-            // Reopening a CLOSED complaint
+        }
+        // Reopening a CLOSED complaint
+        else if (oldStatus == Complaint.Status.CLOSED && newStatus != Complaint.Status.CLOSED) {
             log.warn("Reopening CLOSED complaint: {}", complaint.getId());
+
+            // Restock parts
             restockParts(complaint);
 
+            // Clear close time & total time
             complaint.setCloseTime(null);
             complaint.setTotalTimeMinutes(null);
-            complaint.setStatus(newStatus); // Allow transition to any non-CLOSED
         }
-        // For other transitions (e.g. OPEN → PENDING), no side effects
+        // For other transitions (OPEN ↔ PENDING), do nothing
     }
 
     /**
@@ -334,16 +370,25 @@ public class ComplaintService {
     // ================== MAPPING METHODS ==================
 
     private void mapToEntity(Complaint complaint, ComplaintDTO dto) {
+        // Basic fields
         complaint.setSubject(dto.getSubject());
         complaint.setDescription(dto.getDescription());
         complaint.setPriority(dto.getPriority());
         complaint.setCategory(dto.getCategory());
-        complaint.setStatus(dto.getStatus());
         complaint.setReportDate(dto.getReportDate());
-        complaint.setCloseTime(dto.getCloseTime());
-        complaint.setTotalTimeMinutes(dto.getTotalTimeMinutes());
+        complaint.setActionTaken(dto.getActionTaken());
 
-        // === Optional: Area ===
+        // Status — handle transition
+        Complaint.Status oldStatus = complaint.getStatus();
+        Complaint.Status newStatus = dto.getStatus();
+        complaint.setStatus(newStatus); // Set first
+
+        // Handle side effects AFTER setting new status
+        if (oldStatus != newStatus) {
+            handleStatusTransition(complaint, oldStatus, newStatus);
+        }
+
+        // Area
         if (dto.getArea() != null && dto.getArea().getCode() != null && !dto.getArea().getCode().trim().isEmpty()) {
             String areaCode = dto.getArea().getCode().trim();
             Area area = areaRepository.findByCode(areaCode)
@@ -353,7 +398,7 @@ public class ComplaintService {
             complaint.setArea(null);
         }
 
-        // === Optional: Equipment ===
+        // Equipment
         if (dto.getEquipment() != null && dto.getEquipment().getCode() != null
                 && !dto.getEquipment().getCode().trim().isEmpty()) {
             String equipmentCode = dto.getEquipment().getCode().trim();
@@ -364,7 +409,7 @@ public class ComplaintService {
             complaint.setEquipment(null);
         }
 
-        // === Mandatory: Reporter ===
+        // Reporter (mandatory)
         if (dto.getReporter() == null || dto.getReporter().getEmployeeId() == null) {
             throw new IllegalArgumentException("Reporter is mandatory");
         }
@@ -374,7 +419,7 @@ public class ComplaintService {
                         () -> new IllegalArgumentException("Reporter not found with employeeId: " + reporterEmpId));
         complaint.setReporter(reporter);
 
-        // === Optional: Assignee ===
+        // Assignee (optional)
         if (dto.getAssignee() != null && dto.getAssignee().getEmployeeId() != null
                 && !dto.getAssignee().getEmployeeId().trim().isEmpty()) {
             String assigneeEmpId = dto.getAssignee().getEmployeeId().trim();
@@ -386,20 +431,16 @@ public class ComplaintService {
             complaint.setAssignee(null);
         }
 
-        // PARTS HANDLING: Use merge/update pattern
+        // Parts — Merge/Update pattern
         if (dto.getPartsUsed() != null) {
-            // Create a copy of current parts to allow safe iteration
             List<ComplaintPart> existingParts = new ArrayList<>(complaint.getPartsUsed());
-
-            // Clear the list — thanks to orphanRemoval, old entries will be deleted
-            complaint.getPartsUsed().clear();
+            complaint.getPartsUsed().clear(); // Triggers orphan removal
 
             for (ComplaintPartDTO partDto : dto.getPartsUsed()) {
                 Part part = partRepository.findById(partDto.getPart().getId())
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Part not found with ID: " + partDto.getPart().getId()));
 
-                // Try to reuse an existing ComplaintPart if possible
                 ComplaintPart existing = existingParts.stream()
                         .filter(cp -> cp.getPart().getId().equals(part.getId()))
                         .findFirst()
@@ -407,11 +448,9 @@ public class ComplaintService {
 
                 ComplaintPart cp;
                 if (existing != null) {
-                    // Reuse and update quantity
                     existing.setQuantity(partDto.getQuantity());
                     cp = existing;
                 } else {
-                    // Create new
                     cp = new ComplaintPart();
                     cp.setComplaint(complaint);
                     cp.setPart(part);
@@ -422,7 +461,6 @@ public class ComplaintService {
                 complaint.getPartsUsed().add(cp);
             }
         } else {
-            // If DTO has no parts, just clear
             complaint.getPartsUsed().clear();
         }
     }
@@ -446,6 +484,7 @@ public class ComplaintService {
         dto.setCloseTime(complaint.getCloseTime());
         dto.setTotalTimeMinutes(complaint.getTotalTimeMinutes());
 
+        // Format total time display
         if (complaint.getTotalTimeMinutes() != null) {
             int total = complaint.getTotalTimeMinutes();
             int days = total / 1440;
@@ -460,6 +499,7 @@ public class ComplaintService {
             dto.setTotalTimeDisplay("-");
         }
 
+        // Area
         if (complaint.getArea() != null) {
             AreaDTO areaDTO = new AreaDTO();
             areaDTO.setId(complaint.getArea().getId());
@@ -468,6 +508,7 @@ public class ComplaintService {
             dto.setArea(areaDTO);
         }
 
+        // Equipment
         if (complaint.getEquipment() != null) {
             EquipmentDTO equipmentDTO = new EquipmentDTO();
             equipmentDTO.setId(complaint.getEquipment().getId());
@@ -476,10 +517,18 @@ public class ComplaintService {
             dto.setEquipment(equipmentDTO);
         }
 
-        dto.setReporter(mapToUserDTO(complaint.getReporter()));
-        dto.setAssignee(mapToUserDTO(complaint.getAssignee()));
+        // Reporter
+        if (complaint.getReporter() != null) {
+            dto.setReporter(mapToUserDTO(complaint.getReporter()));
+        }
 
-        if (complaint.getPartsUsed() != null) {
+        // Assignee
+        if (complaint.getAssignee() != null) {
+            dto.setAssignee(mapToUserDTO(complaint.getAssignee()));
+        }
+
+        // Parts Used
+        if (complaint.getPartsUsed() != null && !complaint.getPartsUsed().isEmpty()) {
             dto.setPartsUsed(complaint.getPartsUsed().stream()
                     .map(cp -> {
                         ComplaintPartDTO partDto = new ComplaintPartDTO();

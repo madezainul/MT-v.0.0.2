@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import ahqpck.maintenance.report.dto.AssigneeDailyStatusDTO;
+import ahqpck.maintenance.report.dto.AssigneeTotalStatusDTO;
 import ahqpck.maintenance.report.dto.DailyBreakdownDTO;
 import ahqpck.maintenance.report.dto.DailyComplaintDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportEquipmentDTO;
 import ahqpck.maintenance.report.dto.EquipmentComplaintCountDTO;
 import ahqpck.maintenance.report.dto.EquipmentCountDTO;
+import ahqpck.maintenance.report.dto.EquipmentStatusDTO;
 import ahqpck.maintenance.report.dto.EquipmentWorkReportDTO;
 import ahqpck.maintenance.report.dto.MonthlyBreakdownDTO;
 import ahqpck.maintenance.report.dto.MonthlyComplaintDTO;
@@ -76,10 +78,11 @@ public class DashboardRestController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/equipment-complaint-count")
-    public ResponseEntity<List<EquipmentComplaintCountDTO>> getEquipmentComplaintCount() {
-        List<EquipmentComplaintCountDTO> data = dashboardService.getEquipmentComplaintCount();
-        return ResponseEntity.ok(data);
+    @GetMapping("/assignee-total-status")
+    public ResponseEntity<List<AssigneeTotalStatusDTO>> getAssigneeTotalStatus() {
+
+        List<AssigneeTotalStatusDTO> result = dashboardService.getAssigneeTotalStatus();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/daily-breakdown")
@@ -146,6 +149,12 @@ public class DashboardRestController {
     @GetMapping("/equipment-count")
     public ResponseEntity<List<EquipmentCountDTO>> getEquipmentCount() {
         List<EquipmentCountDTO> data = dashboardService.getEquipmentCount();
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/equipment-status")
+    public ResponseEntity<List<EquipmentStatusDTO>> getEquipmentStatus() {
+        List<EquipmentStatusDTO> data = dashboardService.getEquipmentStatus();
         return ResponseEntity.ok(data);
     }
 }

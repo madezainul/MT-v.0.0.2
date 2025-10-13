@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <!-- Breadcrumbs -->
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-user-circle mr-2"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Menu</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:text="${title}"></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs nav-line nav-color-primary mb-4" id="configTab" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="backup-config-tab" data-toggle="tab"
+                                        href="#backup-config" role="tab">Backup Configuration</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="backup-history-tab" data-toggle="tab" href="#backup-history"
+                                        role="tab">Backup History</a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content">
+
+                                <!-- Backup Configuration Tab -->
+                                <div class="tab-pane fade show active" id="backup-config" role="tabpanel">
+                                    <form id="backupConfigForm" method="post">
+                                        <div class="form-row mb-4">
+                                            <!-- Interval -->
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="intervalDays">Backup Every <span
+                                                            class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="intervalDays"
+                                                            name="intervalDays" th:value="${backupConfig.intervalDays}"
+                                                            min="1" max="30" required>
+                                                        <div class="input-group-append">
+                                                            <span class="input-group-text">days</span>
+                                                        </div>
+                                                    </div>
+                                                    <small class="form-text text-muted">1–30 days</small>
+                                                </div>
+                                            </div>
+                                            <!-- Time -->
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="backupTime">At Time <span
+                                                            class="text-danger">*</span></label>
+                                                    <input type="time" class="form-control" id="backupTime"
+                                                        name="backupTime" th:value="${backupConfig.backupTime}"
+                                                        required>
+                                                    <small class="form-text text-muted">24-hour format</small>
+                                                </div>
+                                            </div>
+                                            <!-- Start Date -->
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="startDate">Start Date <span
+                                                            class="text-danger">*</span></label>
+                                                    <input type="date" class="form-control" id="startDate"
+                                                        name="startDate" th:value="${backupConfig.startDate}" required>
+                                                    <small class="form-text text-muted">First backup date</small>
+                                                </div>
+                                            </div>
+                                            <!-- Backup Folder -->
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="backupFolder">Backup Folder <span
+                                                            class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="backupFolder"
+                                                            name="backupFolder" th:value="${backupConfig.backupFolder}"
+                                                            placeholder="/path/to/backup/folder" required>
+                                                        <div class="input-group-append">
+                                                            <button class="btn btn-outline-secondary" type="button"
+                                                                id="browseFolderBtn">
+                                                                <i class="fas fa-folder"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <small class="form-text text-muted">
+                                                        Absolute path on server (e.g.,
+                                                        <code>/backups/maintenance</code>)
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hidden input for backup types -->
+                                        <input type="hidden" id="backupTypesInput" name="backupTypes"
+                                            th:value="${backupConfig.backupTypes}">
+
+                                        <!-- Data Types Section -->
+                                        <div class="form-group mb-4">
+                                            <label>Data to Include in Backup <span class="text-danger">*</span></label>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="userSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'USER')}">
+                                                        <label class="switch-label mr-2 mb-0" for="userSwitch"></label>
+                                                        <span class="switch-text">Users</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="areaSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'AREA')}">
+                                                        <label class="switch-label mr-2 mb-0" for="areaSwitch"></label>
+                                                        <span class="switch-text">Areas</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="equipmentSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'EQUIPMENT')}">
+                                                        <label class="switch-label mr-2 mb-0"
+                                                            for="equipmentSwitch"></label>
+                                                        <span class="switch-text">Equipments</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="partSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'PART')}">
+                                                        <label class="switch-label mr-2 mb-0" for="partSwitch"></label>
+                                                        <span class="switch-text">Parts Inventory</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="complaintSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'COMPLAINT')}">
+                                                        <label class="switch-label mr-2 mb-0"
+                                                            for="complaintSwitch"></label>
+                                                        <span class="switch-text">Complaints</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mt-2">
+                                                        <input type="checkbox" class="switch" id="workReportSwitch"
+                                                            th:checked="${#strings.contains(backupConfig.backupTypes, 'WORK_REPORT')}">
+                                                        <label class="switch-label mr-2 mb-0"
+                                                            for="workReportSwitch"></label>
+                                                        <span class="switch-text">Work Reports</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="text-right mt-4">
+                                            <button type="button" class="btn btn-success px-4 mr-2" id="backupNowBtn"
+                                                disabled>
+                                                <i class="fas fa-bolt mr-1"></i> Backup Now
+                                            </button>
+                                            <button type="button" class="btn btn-primary px-4" id="saveConfigBtn"
+                                                disabled>
+                                                <i class="fas fa-save mr-1"></i> Save Configuration
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Backup History Tab -->
+                                <div class="tab-pane fade" id="backup-history" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table class="display table table-striped table-hover">
+                                            <thead class="bg-primary text-white">
+                                                <tr>
+                                                    <th style="min-width: 165px;">Backup Time</th>
+                                                    <th style="min-width: 200px;">Data Types</th>
+                                                    <th style="min-width: 50px;">Status</th>
+                                                    <th style="min-width: 50px;">Method</th>
+                                                    <th style="min-width: 50px;">File Size</th>
+                                                    <th style="min-width: 50px;">Location</th>
+                                                    <th style="min-width: 20px;">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="backup : ${backups.content}">
+                                                    <td th:text="${backup.backupDateTime}">2025-04-05 02:00</td>
+                                                    <td>
+                                                        <span
+                                                            th:each="type : ${#strings.arraySplit(backup.backupTypes, ',')}"
+                                                            class="badge badge-secondary mr-1"
+                                                            th:text="${type}">USER</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge"
+                                                            th:classappend="${backup.status == 'SUCCESS'} ? 'badge-success' : 'badge-danger'"
+                                                            th:text="${backup.status}"></span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge"
+                                                            th:classappend="${backup.method == 'AUTOMATIC'} ? 'badge-info' : 'badge-warning'"
+                                                            th:text="${backup.method}"></span>
+                                                    </td>
+                                                    <td th:text="${backup.fileSize}">1.25 KB</td>
+                                                    <td class="text-muted small" th:text="${backup.location}">
+                                                        /var/backups/icbs</td>
+                                                    <td>
+                                                        <button class="btn btn-link text-danger p-0"
+                                                            title="Delete backup">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr th:if="${#lists.isEmpty(backups.content)}">
+                                                    <td colspan="7" class="text-center text-muted">No backup records
+                                                        found</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/error-modal :: error-modal}"></div>
+
+    <th:block layout:fragment="styles">
+        <style>
+            /* --- Switch Toggle Styling --- */
+            .switch {
+                position: absolute;
+                width: 0;
+                height: 0;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .switch+.switch-label {
+                position: relative;
+                background: #1a2035;
+                width: 50px;
+                height: 24px;
+                border-radius: 24px;
+                cursor: pointer;
+                transition: background 0.2s ease-in-out;
+                display: inline-block;
+                flex-shrink: 0;
+            }
+
+            .switch+.switch-label::after {
+                content: "";
+                background: #fff;
+                width: 20px;
+                height: 20px;
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                border-radius: 50%;
+                transition: left 0.3s ease-in-out;
+            }
+
+            .switch:checked+.switch-label {
+                background: #6861CE;
+            }
+
+            .switch:checked+.switch-label::after {
+                left: 28px;
+            }
+
+            .switch-text {
+                font-size: 0.9rem;
+                color: #6c757d;
+                margin-left: 8px;
+                transition: color 0.2s ease-in-out;
+            }
+
+            .switch:checked~.switch-text {
+                color: #495057;
+                font-weight: 500;
+            }
+
+            .switch:focus+.switch-label {
+                box-shadow: 0 0 0 2px rgba(104, 97, 206, 0.25);
+            }
+        </style>
+    </th:block>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            function updateBackupTypes() {
+                const types = [];
+                if (document.getElementById('userSwitch').checked) types.push('USER');
+                if (document.getElementById('areaSwitch').checked) types.push('AREA');
+                if (document.getElementById('equipmentSwitch').checked) types.push('EQUIPMENT');
+                if (document.getElementById('partSwitch').checked) types.push('PART');
+                if (document.getElementById('complaintSwitch').checked) types.push('COMPLAINT');
+                if (document.getElementById('workReportSwitch').checked) types.push('WORK_REPORT');
+                document.getElementById('backupTypesInput').value = types.join(',');
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const savedTypes = document.getElementById('backupTypesInput').value || '';
+                const savedTypesSet = new Set(savedTypes.split(',').map(t => t.trim()).filter(t => t));
+
+                document.getElementById('userSwitch').checked = savedTypesSet.has('USER');
+                document.getElementById('areaSwitch').checked = savedTypesSet.has('AREA');
+                document.getElementById('equipmentSwitch').checked = savedTypesSet.has('EQUIPMENT');
+                document.getElementById('partSwitch').checked = savedTypesSet.has('PART');
+                document.getElementById('complaintSwitch').checked = savedTypesSet.has('COMPLAINT');
+                document.getElementById('workReportSwitch').checked = savedTypesSet.has('WORK_REPORT');
+
+                // Sync initial state to hidden input (in case Thymeleaf value was empty or malformed)
+                updateBackupTypes();
+
+                // ✅ LIVE SYNC: Attach change listeners to all switches
+                const switches = [
+                    'userSwitch',
+                    'areaSwitch',
+                    'equipmentSwitch',
+                    'partSwitch',
+                    'complaintSwitch',
+                    'workReportSwitch'
+                ];
+
+                switches.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('change', updateBackupTypes);
+                    }
+                });
+
+                console.log("✅ JS: Backup config script loaded");
+
+                const form = document.getElementById('backupConfigForm');
+                const saveConfigBtn = document.getElementById('saveConfigBtn');
+                const backupNowBtn = document.getElementById('backupNowBtn');
+
+                // If any of these is null, getElementById failed!
+                if (!form || !saveConfigBtn || !backupNowBtn) {
+                    console.error("❌ JS: Missing form or buttons!");
+                    return;
+                }
+
+                const isFormValid = () => {
+                    return ![...form.querySelectorAll('[required]')].some(input => !input.value.trim());
+                };
+
+                const updateButtonStates = () => {
+                    const valid = isFormValid();
+                    saveConfigBtn.disabled = !valid;
+                    backupNowBtn.disabled = !valid;
+                    console.log("Form valid:", valid);
+                };
+
+                updateButtonStates();
+                form.addEventListener('input', updateButtonStates);
+                form.addEventListener('change', updateButtonStates);
+
+                saveConfigBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log("_CLICKED Save, form valid:", isFormValid());
+                    if (isFormValid()) {
+                        form.action = '/backup/save-config';
+                        console.log("Submitting to:", form.action);
+                        form.submit();
+                    }
+                });
+
+                backupNowBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log("_CLICKED Backup Now, form valid:", isFormValid());
+                    if (isFormValid()) {
+                        form.action = '/backup/backup-now';
+                        console.log("Submitting to:", form.action);
+                        form.submit();
+                    }
+                });
+
+                const flashModalContainer = document.getElementById('flashMessageModalContainer');
+                if (flashModalContainer) {
+                    const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
+                    flashModal.show();
+                }
+            });
+        </script>
+    </th:block>
+
+</body>
+
+</html>

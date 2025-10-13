@@ -1,5 +1,6 @@
 package ahqpck.maintenance.report.controller;
 
+import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.dto.AreaDTO;
 import ahqpck.maintenance.report.dto.ComplaintDTO;
 import ahqpck.maintenance.report.dto.EquipmentDTO;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -38,23 +41,39 @@ public class AreaController {
     private final AreaService areaService;
     private final UserService userService;
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping
     public String listAreas(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String hiddenColumns,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") String size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "true") boolean asc,
+            Authentication authentication,
             Model model) {
 
         try {
             int zeroBasedPage = page - 1;
             int parsedSize = "All".equalsIgnoreCase(size) ? Integer.MAX_VALUE : Integer.parseInt(size);
 
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                UserDTO currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
             Page<AreaDTO> areaPage = areaService.getAllAreas(keyword, zeroBasedPage, parsedSize, sortBy, asc);
 
             model.addAttribute("areas", areaPage);
             model.addAttribute("keyword", keyword);
+            model.addAttribute("hiddenColumns", hiddenColumns);
             model.addAttribute("currentPage", page);
             model.addAttribute("pageSize", size);
             model.addAttribute("sortBy", sortBy);
@@ -72,6 +91,7 @@ public class AreaController {
         return "area/index";
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping
     public String createArea(
             @Valid @ModelAttribute AreaDTO areaDTO,
@@ -86,7 +106,6 @@ public class AreaController {
         }
 
         try {
-            System.out.println("Area" + areaDTO);
             areaService.createArea(areaDTO);
             ra.addFlashAttribute("success", "Area created successfully.");
             return "redirect:/areas";
@@ -98,6 +117,7 @@ public class AreaController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/update")
     public String updateArea(
             @Valid @ModelAttribute AreaDTO areaDTO,
@@ -122,6 +142,7 @@ public class AreaController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN')")
     @GetMapping("/delete/{id}")
     public String deleteArea(@PathVariable String id, RedirectAttributes ra) {
         try {
@@ -133,6 +154,7 @@ public class AreaController {
         return "redirect:/areas";
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/import")
     public String importComplaints(
             @RequestParam("data") String dataJson,

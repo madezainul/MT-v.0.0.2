@@ -51,15 +51,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         Collection<? extends GrantedAuthority> authorities = mapRolesToAuthorities(user.getRoles());
 
-        return new org.springframework.security.core.userdetails.User(
-            user.getEmail(), // principal (can also use employeeId if preferred)
-            user.getPassword(),
-            user.getStatus() == User.Status.ACTIVE,
-            true, // accountNonExpired
-            true, // credentialsNonExpired
-            true, // accountNonLocked
-            authorities
-        );
+        return new UserDetailsImpl(user);
+        // return new org.springframework.security.core.userdetails.User(
+        //     user.getEmail(), // principal (can also use employeeId if preferred)
+        //     user.getPassword(),
+        //     user.getStatus() == User.Status.ACTIVE,
+        //     true, // accountNonExpired
+        //     true, // credentialsNonExpired
+        //     true, // accountNonLocked
+        //     authorities
+        // );
     }
 
     private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Set<Role> roles) {

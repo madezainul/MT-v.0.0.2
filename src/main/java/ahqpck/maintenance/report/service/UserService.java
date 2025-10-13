@@ -68,6 +68,12 @@ public class UserService {
         return userPage.map(this::toDTO);
     }
 
+    public List<UserDTO> getAllUsersForBackup() {
+        return userRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<RoleDTO> getAllRoles() {
         List<RoleDTO> roles = roleRepository.findAll().stream()
                 .map(RoleDTO::new)
@@ -78,6 +84,12 @@ public class UserService {
     public UserDTO getUserById(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + id));
+        return toDTO(user);
+    }
+
+    public UserDTO getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
         return toDTO(user);
     }
 
@@ -326,11 +338,6 @@ public class UserService {
 
         dto.setRoles(user.getRoles().stream()
                 .map(RoleDTO::new)
-                .collect(Collectors.toSet()));
-                
-        // Populate roleNames from the roles
-        dto.setRoleNames(user.getRoles().stream()
-                .map(role -> role.getName().name())
                 .collect(Collectors.toSet()));
 
         return dto;

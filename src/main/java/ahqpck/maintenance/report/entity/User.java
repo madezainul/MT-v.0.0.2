@@ -39,8 +39,7 @@ import lombok.ToString;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = {"areas", "reportedComplaints", "assignedComplaints", "roles"})
-@Getter
-@Setter
+@Data
 public class User {
 
     @Id

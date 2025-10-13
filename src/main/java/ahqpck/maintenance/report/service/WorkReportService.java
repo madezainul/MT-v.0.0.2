@@ -20,6 +20,7 @@ import ahqpck.maintenance.report.repository.AreaRepository;
 import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.repository.UserRepository;
+import ahqpck.maintenance.report.specification.ComplaintSpecification;
 import ahqpck.maintenance.report.specification.WorkReportSpecification;
 import ahqpck.maintenance.report.exception.NotFoundException;
 import ahqpck.maintenance.report.util.ImportUtil;
@@ -62,14 +63,17 @@ public class WorkReportService {
 
     @Transactional
     public Page<WorkReportDTO> getAllWorkReports(String keyword, LocalDateTime reportDateFrom,
-            LocalDateTime reportDateTo, WorkReport.Category category, String equipmentCode, int page, int size,
+            LocalDateTime reportDateTo, WorkReport.Status status, WorkReport.Category category, WorkReport.Scope scope, String equipmentCode,
+            int page, int size,
             String sortBy, boolean asc) {
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<WorkReport> spec = WorkReportSpecification.search(keyword)
                 .and(WorkReportSpecification.withReportDateRange(reportDateFrom, reportDateTo))
+                .and(WorkReportSpecification.withStatus(status))
                 .and(WorkReportSpecification.withCategory(category))
+                .and(WorkReportSpecification.withScope(scope))
                 .and(WorkReportSpecification.withEquipment(equipmentCode));
         Page<WorkReport> workReportPage = workReportRepository.findAll(spec, pageable);
 
@@ -86,6 +90,10 @@ public class WorkReportService {
     public void createWorkReport(WorkReportDTO dto) {
         try {
             WorkReport workReport = new WorkReport();
+
+            validateAreaOrEquipment(
+                    dto.getArea() != null ? dto.getArea().getCode() : null,
+                    dto.getEquipment() != null ? dto.getEquipment().getCode() : null);
 
             if (dto.getCode() == null || dto.getCode().trim().isEmpty()) {
                 String generatedCode = codeGenerator.generate(WorkReport.class, "code", "WR");
@@ -122,10 +130,14 @@ public class WorkReportService {
 
     @Transactional
     public void updateWorkReport(WorkReportDTO dto) {
-        WorkReport workReport = workReportRepository.findById(dto.getId())
-                .orElseThrow(() -> new NotFoundException("Work report not found with ID: " + dto.getId()));
-
         try {
+            WorkReport workReport = workReportRepository.findById(dto.getId())
+                    .orElseThrow(() -> new NotFoundException("Work report not found with ID: " + dto.getId()));
+
+            validateAreaOrEquipment(
+                    dto.getArea() != null ? dto.getArea().getCode() : null,
+                    dto.getEquipment() != null ? dto.getEquipment().getCode() : null);
+
             mapToEntity(workReport, dto);
 
             Set<User> technicians = new HashSet<>();
@@ -359,6 +371,15 @@ public class WorkReportService {
                     cp.getQuantity(), part.getName(), part.getId());
             part.addStock(cp.getQuantity());
             partRepository.save(part);
+        }
+    }
+
+    private void validateAreaOrEquipment(String areaId, String equipmentId) {
+        boolean areaExists = areaId != null && areaRepository.existsByCodeIgnoreCase(areaId);
+        boolean equipmentExists = equipmentId != null && equipmentRepository.existsByCodeIgnoreCase(equipmentId);
+
+        if (!areaExists && !equipmentExists) {
+            throw new IllegalArgumentException("Either Area or Equipment must be specified and must exist");
         }
     }
 

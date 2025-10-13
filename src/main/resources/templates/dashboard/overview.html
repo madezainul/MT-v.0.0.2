@@ -149,6 +149,226 @@
 				</div>
 			</div>
 
+			<!-- <div class="row" sec:authorize="hasAnyRole('ENGINEER')">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h4 class="card-title">My Tasks</h4>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="complaint-table" class="display table table-striped table-hover">
+                                    <thead class="bg-primary text-white">
+                                        <tr>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="code">
+                                                Code <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 135px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="reportDate">
+                                                Report Date <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 125px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="updatedAt">
+                                                Last Update <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="reporter">
+                                                Reporter <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 100px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="area">
+                                                Area <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 100px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="equipment">
+                                                Equipment <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 100px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="subject">
+                                                Subject <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 175px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="description">
+                                                Description <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 175px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="actionTaken">
+                                                Action Taken <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="assignee">
+                                                Assignee <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="priority">
+                                                Priority <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="category">
+                                                Category <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="status">
+                                                Status <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 130px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="closeTime">
+                                                Close Time <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 100px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="totalTimeMinutes">
+                                                Total Time <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="complaint : ${complaints.content}" th:data-id="${complaint.id}">
+                                            <td data-field="code">
+                                                <a th:href="@{/complaints/{id}(id=${complaint.id})}"
+                                                    class="font-weight-bold text-dark"
+                                                    th:text="${complaint.code ?: '-'}">-</a>
+                                            </td>
+                                            <td data-field="reportDate"
+                                                th:text="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'MMM d, yyyy') : '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="updatedAt"
+                                                th:text="${complaint.updatedAt != null ? #temporals.format(complaint.updatedAt, 'MMM d, yyyy HH:mm') : '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="reporter"
+                                                th:data-employee-id="${complaint.reporter?.employeeId}"
+                                                th:text="${complaint.reporter?.name ?: '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="area" th:data-area-code="${complaint.area?.code}"
+                                                th:text="${complaint.area?.name ?: '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="equipment"
+                                                th:data-equipment-code="${complaint.equipment?.code}"
+                                                th:text="${complaint.equipment?.name ?: '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="subject" th:text="${complaint.subject ?: '-'}">-</td>
+                                            <td data-field="description" th:text="${complaint.description ?: '-'}">-
+                                            </td>
+                                            <td data-field="actionTaken" th:text="${complaint.actionTaken ?: '-'}">-
+                                            </td>
+                                            <td data-field="assignee"
+                                                th:data-employee-id="${complaint.assignee?.employeeId}"
+                                                th:text="${complaint.assignee?.name ?: '-'}">-
+                                            </td>
+                                            <td data-field="priority">
+                                                <span class="badge badge-pill px-3 py-2" th:classappend="${
+                                                        complaint.priority == complaint.priority.HIGH ? 'badge-danger' :
+                                                        complaint.priority == complaint.priority.MEDIUM ? 'badge-warning' :
+                                                        'badge-success'
+                                                    }" th:text="${complaint.priority ?: '-'}"></span>
+                                            </td>
+                                            <td data-field="category">
+                                                <span class="badge badge-pill px-3 py-2" th:classappend="${
+                                                        complaint.category == complaint.category.MECHANICAL ? 'badge-info' :
+                                                        complaint.category == complaint.category.ELECTRICAL ? 'badge-danger' :
+                                                        complaint.category == complaint.category.IT ? 'badge-success' :
+                                                        'badge-dark'
+                                                    }" th:text="${complaint.category ?: '-'}"></span>
+                                            </td>
+                                            <td data-field="status">
+                                                <span class="badge badge-pill px-3 py-2" th:classappend="${
+                                                        complaint.status == complaint.status.OPEN ? 'badge-warning' :
+                                                        complaint.status == complaint.status.PENDING ? 'badge-danger' :
+                                                        'badge-success'
+                                                    }" th:text="${complaint.status ?: '-'}"></span>
+                                            </td>
+                                            <td data-field="closeTime"
+                                                th:text="${complaint.closeTime != null ? #temporals.format(complaint.closeTime, 'MMM d, yyyy HH:mm') : '-'}">
+                                                -
+                                            </td>
+                                            <td data-field="totalTimeMinutes"
+                                                th:text="${complaint.totalTimeDisplay ?: '-'}">-</td>
+                                        </tr>
+                                        <tr th:if="${complaints.totalElements == 0}">
+                                            <td colspan="15" class="text-center">No complaint found</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row mt-3 align-items-center">
+                                <div class="col-md-6 col-sm-12">
+                                    <p class="text-muted mb-0">
+                                        Showing
+                                        <span th:text="${complaints.number * complaints.size + 1} ?: 0"></span>
+                                        -
+                                        <span
+                                            th:text="${complaints.number * complaints.size + complaints.numberOfElements} ?: 0"></span>
+                                        of <span th:text="${complaints.totalElements} ?: 0"></span> entries
+                                    </p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <nav class=" d-flex justify-content-end">
+                                        <ul class="pagination mb-0">
+                                            <li class="page-item"
+                                                th:classappend="${!complaints.hasPrevious} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/complaints(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, assigneeEmpId=${param.assigneeEmpId}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, page=${complaints.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${complaints.hasPrevious}">Prev</a>
+                                                <span class="page-link" th:if="${!complaints.hasPrevious}">Prev</span>
+                                            </li>
+
+                                            <li class="page-item" th:if="${complaints.number > 0}"
+                                                th:classappend="${!complaints.hasPrevious} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/complaints(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, assigneeEmpId=${param.assigneeEmpId}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${complaints.totalPages >= 3 and complaints.number > 1}">
+                                                <span class="page-link">...</span>
+                                            </li>
+
+                                            <li class="page-item active">
+                                                <span class="page-link" th:text="${complaints.number + 1}">1</span>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${complaints.totalPages >= 3 and complaints.number + 1 < complaints.totalPages - 1}">
+                                                <span class="page-link">...</span>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${complaints.number + 1 < complaints.totalPages}"
+                                                th:classappend="${!complaints.hasNext} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/complaints(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, assigneeEmpId=${param.assigneeEmpId}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, page=${complaints.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
+                                                    <span th:text="${complaints.totalPages}">20</span>
+                                                </a>
+                                            </li>
+
+                                            <li class="page-item" th:classappend="${!complaints.hasNext} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/complaints(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, assigneeEmpId=${param.assigneeEmpId}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, page=${complaints.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${complaints.hasNext}">Next</a>
+                                                <span class="page-link" th:if="${!complaints.hasNext}">Next</span>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+
 			<div class="row">
 				<div class="col-md-12">
 					<div class="card full-height">
@@ -180,10 +400,12 @@
 
 										<!-- REMOVE WEEKLY BUTTON — KEEP ONLY MONTHLY & YEARLY -->
 										<div class="btn-group btn-group-sm d-flex mb-2">
-											<!-- <button type="button" class="btn btn-outline-primary flex-fill" data-range="weekly">Weekly</button> -->
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<!-- Inside Complaint Chart dropdown -->
+											<button type="button"
+												class="btn btn-outline-primary flex-fill complaint-filter"
 												data-range="monthly">Monthly</button>
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<button type="button"
+												class="btn btn-outline-primary flex-fill complaint-filter"
 												data-range="yearly">Yearly</button>
 										</div>
 
@@ -252,7 +474,7 @@
 			</div>
 
 			<div class="row">
-				<div class="col-md-8">
+				<div class="col-12 col-lg-12">
 					<div class="card">
 						<div class="card-header">
 							<div class="card-head-row card-tools-still-right">
@@ -278,13 +500,18 @@
 							<div class="table-responsive table-hover table-sales">
 								<table class="table table-bordered text-center">
 									<thead class="bg-primary text-white">
+										<!-- Row 1: Main headers -->
 										<tr>
-											<th rowspan="3" class="align-middle">Engineer</th>
-											<th id="openHeader" colspan="0" style="display:none;"></th>
-											<th id="pendingHeader" colspan="0" style="display:none;"></th>
-											<th id="closedHeader" colspan="0" style="display:none;"></th>
+											<th rowspan="2" class="align-middle">Engineer</th>
+											<th colspan="3" class="align-middle">Total</th>
+											<!-- Dynamic date headers will go here -->
 										</tr>
-										<tr id="dayHeaders">
+										<!-- Row 2: Sub-headers -->
+										<tr>
+											<th>O</th>
+											<th>P</th>
+											<th>C</th>
+											<!-- Dynamic sub-headers (Open/Closed per date) will go here -->
 										</tr>
 									</thead>
 									<tbody id="engineerTableBody">
@@ -295,7 +522,7 @@
 					</div>
 				</div>
 
-				<div class="col-md-4">
+				<!-- <div class="col-12 col-lg-2">
 					<div class="card">
 						<div class="card-header">
 							<div class="card-head-row card-tools-still-right">
@@ -320,7 +547,7 @@
 						<div class="card-body pb-0" id="equipment-work-list-container">
 						</div>
 					</div>
-				</div>
+				</div> -->
 			</div>
 
 
@@ -331,17 +558,14 @@
 							<div class="d-flex justify-content-between align-items-center">
 								<h4 class="card-title">Work Report Chart</h4>
 
-								<!-- Dropdown Trigger Button -->
 								<div class="dropdown">
 									<button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-										id="chartFilterDropdown" data-toggle="dropdown" aria-haspopup="true"
+										id="wrFilterDropdown" data-toggle="dropdown" aria-haspopup="true"
 										aria-expanded="false">
 										<i class="fas fa-filter"></i> Filters
 									</button>
 									<div class="dropdown-menu dropdown-menu-right p-3" style="width: 360px;"
-										aria-labelledby="chartFilterDropdown">
-
-										<!-- Date Range -->
+										aria-labelledby="wrFilterDropdown">
 										<div class="form-group">
 											<label for="wr-from">Date Range</label>
 											<div class="input-group input-daterange">
@@ -355,26 +579,14 @@
 											</div>
 										</div>
 
-										<!-- Equipment -->
-										<div class="form-group">
-											<label for="wr-equipment">Equipment</label>
-											<select id="wr-equipment" class="form-control form-control-sm">
-												<option value="">All Equipment</option>
-											</select>
-										</div>
-
-										<!-- Quick Buttons -->
 										<div class="btn-group btn-group-sm d-flex mb-2">
-											<button type="button" class="btn btn-outline-primary flex-fill"
-												data-range="weekly">Weekly</button>
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<button type="button" class="btn btn-outline-primary flex-fill wr-filter"
 												data-range="monthly">Monthly</button>
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<button type="button" class="btn btn-outline-primary flex-fill wr-filter"
 												data-range="yearly">Yearly</button>
 										</div>
 
-										<!-- Year Selector -->
-										<div id="wr-year-selector" style="display: none;">
+										<div id="wr-year-selector" style="display: none;" class="mt-2">
 											<div class="form-group">
 												<label for="wr-year-select">Year</label>
 												<select id="wr-year-select"
@@ -382,13 +594,45 @@
 											</div>
 										</div>
 
-										<!-- Apply Button -->
-										<button id="apply-filters-btn" class="btn btn-sm btn-primary btn-block mt-2">
+										<div id="wr-month-selector" style="display: none;" class="mt-2">
+											<div class="form-group">
+												<label for="wr-month-select">Month</label>
+												<select id="wr-month-select" class="form-control form-control-sm">
+													<option value="">All Months</option>
+													<option value="01">January</option>
+													<option value="02">February</option>
+													<option value="03">March</option>
+													<option value="04">April</option>
+													<option value="05">May</option>
+													<option value="06">June</option>
+													<option value="07">July</option>
+													<option value="08">August</option>
+													<option value="09">September</option>
+													<option value="10">October</option>
+													<option value="11">November</option>
+													<option value="12">December</option>
+												</select>
+											</div>
+										</div>
+
+										<button id="apply-wr-filters" class="btn btn-sm btn-primary btn-block mt-2">
 											Apply Filters
 										</button>
 									</div>
 								</div>
 							</div>
+						</div>
+
+						<div id="wr-weekly-nav" class="d-flex justify-content-center align-items-center py-2"
+							style="border-top: 1px solid #eee; margin-top: -1px; display: none;">
+							<button class="btn btn-sm btn-outline-primary mx-1" id="wr-prevWeekBtn"
+								title="Previous Week">
+								<i class="fas fa-chevron-left"></i> Prev
+							</button>
+							<span class="text-muted small mx-2" id="wr-weekRangeLabel">Week of Jan 1–7, 2024</span>
+							<button class="btn btn-sm btn-outline-primary mx-1" id="wr-nextWeekBtn" title="Next Week">
+								Next <i class="fas fa-chevron-right"></i>
+							</button>
 						</div>
 
 						<div class="card-body d-flex flex-column">
@@ -407,7 +651,6 @@
 							<div class="d-flex justify-content-between align-items-center">
 								<h4 class="card-title">Breakdown Chart</h4>
 
-								<!-- Filters Dropdown Button -->
 								<div class="dropdown">
 									<button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
 										id="breakdownFilterDropdown" data-toggle="dropdown" aria-haspopup="true"
@@ -416,8 +659,6 @@
 									</button>
 									<div class="dropdown-menu dropdown-menu-right p-3" style="width: 360px;"
 										aria-labelledby="breakdownFilterDropdown">
-
-										<!-- Date Range -->
 										<div class="form-group">
 											<label for="breakdown-from">Date Range</label>
 											<div class="input-group input-daterange">
@@ -431,18 +672,16 @@
 											</div>
 										</div>
 
-										<!-- Quick Buttons -->
 										<div class="btn-group btn-group-sm d-flex mb-2">
-											<button type="button" class="btn btn-outline-primary flex-fill"
-												data-range="weekly">Weekly</button>
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<button type="button"
+												class="btn btn-outline-primary flex-fill breakdown-filter"
 												data-range="monthly">Monthly</button>
-											<button type="button" class="btn btn-outline-primary flex-fill"
+											<button type="button"
+												class="btn btn-outline-primary flex-fill breakdown-filter"
 												data-range="yearly">Yearly</button>
 										</div>
 
-										<!-- Year Selector -->
-										<div id="breakdown-year-selector" style="display: none;">
+										<div id="breakdown-year-selector" style="display: none;" class="mt-2">
 											<div class="form-group">
 												<label for="breakdown-year-select">Year</label>
 												<select id="breakdown-year-select"
@@ -450,7 +689,28 @@
 											</div>
 										</div>
 
-										<!-- Apply Button -->
+										<div id="breakdown-month-selector" style="display: none;" class="mt-2">
+											<div class="form-group">
+												<label for="breakdown-month-select">Month</label>
+												<select id="breakdown-month-select"
+													class="form-control form-control-sm">
+													<option value="">All Months</option>
+													<option value="01">January</option>
+													<option value="02">February</option>
+													<option value="03">March</option>
+													<option value="04">April</option>
+													<option value="05">May</option>
+													<option value="06">June</option>
+													<option value="07">July</option>
+													<option value="08">August</option>
+													<option value="09">September</option>
+													<option value="10">October</option>
+													<option value="11">November</option>
+													<option value="12">December</option>
+												</select>
+											</div>
+										</div>
+
 										<button id="apply-breakdown-filters"
 											class="btn btn-sm btn-primary btn-block mt-2">
 											Apply Filters
@@ -459,6 +719,21 @@
 								</div>
 							</div>
 						</div>
+
+						<div id="breakdown-weekly-nav" class="d-flex justify-content-center align-items-center py-2"
+							style="border-top: 1px solid #eee; margin-top: -1px; display: none;">
+							<button class="btn btn-sm btn-outline-primary mx-1" id="breakdown-prevWeekBtn"
+								title="Previous Week">
+								<i class="fas fa-chevron-left"></i> Prev
+							</button>
+							<span class="text-muted small mx-2" id="breakdown-weekRangeLabel">Week of Jan 1–7,
+								2024</span>
+							<button class="btn btn-sm btn-outline-primary mx-1" id="breakdown-nextWeekBtn"
+								title="Next Week">
+								Next <i class="fas fa-chevron-right"></i>
+							</button>
+						</div>
+
 						<div class="card-body d-flex flex-column">
 							<div class="chart-container flex-grow-1">
 								<canvas id="breakdown-line-chart"></canvas>
@@ -468,9 +743,64 @@
 				</div>
 			</div>
 
+			<div class="row">
+				<div class="col-12 col-lg-6">
+					<div class="card">
+						<div class="card-header">
+							<div class="card-head-row card-tools-still-right">
+								<h4 class="card-title">Equipment</h4>
+								<div class="card-tools">
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-work-prev-btn" title="Previous">
+										<i class="fas fa-chevron-up"></i>
+									</button>
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-work-next-btn" title="Next">
+										<i class="fas fa-chevron-down"></i>
+									</button>
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-work-refresh-btn" title="Refresh">
+										<i class="fa fa-sync-alt"></i>
+									</button>
+								</div>
+							</div>
+							<p class="card-category">Top Equipment by Resolution Time</p>
+						</div>
+						<div class="card-body pb-0" id="equipment-count-container">
+						</div>
+					</div>
+				</div>
 
+				<div class="col-12 col-lg-6">
+					<div class="card">
+						<div class="card-header">
+							<div class="card-head-row card-tools-still-right">
+								<h4 class="card-title">Equipment</h4>
+								<div class="card-tools">
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-status-prev-btn" title="Previous">
+										<i class="fas fa-chevron-up"></i>
+									</button>
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-status-next-btn" title="Next">
+										<i class="fas fa-chevron-down"></i>
+									</button>
+									<button class="btn btn-icon btn-link btn-primary btn-xs"
+										id="equipment-status-refresh-btn" title="Refresh">
+										<i class="fa fa-sync-alt"></i>
+									</button>
+								</div>
+							</div>
+							<p class="card-category text-muted mb-0">
+								Open or pending complaints & work reports
+							</p>
+						</div>
+						<div class="card-body pb-0" id="equipment-status-container">
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-
 		<footer class="footer">
 			<div class="container-fluid">
 				<nav class="pull-left">
@@ -502,6 +832,7 @@
 
 	<!-- Scripts Fragment -->
 	<th:block layout:fragment="scripts">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 		<script th:inline="javascript">
@@ -510,7 +841,6 @@
 			const apiEndpoint = baseUrl + '/api/dashboards/status-count';
 			/*]]>*/
 		</script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 		<script th:src="@{/assets/js/overview-chart.js}"></script>
 		<script th:src="@{/assets/js/generate-report.js}"></script>
 	</th:block>

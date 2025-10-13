@@ -14,6 +14,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -31,7 +33,7 @@ import lombok.NoArgsConstructor;
 public class Area {
 
     @Id
-    @Column(name = "id", length = 22, nullable = false, updatable = false)
+    @Column(length = 22, updatable = false, nullable = false)
     private String id;
 
     @Column(nullable = false, unique = true)
@@ -45,10 +47,8 @@ public class Area {
     private Status status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "responsible_person", referencedColumnName = "employee_id", nullable = false)
+    @JoinColumn(name = "responsible_person", referencedColumnName = "id", nullable = false)
     private User responsiblePerson;
-
-    
 
     @OneToMany(mappedBy = "area", fetch = FetchType.LAZY)
     private final Set<Complaint> complaints = new HashSet<>();
@@ -63,7 +63,7 @@ public class Area {
 
     @PrePersist
     public void prePersist() {
-        this.id = this.id == null ? Base62.encode(UUID.randomUUID()) : this.id;
+        this.id = (this.id == null) ? Base62.encode(UUID.randomUUID()) : this.id;
         this.status = this.status != null ? this.status : Status.INACTIVE;
     }
 }

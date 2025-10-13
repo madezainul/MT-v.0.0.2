@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+
+<head>
+    <title th:text="${title}">Complaint Detail</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="row">
+        <div class="col-md-12 ml-auto mr-auto">
+            <div class="card card-profile">
+                <form id="complaintForm" th:action="@{/complaints/update}" method="post" enctype="multipart/form-data">
+                    <div class="card-body">
+                        <!-- Header: ID & Status -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0 text-muted" th:id="${'complaint-key'}" th:text="${complaint.id}">fX9aB2kLmN</h5>
+                            <span class="badge"
+                                  th:classappend="${complaint.status} == 'OPEN' ? 'badge-danger' :
+                                                 ${complaint.status} == 'IN_PROGRESS' ? 'badge-warning' :
+                                                 ${complaint.status} == 'PENDING' ? 'badge-info' :
+                                                 ${complaint.status} == 'DONE' ? 'badge-primary' :
+                                                 'badge-success'"
+                                  th:text="${complaint.status}"
+                                  style="cursor: pointer; font-weight: 600;"
+                                  title="Click to change status"
+                                  onclick="toggleStatus(this)"></span>
+                            <input type="hidden" name="id" th:value="${complaint.id}" />
+                            <input type="hidden" name="status" th:value="${complaint.status}" id="status-input" />
+                        </div>
+
+                        <!-- Subject (Editable) -->
+                        <h3 class="mb-3"
+                            contenteditable="true"
+                            th:id="${'subject-field'}"
+                            th:data-original="${complaint.subject}"
+                            th:text="${complaint.subject}"
+                            style="cursor: text; border-bottom: 2px dashed transparent; transition: border-color 0.2s;"
+                            onfocus="this.style.borderBottom='2px dashed #007bff';"
+                            onblur="updateHiddenInput(this, 'subject-input');">
+                        </h3>
+                        <input type="hidden" name="subject" th:value="${complaint.subject}" id="subject-input" />
+
+                        <!-- Badges: Priority, Category -->
+                        <div class="mb-4">
+                            <span class="badge badge-info">Maintenance</span>
+
+                            <span class="badge"
+                                  th:classappend="${complaint.priority} == 'HIGH' ? 'badge-danger' :
+                                                 ${complaint.priority} == 'MEDIUM' ? 'badge-warning' :
+                                                 'badge-secondary'"
+                                  th:text="${complaint.priority} + ' Priority'"
+                                  id="priority-field"
+                                  style="cursor: pointer;"
+                                  title="Click to edit"
+                                  onclick="cyclePriority(this)"></span>
+                            <input type="hidden" name="priority" th:value="${complaint.priority}" id="priority-input" />
+
+                            <span class="badge badge-dark"
+                                  th:text="${complaint.category}"
+                                  id="category-field"
+                                  style="cursor: pointer;"
+                                  title="Click to edit"
+                                  onclick="cycleCategory(this)"></span>
+                            <input type="hidden" name="category" th:value="${complaint.category}" id="category-input" />
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Reporter:</strong>
+                                    <span th:id="${'reporter-field'}"
+                                          th:data-original="${complaint.reporter.name + ' (' + complaint.reporter.employeeId + ')'}"
+                                          th:text="${complaint.reporter.name + ' (' + complaint.reporter.employeeId + ')'}">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="reporterName" th:value="${complaint.reporter.name}" />
+                                <input type="hidden" name="reporterEmployeeId" th:value="${complaint.reporter.employeeId}" />
+
+                                <p class="mb-2">
+                                    <strong>Assignee:</strong>
+                                    <span th:id="${'assignee-field'}"
+                                          contenteditable="true"
+                                          th:data-original="${complaint.assignee?.name ?: '-'}"
+                                          th:text="${complaint.assignee?.name ?: '-'}"
+                                          style="cursor: text; border-bottom: 1px dashed #ccc;">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="assigneeName" th:value="${complaint.assignee?.name}" id="assignee-input" />
+
+                                <p class="mb-2">
+                                    <strong>Area:</strong>
+                                    <span th:id="${'area-field'}"
+                                          contenteditable="true"
+                                          th:data-original="${complaint.area.name}"
+                                          th:text="${complaint.area.name}"
+                                          style="cursor: text; border-bottom: 1px dashed #ccc;">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="areaName" th:value="${complaint.area.name}" id="area-input" />
+
+                                <p class="mb-2">
+                                    <strong>Equipment:</strong>
+                                    <span th:id="${'equipment-field'}"
+                                          contenteditable="true"
+                                          th:data-original="${complaint.equipment.name}"
+                                          th:text="${complaint.equipment.name}"
+                                          style="cursor: text; border-bottom: 1px dashed #ccc;">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="equipmentName" th:value="${complaint.equipment.name}" id="equipment-input" />
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Report Date:</strong>
+                                    <span th:id="${'report-date-field'}"
+                                          th:data-original="${#temporals.format(complaint.reportDate, 'MMM d, yyyy HH:mm')}"
+                                          th:text="${#temporals.format(complaint.reportDate, 'MMM d, yyyy HH:mm')}">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="reportDate" th:value="${#temporals.format(complaint.reportDate, 'yyyy-MM-dd HH:mm')}" />
+
+                                <p class="mb-2" th:if="${complaint.closeTime != null}">
+                                    <strong>Close Time:</strong>
+                                    <span th:id="${'close-time-field'}"
+                                          th:data-original="${#temporals.format(complaint.closeTime, 'MMM d, yyyy HH:mm')}"
+                                          th:text="${#temporals.format(complaint.closeTime, 'MMM d, yyyy HH:mm')}">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="closeTime" th:value="${#temporals.format(complaint.closeTime, 'yyyy-MM-dd HH:mm')}" th:if="${complaint.closeTime != null}" />
+
+                                <p class="mb-2">
+                                    <strong>Resolution Time:</strong>
+                                    <span th:id="${'resolution-time-field'}"
+                                          th:data-original="${complaint.totalResolutionTimeMinutes != null ? complaint.totalResolutionTimeMinutes + ' minutes' : '-'}"
+                                          th:text="${complaint.totalResolutionTimeMinutes != null ? complaint.totalResolutionTimeMinutes + ' minutes' : '-'}">
+                                    </span>
+                                </p>
+                                <input type="hidden" name="totalResolutionTimeMinutes" th:value="${complaint.totalResolutionTimeMinutes}" />
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <h5 class="d-flex align-items-center mb-2">
+                                <i class="fas fa-align-left mr-2 text-primary"></i> Description
+                            </h5>
+                            <textarea id="description-field" class="form-control" rows="6" readonly
+                                      th:data-original="${complaint.description}"
+                                      th:text="${complaint.description}"
+                                      style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;"
+                                      onclick="this.readOnly = false; this.style.backgroundColor = '#fff'; this.style.boxShadow = '0 0 0 0.2rem rgba(0,123,255,.1)'; this.focus();"
+                                      onblur="updateHiddenInput(this, 'description-input')">
+                            </textarea>
+                            <input type="hidden" name="description" th:value="${complaint.description}" id="description-input" />
+                        </div>
+
+                        <!-- Action Taken -->
+                        <div class="mb-4">
+                            <h5 class="d-flex align-items-center mb-2">
+                                <i class="fas fa-wrench mr-2 text-success"></i> Action Taken
+                            </h5>
+                            <textarea id="action-taken-field" class="form-control" rows="6" readonly
+                                      th:data-original="${complaint.actionTaken}"
+                                      th:text="${complaint.actionTaken}"
+                                      style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;"
+                                      onclick="this.readOnly = false; this.style.backgroundColor = '#fff'; this.style.boxShadow = '0 0 0 0.2rem rgba(0,123,255,.1)'; this.focus();"
+                                      onblur="updateHiddenInput(this, 'action-taken-input')">
+                            </textarea>
+                            <input type="hidden" name="actionTaken" th:value="${complaint.actionTaken}" id="action-taken-input" />
+                        </div>
+
+                        <!-- BEFORE & AFTER IMAGES -->
+                        <div class="mb-4">
+                            <h5 class="d-flex align-items-center mb-3">
+                                <i class="fas fa-images mr-2 text-primary"></i> Visual Documentation
+                            </h5>
+                            <div class="row">
+                                <!-- BEFORE REPAIR -->
+                                <div class="col-md-6">
+                                    <div class="card border-light shadow-sm h-50">
+                                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <strong class="text-warning">
+                                                <i class="fas fa-camera mr-1"></i> Before Repair
+                                            </strong>
+                                        </div>
+                                        <div class="card-body d-flex flex-column align-items-center text-center p-3"
+                                             style="cursor: pointer; background-color: #fcfcfd;"
+                                             onclick="this.querySelector('input[type=file]').click();">
+                                            <div id="beforeImageContainer" class="w-100 d-flex justify-content-center">
+                                                <img id="beforeImagePreview"
+                                                     th:src="@{/upload/complaint/image/before/} + ${complaint.imageBefore}"
+                                                     th:if="${complaint.imageBefore != null}"
+                                                     alt="Before Repair Preview"
+                                                     class="img-fluid rounded"
+                                                     style="max-height: 300px; object-fit: scale-down;" />
+                                                <div id="beforeImagePlaceholder" class="text-muted" th:if="${complaint.imageBefore == null}">
+                                                    <i class="fas fa-image fa-2x mb-2" style="opacity: 0.3;"></i>
+                                                    <p class="mb-0 small">No image</p>
+                                                </div>
+                                            </div>
+                                            <input type="file" name="imageBeforeFile" accept="image/*" style="display: none;"
+                                                   onchange="updateImagePreview(this, 'beforeImagePreview', 'beforeImagePlaceholder')" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- AFTER REPAIR -->
+                                <div class="col-md-6">
+                                    <div class="card border-light shadow-sm h-50">
+                                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <strong class="text-success">
+                                                <i class="fas fa-check-circle mr-1"></i> After Repair
+                                            </strong>
+                                        </div>
+                                        <div class="card-body d-flex flex-column align-items-center text-center p-3"
+                                             style="cursor: pointer; background-color: #fcfcfd;"
+                                             onclick="this.querySelector('input[type=file]').click();">
+                                            <div id="afterImageContainer" class="w-100 d-flex justify-content-center">
+                                                <img id="afterImagePreview"
+                                                     th:src="@{/upload/complaint/image/after/} + ${complaint.imageAfter}"
+                                                     th:if="${complaint.imageAfter != null}"
+                                                     alt="After Repair Preview"
+                                                     class="img-fluid rounded"
+                                                     style="max-height: 300px; object-fit: scale-down;" />
+                                                <div id="afterImagePlaceholder" class="text-muted" th:if="${complaint.imageAfter == null}">
+                                                    <i class="fas fa-image fa-2x mb-2" style="opacity: 0.3;"></i>
+                                                    <p class="mb-0 small">No image</p>
+                                                </div>
+                                            </div>
+                                            <input type="file" name="imageAfterFile" accept="image/*" style="display: none;"
+                                                   onchange="updateImagePreview(this, 'afterImagePreview', 'afterImagePlaceholder')" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parts Used -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="d-flex align-items-center mb-0">
+                                    <i class="fas fa-cogs mr-2 text-secondary"></i> Parts Used
+                                </h5>
+                                <button type="button" class="btn btn-primary btn-sm btn-round"
+                                        data-toggle="modal" data-target="#addPartModal">
+                                    <i class="fas fa-plus"></i> Add Part
+                                </button>
+                            </div>
+
+                            <!-- Include Parts Modal -->
+                            <div th:replace="~{complaint/part-modal :: part-modal}"></div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm" id="partsTable">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th>Part Code</th>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="partDto : ${complaint.partsUsed}">
+                                        <td><code class="bg-light px-2 py-1 rounded" th:text="${partDto.part.code}"></code></td>
+                                        <td th:text="${partDto.part.name}"></td>
+                                        <td th:text="${partDto.part.category}"></td>
+                                        <td class="text-center font-weight-bold" contenteditable="true"
+                                            th:data-original="${partDto.quantity}"
+                                            th:text="${partDto.quantity}"></td>
+                                        <td class="text-center">
+                                            <button class="btn btn-link text-danger btn-sm delete-row" type="button">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <input type="hidden" name="partsUsedData" id="partsUsedData" value="" />
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-4">
+                            <small class="text-muted">
+                                Last updated:
+                                <span th:id="${'updated-at-field'}"
+                                      th:data-original="${#temporals.format(complaint.updatedAt, 'MMM d, yyyy HH:mm')}"
+                                      th:text="${#temporals.format(complaint.updatedAt, 'MMM d, yyyy HH:mm')}">
+                                </span>
+                            </small>
+                            <div>
+                                <button type="button" class="btn btn-danger btn-border btn-round mr-2"
+                                        data-toggle="modal" data-target="#deleteConfirmModal">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-round" id="saveChangesBtn">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Modals -->
+    <div th:replace="~{complaint/modal :: deleteConfirmModal}"></div>
+
+    <!-- JavaScript for interactivity -->
+    <script th:replace="~{complaint/detail-js :: scripts}"></script>
+</div>
+</body>
+</html>
+<div th:fragment="scripts">
+<script>
+    function updateHiddenInput(element, hiddenId) {
+        document.getElementById(hiddenId).value = element.textContent.trim();
+    }
+
+    function updateImagePreview(input, imgId, placeholderId) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById(imgId);
+                const placeholder = document.getElementById(placeholderId);
+                img.src = e.target.result;
+                img.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function toggleStatus(span) {
+        const statuses = ['OPEN', 'IN_PROGRESS', 'PENDING', 'DONE', 'CLOSED'];
+        const current = span.textContent.trim();
+        const index = statuses.indexOf(current);
+        const next = statuses[(index + 1) % statuses.length];
+        span.textContent = next;
+        document.getElementById('status-input').value = next;
+
+        // Update badge color
+        span.className = 'badge';
+        if (next === 'OPEN') span.classList.add('badge-danger');
+        else if (next === 'IN_PROGRESS') span.classList.add('badge-warning');
+        else if (next === 'PENDING') span.classList.add('badge-info');
+        else if (next === 'DONE') span.classList.add('badge-primary');
+        else span.classList.add('badge-success');
+    }
+
+    function cyclePriority(span) {
+        const priorities = ['LOW', 'MEDIUM', 'HIGH'];
+        const current = span.textContent.replace(' Priority', '');
+        const index = priorities.indexOf(current);
+        const next = priorities[(index + 1) % priorities.length];
+        span.textContent = next + ' Priority';
+        document.getElementById('priority-input').value = next;
+
+        span.className = 'badge';
+        if (next === 'HIGH') span.classList.add('badge-danger');
+        else if (next === 'MEDIUM') span.classList.add('badge-warning');
+        else span.classList.add('badge-secondary');
+    }
+
+    function cycleCategory(span) {
+        const categories = ['MECHANICAL', 'ELECTRICAL', 'IT'];
+        const current = span.textContent;
+        const index = categories.indexOf(current);
+        const next = categories[(index + 1) % categories.length];
+        span.textContent = next;
+        document.getElementById('category-input').value = next;
+    }
+</script>
+</div>
+
+
+
+
+
+
+

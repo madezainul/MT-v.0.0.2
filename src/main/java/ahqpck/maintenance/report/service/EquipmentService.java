@@ -5,6 +5,10 @@ import ahqpck.maintenance.report.entity.Equipment;
 import ahqpck.maintenance.report.exception.NotFoundException;
 import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.repository.EquipmentPartBOMRepository;
+import ahqpck.maintenance.report.dto.EquipmentStatusDTO;
+import ahqpck.maintenance.report.entity.Equipment;
+import ahqpck.maintenance.report.exception.NotFoundException;
+import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.specification.EquipmentSpecification;
 import ahqpck.maintenance.report.util.FileUploadUtil;
 import ahqpck.maintenance.report.util.ImportUtil;
@@ -25,6 +29,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,6 +50,7 @@ public class EquipmentService {
     private final ImportUtil importUtil;
 
     public Page<EquipmentDTO> getAllEquipments(String keyword, int page, int size, String sortBy, boolean asc) {
+        // Keep your existing logic
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -49,6 +58,39 @@ public class EquipmentService {
         Page<Equipment> equipmentPage = equipmentRepository.findAll(spec, pageable);
 
         return equipmentPage.map(this::toDTO);
+        // >>> NEW: Fetch stats only for current page IDs <<<
+        List<String> ids = equipmentPage.getContent().stream()
+                .map(Equipment::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<String, EquipmentStatusDTO> statsMap = ids.isEmpty()
+                ? Map.of()
+                : equipmentRepository.findStatsByEquipmentIds(ids).stream()
+                        .collect(Collectors.toMap(
+                                EquipmentStatusDTO::getId,
+                                s -> s,
+                                (existing, replacement) -> existing // in case of duplicate (shouldn't happen)
+                        ));
+
+        // Map to DTO + enrich with stats
+        return equipmentPage.map(equipment -> {
+            EquipmentDTO dto = toDTO(equipment);
+            EquipmentStatusDTO stats = statsMap.get(equipment.getId());
+            if (stats != null) {
+                dto.setTotalOpenWorkReports(stats.getOpenWr());
+                dto.setTotalPendingWorkReports(stats.getPendingWr());
+                dto.setTotalOpenComplaints(stats.getOpenCp());
+                dto.setTotalPendingComplaints(stats.getPendingCp());
+            } else {
+                // Set zeros if no stats (e.g., no WR/complaints)
+                dto.setTotalOpenWorkReports(0L);
+                dto.setTotalPendingWorkReports(0L);
+                dto.setTotalOpenComplaints(0L);
+                dto.setTotalPendingComplaints(0L);
+            }
+            return dto;
+        });
     }
 
     public void createEquipment(EquipmentDTO dto, MultipartFile imageFile) {
