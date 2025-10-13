@@ -1,0 +1,176 @@
+mysql -u root -p maintenance_report < "D:\Code\maintenance\backup\maintenance_report_1_backup_04Sat10_0840.sql"
+
+SELECT 
+    CONSTRAINT_NAME,
+    TABLE_NAME,
+    COLUMN_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM 
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE 
+    REFERENCED_TABLE_SCHEMA = 'maintenance_report'
+    AND REFERENCED_TABLE_NAME IS NOT NULL
+ORDER BY 
+    REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME;
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE complaints ADD COLUMN reporter_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari users
+UPDATE complaints c
+JOIN users u ON c.reporter = u.employee_id
+SET c.reporter_new = u.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE complaints DROP FOREIGN KEY FK56x2u4ix1vybwq5oxd9ps2h21;
+
+-- 4. Ganti kolom reporter dengan nilai baru
+ALTER TABLE complaints DROP COLUMN reporter;
+ALTER TABLE complaints CHANGE COLUMN reporter_new reporter VARCHAR(22);
+
+-- 5. Buat foreign key baru ke users.id
+ALTER TABLE complaints 
+ADD CONSTRAINT FK_complaints_reporter 
+FOREIGN KEY (reporter) REFERENCES users(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE complaints ADD COLUMN assignee_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari users
+UPDATE complaints c
+JOIN users u ON c.assignee = u.employee_id
+SET c.assignee_new = u.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE complaints DROP FOREIGN KEY FKqmo6ko41b28wvadaumei6yia1;
+
+-- 4. Ganti kolom assignee dengan nilai baru
+ALTER TABLE complaints DROP COLUMN assignee;
+ALTER TABLE complaints CHANGE COLUMN assignee_new assignee VARCHAR(22);
+
+-- 5. Buat foreign key baru ke users.id
+ALTER TABLE complaints 
+ADD CONSTRAINT FK_complaints_assignee 
+FOREIGN KEY (assignee) REFERENCES users(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE work_reports ADD COLUMN supervisor_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari users
+UPDATE work_reports w
+JOIN users u ON w.supervisor = u.employee_id
+SET w.supervisor_new = u.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE work_reports DROP FOREIGN KEY FK1ov18jxcvcdmfrivnj4emgyal;
+
+-- 4. Ganti kolom supervisor dengan nilai baru
+ALTER TABLE work_reports DROP COLUMN supervisor;
+ALTER TABLE work_reports CHANGE COLUMN supervisor_new supervisor VARCHAR(22);
+
+-- 5. Buat foreign key baru ke users.id
+ALTER TABLE work_reports 
+ADD CONSTRAINT FK_work_reports_supervisor 
+FOREIGN KEY (supervisor) REFERENCES users(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE areas ADD COLUMN responsible_person_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari users
+UPDATE areas a
+JOIN users u ON a.responsible_person = u.employee_id
+SET a.responsible_person_new = u.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE areas DROP FOREIGN KEY FK4tr9eiga9yaopu5qq225vfsju;
+
+-- 4. Ganti kolom responsible_person dengan nilai baru
+ALTER TABLE areas DROP COLUMN responsible_person;
+ALTER TABLE areas CHANGE COLUMN responsible_person_new responsible_person VARCHAR(22);
+
+-- 5. Buat foreign key baru ke users.id
+ALTER TABLE areas 
+ADD CONSTRAINT FK_areas_responsible_person 
+FOREIGN KEY (responsible_person) REFERENCES users(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE complaints ADD COLUMN area_code_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari areas
+UPDATE complaints c
+JOIN areas a ON c.area_code = a.code
+SET c.area_code_new = a.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE complaints DROP FOREIGN KEY FKnc0vpn21riojmkealhih2ofpu;
+
+-- 4. Ganti kolom area_code dengan nilai baru
+ALTER TABLE complaints DROP COLUMN area_code;
+ALTER TABLE complaints CHANGE COLUMN area_code_new area_code VARCHAR(22);
+
+-- 5. Buat foreign key baru ke areas.id
+ALTER TABLE complaints 
+ADD CONSTRAINT FK_complaints_area 
+FOREIGN KEY (area_code) REFERENCES areas(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE work_reports ADD COLUMN area_code_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari areas
+UPDATE work_reports w
+JOIN areas a ON w.area_code = a.code
+SET w.area_code_new = a.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE work_reports DROP FOREIGN KEY FKaxks0svahqx9ltf5no0vlc5vk;
+
+-- 4. Ganti kolom area_code dengan nilai baru
+ALTER TABLE work_reports DROP COLUMN area_code;
+ALTER TABLE work_reports CHANGE COLUMN area_code_new area_code VARCHAR(22);
+
+-- 5. Buat foreign key baru ke areas.id
+ALTER TABLE work_reports 
+ADD CONSTRAINT FK_work_reports_area 
+FOREIGN KEY (area_code) REFERENCES areas(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE complaints ADD COLUMN equipment_code_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari equipments
+UPDATE complaints c
+JOIN equipments e ON c.equipment_code = e.code
+SET c.equipment_code_new = e.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE complaints DROP FOREIGN KEY FKpnonthcfumql2a391k4ywseev;
+
+-- 4. Ganti kolom equipment_code dengan nilai baru
+ALTER TABLE complaints DROP COLUMN equipment_code;
+ALTER TABLE complaints CHANGE COLUMN equipment_code_new equipment_code VARCHAR(22);
+
+-- 5. Buat foreign key baru ke equipments.id
+ALTER TABLE complaints 
+ADD CONSTRAINT FK_complaints_equipment 
+FOREIGN KEY (equipment_code) REFERENCES equipments(id);
+
+-- 1. Tambahkan kolom sementara
+ALTER TABLE work_reports ADD COLUMN equipment_code_new VARCHAR(22);
+
+-- 2. Isi kolom baru dengan nilai id dari equipments
+UPDATE work_reports w
+JOIN equipments e ON w.equipment_code = e.code
+SET w.equipment_code_new = e.id;
+
+-- 3. Drop foreign key lama
+ALTER TABLE work_reports DROP FOREIGN KEY FKflk3k25amx3dmg0ne9d5vh7gj;
+
+-- 4. Ganti kolom equipment_code dengan nilai baru
+ALTER TABLE work_reports DROP COLUMN equipment_code;
+ALTER TABLE work_reports CHANGE COLUMN equipment_code_new equipment_code VARCHAR(22);
+
+-- 5. Buat foreign key baru ke equipments.id
+ALTER TABLE work_reports 
+ADD CONSTRAINT FK_work_reports_equipment 
+FOREIGN KEY (equipment_code) REFERENCES equipments(id);
+

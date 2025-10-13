@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <a>
+                            <i class="fas fa-toolbox"></i>
+                        </a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Menu</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:text="${title}"></a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <button class="btn btn-primary dropdown-toggle mt-2 mr-2" type="button" id="importDropdown"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-upload mr-1"></i> Import
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="importDropdown">
+                        <a class="dropdown-item" href="#"><i class="fa fa-file-excel mr-2 text-success"></i>
+                            Excel</a>
+                        <a class="dropdown-item" href="#"><i class="fa fa-file-pdf mr-2 text-danger"></i> PDF</a>
+                    </div>
+                    <button class="btn btn-primary dropdown-toggle mt-2 mr-2" type="button" id="exportDropdown"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-download mr-1"></i> Export
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="exportDropdown">
+                        <a class="dropdown-item" href="#"><i class="fa fa-file-excel mr-2 text-success"></i>
+                            Excel</a>
+                        <a class="dropdown-item" href="#"><i class="fa fa-file-pdf mr-2 text-danger"></i> PDF</a>
+                    </div>
+                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal">
+                        <i class="fa fa-plus-circle mr-2"></i> Add
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h4 class="card-title" th:text="${title}"></h4>
+                                <form class="form-inline ml-auto" th:action="@{/parts}" method="get" id="partsForm">
+                                    <div class="input-icon">
+                                        <input type="text" name="keyword" th:value="${keyword}" id="userSearchInput"
+                                            class="form-control" placeholder="Search...">
+                                        <span class="input-icon-addon"><i class="fa fa-search"></i></span>
+                                    </div>
+
+                                    <!-- Size Dropdown -->
+                                    <div class="form-group">
+                                        <label for="pageSizeSelect" class="sr-only">Items per page:</label>
+                                        <select name="size" id="pageSizeSelect" class="form-control"
+                                            onchange="this.form.submit()">
+                                            <option value="10" th:selected="${pageSize == 10}">10</option>
+                                            <option value="30" th:selected="${pageSize == 30}">30</option>
+                                            <option value="50" th:selected="${pageSize == 50}">50</option>
+                                            <option value="100" th:selected="${pageSize == 100}">100</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Filter Dropdown -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary dropdown-toggle" type="button"
+                                            id="filterDropdown" data-toggle="dropdown" aria-haspopup="true"
+                                            aria-expanded="false" style="padding: 0.375rem 0.5rem;">
+                                            <i class="fa fa-filter"></i>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="filterDropdown"
+                                            style="min-width: 200px;">
+
+                                            <!-- Hidden inputs -->
+                                            <input type="hidden" name="sortBy" id="sortByInput" th:value="${sortBy}" />
+                                            <input type="hidden" name="asc" id="ascInput" th:value="${asc}" />
+
+                                            <!-- Sort Column -->
+                                            <h6 class="dropdown-header">Sort Column</h6>
+                                            <th:block th:each="field : ${sortFields}">
+                                                <a class="dropdown-item sort-column" href="#" th:text="${field}"
+                                                    th:data-column="${field}"
+                                                    th:classappend="${sortBy == field} ? 'active' : ''">
+                                                </a>
+                                            </th:block>
+
+                                            <div class="dropdown-divider"></div>
+
+                                            <!-- Sort Order (using asc=true/false) -->
+                                            <h6 class="dropdown-header">Sort Order</h6>
+                                            <a class="dropdown-item" href="#" data-asc="true"
+                                                th:classappend="${asc == true} ? 'active' : ''">Ascending</a>
+                                            <a class="dropdown-item" href="#" data-asc="false"
+                                                th:classappend="${asc == false} ? 'active' : ''">Descending</a>
+                                        </div>
+                                    </div>
+
+                                    <!-- Optional: reset page to 0 on change -->
+                                    <!-- <input type="hidden" name="page" value="0" /> -->
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Include Modals -->
+                            <div th:replace="~{part/modal :: modal}"></div>
+
+                            <!-- Table -->
+                            <div class="table-responsive">
+                                <table id="item-table" class="display table table-striped table-hover">
+                                    <thead class="bg-primary text-white">
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Supplier</th>
+                                            <th>Quantity</th>
+                                            <th>Description</th>
+                                            <th>Image</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Sample Row 1 -->
+                                        <tr th:each="part : ${parts.content}" class="table-row-hover"
+                                            th:if="${parts.totalElements > 0}">
+                                            <td data-field="code" th:text="${part.code}"></td>
+                                            <td data-field="name" th:text="${part.name}"></td>
+                                            <td data-field="category" th:text="${part.category}"></td>
+                                            <td data-field="supplier" th:text="${part.supplier}">
+                                            </td>
+                                            <td data-field="stockQuantity" class="text-center"
+                                                th:text="${part.stockQuantity}">
+                                            </td>
+                                            <td data-field="description" class="text-center"
+                                                th:text="${part.description}">
+                                            </td>
+                                            <td data-field="image">
+                                                <div class="avatar-lg my-2" th:if="${part.image}">
+                                                    <img th:src="@{/upload/part/image/__${part.image}__}"
+                                                        class="rounded avatar-img" alt="Part Image" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="form-button-action">
+                                                    <button type="button"
+                                                        class="btn btn-link btn-primary btn-lg edit-row"
+                                                        th:data-id="${part.id}" th:data-name="${part.name}">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-link btn-danger delete-row"
+                                                        th:data-id="${part.id}" th:data-name="${part.name}">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${parts.totalElements == 0}">
+                                            <td colspan="8" class="text-center">No parts found</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="row mt-3 align-items-center">
+                                <div class="col-md-6 col-sm-12">
+                                    <p class="text-muted mb-0">
+                                        Showing
+                                        <span th:text="${parts.number * parts.size + 1} ?: 0"></span>
+                                        -
+                                        <span
+                                            th:text="${parts.number * parts.size + parts.numberOfElements} ?: 0"></span>
+                                        of <span th:text="${parts.totalElements} ?: 0"></span> entries
+                                    </p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <nav class="d-flex justify-content-end">
+                                        <ul class="pagination mb-0">
+                                            <li class="page-item" th:classappend="${!parts.hasPrevious} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/parts(keyword=${keyword}, page=${parts.number - 1}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${parts.hasPrevious}">Prev</a>
+                                                <span class="page-link" th:if="${!parts.hasPrevious}">Prev</span>
+                                            </li>
+
+                                            <li class="page-item" th:classappend="${p == parts.number} ? 'active'"
+                                                th:each="p : ${#numbers.sequence(0, parts.totalPages - 1)}">
+                                                <a class="page-link"
+                                                    th:href="@{/parts(keyword=${keyword}, page=${p}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:text="${p + 1}"></a>
+                                            </li>
+
+                                            <li class="page-item" th:classappend="${!parts.hasNext} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/parts(keyword=${keyword}, page=${parts.number + 1}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${parts.hasNext}">Next</a>
+                                                <span class="page-link" th:if="${!parts.hasNext}">Next</span>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Fragment -->
+    <th:block layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.getElementById('partsForm');
+                const sortByInput = document.getElementById('sortByInput');
+                const ascInput = document.getElementById('ascInput');
+
+                // Handle column click
+                document.querySelectorAll('.sort-column').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const column = this.getAttribute('data-column');
+                        sortByInput.value = column;
+
+                        // Update active class
+                        document.querySelectorAll('.sort-column').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        // Submit form
+                        form.submit();
+                    });
+                });
+
+                // Handle sort order (asc=true/false)
+                document.querySelectorAll('[data-asc]').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const ascValue = this.getAttribute('data-asc') === 'true'; // convert to boolean
+                        ascInput.value = ascValue;
+
+                        // Update active class
+                        document.querySelectorAll('[data-asc]').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        // Submit form
+                        form.submit();
+                    });
+                });
+            });
+
+            $(document).ready(function () {
+                // --- Edit Modal Trigger ---
+                $('.edit-row').on('click', function () {
+                    const row = $(this).closest('tr');
+                    const currentId = $(this).data('id');
+
+                    // Populate form fields
+                    $('#editId').val(currentId);
+                    $('#editCode').val(row.find('[data-field="code"]').text().trim());
+                    $('#editName').val(row.find('[data-field="name"]').text().trim());
+                    $('#editCategory').val(row.find('[data-field="category"]').text().trim());
+                    $('#editSupplier').val(row.find('[data-field="supplier"]').text().trim());
+                    $('#editStockQuantity').val(row.find('[data-field="stockQuantity"]').text().trim());
+                    $('#editDescription').val(row.find('[data-field="description"]').text().trim());
+
+                    // Set image preview if exists
+                    const imgSrc = row.find('[data-field="image"] img').attr('src');
+                    if (imgSrc) {
+                        $('#editImagePreview').attr('src', imgSrc).show();
+                    } else {
+                        $('#editImagePreview').hide();
+                    }
+
+                    // Show modal
+                    $('#editRowModal').modal('show');
+                });
+
+                // --- Delete Modal Trigger ---
+                $('.delete-row').on('click', function () {
+                    const name = $(this).data('name');
+                    const id = $(this).data('id');
+
+                    $('#deleteDocName').text(name);
+                    $('#confirmDeleteButton').attr('href', '/parts/delete/' + encodeURIComponent(id));
+                    $('#deleteRowModal').modal('show');
+                });
+            });
+
+            $(document).ready(function () {
+                // Check if the modal container exists (meaning a flash message was present)
+                if ($('#flashMessageModalContainer').length) {
+                    // Show the modal using Bootstrap's modal function
+                    $('#flashMessageModal').modal('show');
+                }
+            });
+        </script>
+    </th:block>
+
+</body>
+
+</html>

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Documents</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div th:replace="~{fragments/part-modal :: part-modal}"></div>
+        <div th:replace="~{fragments/error-modal :: error-modal}"></div>
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <a>
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Menu</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:text="${title}"></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="row">
+                <div class="col-md-12 ml-auto mr-auto">
+                    <div class="card card-profile">
+                        <!-- Main complaint edit form -->
+                        <form id="complaintForm" th:action="@{/complaints/update}" method="post"
+                            enctype="multipart/form-data">
+                            <div class="card-body">
+                                <!-- Header: Complaint code + status badge -->
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0 text-muted" th:id="${'complaint-key'}"
+                                        th:text="${complaint?.code ?: '-'}"></h5>
+                                    <span class="badge" th:id="${'status-field'}" th:classappend="${
+                                                        complaint.status == complaint.status.OPEN ? 'badge-warning' :
+                                                        complaint.status == complaint.status.PENDING ? 'badge-danger' :
+                                                        'badge-success'
+                                                    }" th:text="${complaint.status ?: '-'}"
+                                        style="cursor: pointer; font-weight: 600;"
+                                        title="Click to change status"></span>
+                                    <input type="hidden" name="id" th:value="${complaint.id}" />
+                                    <input type="hidden" name="status" th:value="${complaint.status}"
+                                        id="status-input" />
+                                </div>
+
+                                <!-- Editable subject field -->
+                                <h3 class="mb-3 pb-2" contenteditable="true" th:id="${'subject-field'}"
+                                    th:data-original="${complaint.subject ?: ''}" th:text="${complaint.subject ?: ''}"
+                                    style="cursor: text; border-bottom: 2px dashed #ccc; transition: border-color 0.2s;"
+                                    onfocus="this.style.borderBottom = '2px dashed #007bff';"
+                                    onblur="this.style.borderBottom = '2px dashed #ccc'; updateHiddenInput(this, 'subject-input');">
+                                </h3>
+                                <input type="hidden" name="subject" th:value="${complaint.subject ?: ''}"
+                                    id="subject-input" />
+
+                                <!-- Priority & category badges -->
+                                <div class="mb-4">
+                                    <span class="badge badge-secondary">MAINTENANCE</span>
+
+                                    <span class="badge" th:classappend="${
+                                                        complaint.priority == complaint.priority.HIGH ? 'badge-danger' :
+                                                        complaint.priority == complaint.priority.MEDIUM ? 'badge-warning' :
+                                                        'badge-success'
+                                                    }" th:text="${complaint.priority ?: '-'} + ' PRIORITY'"
+                                        id="priority-field" style="cursor: pointer;" title="Click to edit"></span>
+                                    <input type="hidden" name="priority" th:value="${complaint.priority ?: '-'}"
+                                        id="priority-input" />
+
+                                    <span class="badge" th:classappend="${
+                                                        complaint.category == complaint.category.MECHANICAL ? 'badge-info' :
+                                                        complaint.category == complaint.category.ELECTRICAL ? 'badge-danger' :
+                                                        complaint.category == complaint.category.IT ? 'badge-success' :
+                                                        'badge-dark'
+                                                    }" th:text="${complaint.category ?: '-'}" id="category-field"
+                                        style="cursor: pointer;" title="Click to edit"></span>
+                                    <input type="hidden" name="category" th:value="${complaint.category ?: '-'}"
+                                        id="category-input" />
+                                </div>
+
+                                <!-- Left column: Reporter, Assignee, Area, Equipment -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <!-- Reporter -->
+                                        <p class="mb-2">
+                                            <strong>Reporter:</strong>
+                                            <span th:id="${'reporter-field'}" class="ml-2"
+                                                th:data-original="${complaint.reporter?.name ?: '-'} + ' (' + ${complaint.reporter?.employeeId ?: '-'} + ')'"
+                                                th:text="${complaint.reporter?.name ?: '-'} + ' (' + ${complaint.reporter?.employeeId ?: '-'} + ')'">
+                                            </span>
+                                        </p>
+                                        <input type="hidden" name="reporterName"
+                                            th:value="${complaint.reporter?.name ?: '-'}" />
+                                        <input type="hidden" name="reporter.employeeId"
+                                            th:value="${complaint.reporter?.employeeId ?: '-'}" />
+
+                                        <!-- Assignee with custom dropdown -->
+                                        <div class="form-group d-flex align-items-center pl-0">
+                                            <label for="assigneeInput" class="mb-0" style="white-space: nowrap;">
+                                                <strong>Assignee:</strong></label>
+                                            <div class="position-relative flex-grow-1">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control form-control-sm"
+                                                        id="assigneeInput" placeholder="Search assignee by name or ID"
+                                                        style="border: none; cursor: text; border-bottom: 1px dashed #ccc; max-width: 311px;"
+                                                        onfocus="this.style.borderBottom = '1px dashed #007bff';"
+                                                        onblur="this.style.borderBottom = '1px dashed #ccc';"
+                                                        autocomplete="off" />
+                                                </div>
+
+                                                <div id="assigneeDropdown" class="dropdown-menu w-100"
+                                                    style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white; border-radius: 0 0 0.3rem 0.3rem; margin-top: -1px;">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="assigneeName" id="assigneeName" />
+                                        <input type="hidden" name="assignee.employeeId" id="assigneeEmployeeId" />
+
+                                        <datalist id="userOptions">
+                                            <option th:each="user : ${users}"
+                                                th:value="${user.name} + ' (' + ${user.employeeId} + ')'"
+                                                th:data-employee-id="${user.employeeId}">
+                                            </option>
+                                        </datalist>
+
+                                        <!-- Area with custom dropdown -->
+                                        <div class="form-group d-flex align-items-center pl-0">
+                                            <label for="areaInput" class="mb-0" style="white-space: nowrap;">
+                                                <strong>Area:</strong>
+                                            </label>
+                                            <div class="position-relative flex-grow-1">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control form-control-sm"
+                                                        id="areaInput" placeholder="Search area..."
+                                                        style="border: none; cursor: text; border-bottom: 1px dashed #ccc; max-width: 337px;"
+                                                        onfocus="this.style.borderBottom = '1px dashed #007bff';"
+                                                        onblur="this.style.borderBottom = '1px dashed #ccc';"
+                                                        autocomplete="off" />
+                                                </div>
+                                                <div id="areaDropdown" class="dropdown-menu w-100"
+                                                    style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white; border-radius: 0 0 0.3rem 0.3rem; margin-top: -1px;">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="areaName" id="areaName" />
+                                        <input type="hidden" name="area.code" id="areaCode" />
+
+                                        <datalist id="areaOptions">
+                                            <option th:each="area : ${areas}"
+                                                th:value="${area.name} + ' (' + ${area.code} + ')'"
+                                                th:data-code="${area.code}">
+                                            </option>
+                                        </datalist>
+
+                                        <!-- Equipment with custom dropdown -->
+                                        <div class="form-group d-flex align-items-center pl-0">
+                                            <label for="equipmentInput" class="mb-0" style="white-space: nowrap;">
+                                                <strong>Equipment:</strong>
+                                            </label>
+                                            <div class="position-relative flex-grow-1">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control form-control-sm"
+                                                        id="equipmentInput" placeholder="Search equipment..."
+                                                        style="border: none; cursor: text; border-bottom: 1px dashed #ccc; max-width: 300px;"
+                                                        onfocus="this.style.borderBottom = '1px dashed #007bff';"
+                                                        onblur="this.style.borderBottom = '1px dashed #ccc';"
+                                                        autocomplete="off" />
+                                                </div>
+                                                <div id="equipmentDropdown" class="dropdown-menu w-100"
+                                                    style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white; border-radius: 0 0 0.3rem 0.3rem; margin-top: -1px;">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="equipmentName" id="equipmentName" />
+                                        <input type="hidden" name="equipment.code" id="equipmentCode" />
+
+                                        <datalist id="equipmentOptions">
+                                            <option th:each="equipment : ${equipments}"
+                                                th:value="${equipment.name} + ' (' + ${equipment.code} + ')'"
+                                                th:data-code="${equipment.code}">
+                                            </option>
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Right column: Dates & times -->
+                                    <div class="col-md-6">
+                                        <!-- Report Date -->
+                                        <p class="mb-2">
+                                            <strong>Report Date:</strong>
+                                            <span th:id="${'report-date-field'}"
+                                                th:data-original="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'yyyy-MM-dd HH:mm') : '-'}"
+                                                th:text="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'MMM d, yyyy HH:mm') : '-'}">
+                                            </span>
+                                        </p>
+                                        <input type="hidden" name="reportDate" id="reportDateInput"
+                                            th:value="${complaint.reportDate != null ? #temporals.format(complaint.reportDate, 'yyyy-MM-dd''T''HH:mm') : '-'}" />
+
+                                        <!-- Close Time (if exists) -->
+                                        <p class="mb-2" th:if="${complaint.closeTime != null}">
+                                            <strong>Close Time:</strong>
+                                            <span th:id="${'close-time-field'}"
+                                                th:data-original="${complaint.closeTime != null ? #temporals.format(complaint.closeTime, 'MMM d, yyyy HH:mm') : '-'}"
+                                                th:text="${complaint.closeTime != null ? #temporals.format(complaint.closeTime, 'MMM d, yyyy HH:mm') : '-'}">
+                                            </span>
+                                        </p>
+                                        <input type="hidden" name="closeTime"
+                                            th:value="${complaint.closeTime != null ? #temporals.format(complaint.closeTime, 'yyyy-MM-dd HH:mm') : '-'}"
+                                            th:if="${complaint.closeTime != null}" />
+
+                                        <!-- Total Time -->
+                                        <p class="mb-2">
+                                            <strong>Total Time:</strong>
+                                            <span th:id="${'resolution-time-field'}"
+                                                th:data-original="${complaint.totalTimeMinutes != null ? complaint.totalTimeMinutes + ' minutes' : '-'}"
+                                                th:text="${complaint.totalTimeMinutes != null ? complaint.totalTimeMinutes + ' minutes' : '-'}">
+                                            </span>
+                                        </p>
+                                        <input type="hidden" name="totalTimeMinutes"
+                                            th:value="${complaint.totalTimeMinutes ?: 0}" />
+                                    </div>
+                                </div>
+
+                                <!-- Description field (editable on click) -->
+                                <div class="mb-4">
+                                    <h5 class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-align-left mr-2 text-primary"></i> Description
+                                    </h5>
+                                    <textarea id="description-field" class="form-control" rows="6" readonly
+                                        th:data-original="${complaint.description ?: ''}"
+                                        th:text="${complaint.description ?: ''}"
+                                        style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;">
+                                    </textarea>
+                                    <input type="hidden" name="description" th:value="${complaint.description ?: ''}"
+                                        id="description-input" />
+                                </div>
+
+                                <!-- Action Taken field (editable on click) -->
+                                <div class="mb-4">
+                                    <h5 class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-wrench mr-2 text-success"></i> Action Taken
+                                    </h5>
+                                    <textarea id="action-taken-field" class="form-control" rows="6" readonly
+                                        th:data-original="${complaint.actionTaken ?: ''}"
+                                        th:text="${complaint.actionTaken ?: ''}"
+                                        style="background-color: #f9f9fb; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; cursor: pointer;"
+                                        onclick="this.readOnly = false; this.style.backgroundColor = '#fff'; this.style.boxShadow = '0 0 0 0.2rem rgba(0,123,255,.1)'; this.focus();"
+                                        onblur="updateHiddenInput(this, 'action-taken-input')">
+                                    </textarea>
+                                    <input type="hidden" name="actionTaken" th:value="${complaint.actionTaken ?: ''}"
+                                        id="action-taken-input" />
+                                </div>
+
+                                <!-- Image Upload: Before & After Repair -->
+                                <div class="mb-4">
+                                    <h5 class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-images mr-2 text-primary"></i> Visual Documentation
+                                    </h5>
+                                    <div class="row">
+                                        <!-- Before Repair -->
+                                        <div class="col-md-6">
+                                            <div class="card border-light shadow-sm h-50">
+                                                <div
+                                                    class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                    <strong class="text-warning">
+                                                        <i class="fas fa-camera mr-1"></i> Before Repair
+                                                    </strong>
+                                                </div>
+                                                <div class="card-body d-flex flex-column align-items-center text-center p-3"
+                                                    style="cursor: pointer; background-color: #fcfcfd;"
+                                                    onclick="this.querySelector('input[type=file]').click();">
+                                                    <div id="beforeImageContainer"
+                                                        class="w-100 d-flex justify-content-center">
+                                                        <img th:if="${complaint?.imageBefore}"
+                                                            th:src="@{/upload/complaint/image/before/__${complaint.imageBefore}__}"
+                                                            alt="Before Repair Preview" class="img-fluid rounded"
+                                                            style="max-height: 300px; object-fit: scale-down;" />
+
+                                                        <img id="beforeImagePreview" class="img-fluid rounded"
+                                                            style="max-height: 300px; object-fit: scale-down;" />
+
+                                                        <div th:unless="${complaint?.imageBefore}"
+                                                            id="beforeImagePlaceholder" class="text-muted">
+                                                            <i class="fas fa-image fa-2x mb-2"
+                                                                style="opacity: 0.3;"></i>
+                                                            <p class="mb-0 small">No image</p>
+                                                        </div>
+                                                    </div>
+                                                    <input type="file" name="imageBeforeFile" accept="image/*"
+                                                        style="display: none;"
+                                                        onchange="handleImageUpload(this, 'beforeImagePreview', 'beforeImagePlaceholder')" />
+                                                </div>
+                                                <div th:if="${complaint?.imageBefore}" class="form-check">
+                                                    <label class="form-check-label d-flex align-items-center">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            name="deleteImageBefore" id="deleteImageBefore"
+                                                            value="true">
+                                                        <span class="form-check-sign small text-danger">Delete this
+                                                            image</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- After Repair -->
+                                        <div class="col-md-6">
+                                            <div class="card border-light shadow-sm h-50">
+                                                <div
+                                                    class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                    <strong class="text-warning">
+                                                        <i class="fas fa-camera mr-1"></i> After Repair
+                                                    </strong>
+                                                </div>
+                                                <div class="card-body d-flex flex-column align-items-center text-center p-3"
+                                                    style="cursor: pointer; background-color: #fcfcfd;"
+                                                    onclick="this.querySelector('input[type=file]').click();">
+                                                    <div id="afterImageContainer"
+                                                        class="w-100 d-flex justify-content-center">
+                                                        <img th:if="${complaint?.imageAfter}"
+                                                            th:src="@{/upload/complaint/image/after/__${complaint.imageAfter}__}"
+                                                            alt="After Repair Preview" class="img-fluid rounded"
+                                                            style="max-height: 300px; object-fit: scale-down;" />
+
+                                                        <img id="afterImagePreview" class="img-fluid rounded"
+                                                            style="max-height: 300px; object-fit: scale-down;" />
+
+                                                        <div th:unless="${complaint?.imageAfter}"
+                                                            id="afterImagePlaceholder" class="text-muted">
+                                                            <i class="fas fa-image fa-2x mb-2"
+                                                                style="opacity: 0.3;"></i>
+                                                            <p class="mb-0 small">No image</p>
+                                                        </div>
+                                                    </div>
+                                                    <input type="file" name="imageAfterFile" accept="image/*"
+                                                        style="display: none;"
+                                                        onchange="handleImageUpload(this, 'afterImagePreview', 'afterImagePlaceholder')" />
+                                                </div>
+                                                <div th:if="${complaint?.imageAfter}" class="form-check">
+                                                    <label class="form-check-label d-flex align-items-center">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            name="deleteImageAfter" id="deleteImageAfter" value="true">
+                                                        <span class="form-check-sign small text-danger">Delete this
+                                                            image</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Parts Used Table + Modal -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="d-flex align-items-center mb-0">
+                                            <i class="fas fa-cogs mr-2 text-secondary"></i> Parts Used
+                                        </h5>
+                                        <button type="button" class="btn btn-primary btn-sm btn-round"
+                                            data-toggle="modal" data-target="#addPartModal">
+                                            <i class="fas fa-plus"></i> Add Part
+                                        </button>
+                                    </div>
+
+                                    <!-- Parts Table -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover table-sm" id="partsTable">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Part Code</th>
+                                                    <th>Name</th>
+                                                    <th>Category</th>
+                                                    <th class="text-center">Qty</th>
+                                                    <th class="text-center">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="partDto : ${complaint.partsUsed}"
+                                                    th:attr="data-part-id=${partDto.part.id}, data-part-code=${partDto.part.code}">
+                                                    <td><code class="bg-light px-2 py-1 rounded"
+                                                            th:text="${partDto.part.code ?: '-'}"></code></td>
+                                                    <td th:text="${partDto.part.name ?: '-'}"></td>
+                                                    <td th:text="${partDto.part.category ?: '-'}"></td>
+                                                    <td class="text-center font-weight-bold" contenteditable="true"
+                                                        th:data-original="${partDto.quantity ?: 0}"
+                                                        th:text="${partDto.quantity ?: 0}"></td>
+                                                    <td class="text-center">
+                                                        <button class="btn btn-link text-danger btn-sm delete-part-row"
+                                                            type="button">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div id="partsUsedInputs"></div>
+                                </div>
+
+                                <!-- Footer: Last updated + action buttons -->
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-4">
+                                    <small class="text-muted">
+                                        Last updated:
+                                        <span th:id="${'updated-at-field'}"
+                                            th:data-original="${complaint.updatedAt != null ? #temporals.format(complaint.updatedAt, 'MMM d, yyyy HH:mm') : '-'}"
+                                            th:text="${complaint.updatedAt != null ? #temporals.format(complaint.updatedAt, 'MMM d, yyyy HH:mm') : '-'}">
+                                        </span>
+                                    </small>
+                                    <div>
+                                        <button type="button"
+                                            class="btn btn-danger btn-border btn-round mr-2 delete-row"
+                                            th:data-id="${complaint.id}" th:data-name="${complaint.code ?: '-'}"
+                                            data-toggle="modal" data-target="#deleteConfirmModal">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                        <button class="btn btn-primary btn-round" id="saveChangesBtn">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const USERS = /*[[${users}]]*/[];
+            const AREAS = /*[[${areas}]]*/[];
+            const EQUIPMENTS = /*[[${equipments}]]*/[];
+            const COMPLAINT = /*[[${complaint}]]*/ null;
+            /*]]>*/
+        </script>
+
+        <script>
+
+            function setupLiveSearchInput(inputId, dropdownId, hiddenNameId, hiddenIdId, datalistId, labelField = 'item', dataAttr) {
+                const input = document.getElementById(inputId);
+                const dropdown = document.getElementById(dropdownId);
+                const hiddenName = document.getElementById(hiddenNameId);
+                const hiddenId = document.getElementById(hiddenIdId);
+                const clearBtn = document.getElementById(inputId.replace('Input', 'ClearBtn'));
+
+                if (!input || !dropdown || !hiddenName || !hiddenId) {
+                    console.warn(`Missing elements for ${labelField || inputId} live search`);
+                    return;
+                }
+
+                // Extract options from datalist
+                const options = Array.from(document.querySelectorAll(`#${datalistId} option`)).map(opt => ({
+                    value: opt.value,
+                    label: opt.value.split(' (')[0],
+                    id: opt.dataset[dataAttr],
+                    fullText: opt.value
+                }));
+
+                // Fallback: use window.users if available (server-rendered JS array)
+                if (options.length === 0 && window.users && Array.isArray(window.users)) {
+                    options.push(...window.users.map(user => ({
+                        value: `${user.name} (${user.employeeId})`,
+                        label: user.name,
+                        id: user.employeeId,
+                        fullText: `${user.name} (${user.employeeId})`
+                    })));
+                }
+
+                // Set initial value if COMPLAINT.assignee exists
+                if (window.COMPLAINT?.assignee) {
+                    const { name, employeeId } = COMPLAINT.assignee;
+                    if (name && employeeId) {
+                        input.value = `${name} (${employeeId})`;
+                        hiddenName.value = name;
+                        hiddenId.value = employeeId;
+                    }
+                }
+
+                // Show/hide dropdown based on input
+                input.addEventListener('input', function () {
+                    const term = this.value.toLowerCase().trim();
+                    dropdown.innerHTML = '';
+
+                    if (term === '') {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    const filtered = options.filter(opt =>
+                        opt.label.toLowerCase().includes(term) ||
+                        opt.id.toLowerCase().includes(term)
+                    );
+
+                    if (filtered.length === 0) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+
+                    filtered.forEach(opt => {
+                        const div = document.createElement('div');
+                        div.className = 'dropdown-item';
+                        div.style.cursor = 'pointer';
+                        div.style.padding = '0.5rem';
+                        div.style.whiteSpace = 'normal';
+
+                        // Highlight matches in name and ID
+                        let highlightedLabel = opt.label;
+                        let highlightedId = opt.id;
+
+                        if (term) {
+                            const regex = new RegExp(`(${term})`, 'gi');
+                            highlightedLabel = opt.label.replace(regex, '<strong>$1</strong>');
+                            highlightedId = opt.id.replace(regex, '<strong>$1</strong>');
+                        }
+
+                        div.innerHTML = `
+                ${highlightedLabel}
+                <small class="text-muted ms-1">(${highlightedId})</small>
+            `;
+
+                        div.addEventListener('click', () => {
+                            input.value = opt.fullText;
+                            hiddenName.value = opt.label;
+                            hiddenId.value = opt.id;
+                            dropdown.style.display = 'none';
+                            input.focus();
+                        });
+
+                        dropdown.appendChild(div);
+                    });
+
+                    dropdown.style.display = 'block';
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!input.contains(e.target) && !dropdown.contains(e.target) && e.target !== clearBtn) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+
+                // Keyboard navigation
+                input.addEventListener('keydown', function (e) {
+                    const items = dropdown.querySelectorAll('.dropdown-item');
+                    if (items.length === 0) return;
+
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                        current = (current + 1) % items.length;
+                        items.forEach(item => item.classList.remove('active'));
+                        items[current].classList.add('active');
+                        items[current].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                        current = current <= 0 ? items.length - 1 : current - 1;
+                        items.forEach(item => item.classList.remove('active'));
+                        items[current].classList.add('active');
+                        items[current].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const active = dropdown.querySelector('.dropdown-item.active');
+                        if (active) active.click();
+                    } else if (e.key === 'Escape') {
+                        dropdown.style.display = 'none';
+                        input.value = '';
+                        hiddenName.value = '';
+                        hiddenId.value = '';
+                    }
+                });
+
+                // Clear button functionality
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        input.value = '';
+                        hiddenName.value = '';
+                        hiddenId.value = '';
+                        dropdown.style.display = 'none';
+                        input.focus();
+                    });
+                }
+
+                // Prevent default datalist behavior (optional)
+                input.setAttribute('list', '');
+            }
+
+
+
+            document.addEventListener("DOMContentLoaded", function () {
+
+                // Handle Delete button click
+                document.querySelectorAll('.delete-row').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const name = this.dataset.name;
+                        const id = this.dataset.id;
+                        console.log('Delete button clicked for ID:', id, 'Name:', name);
+
+                        document.getElementById('deleteComplaintName').textContent = name;
+                        document.getElementById('confirmDeleteComplaintButton').href = '/complaints/delete/' + encodeURIComponent(id);
+
+                        const modal = new bootstrap.Modal(document.getElementById('deleteComplaintModal'));
+                        modal.show();
+                    });
+                });
+
+                // --- Flash Message Modal ---
+
+                // Auto-show flash message modal if present
+                const flashModalContainer = document.getElementById('flashMessageModalContainer');
+                if (flashModalContainer) {
+                    const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
+                    flashModal.show();
+                }
+
+                setupLiveSearchInput('assigneeInput', 'assigneeDropdown', 'assigneeName', 'assigneeEmployeeId', 'userOptions', 'Assignee', 'employeeId');
+                setupLiveSearchInput('areaInput', 'areaDropdown', 'areaName', 'areaCode', 'areaOptions', 'Area', 'code');
+                setupLiveSearchInput('equipmentInput', 'equipmentDropdown', 'equipmentName', 'equipmentCode', 'equipmentOptions', 'Equipment', 'code');
+
+                // Parts used inputs container
+                function updatePartsUsedInputs() {
+                    const container = document.getElementById('partsUsedInputs');
+                    container.innerHTML = '';
+
+                    const rows = document.querySelectorAll('#partsTable tbody tr');
+                    rows.forEach((row, index) => {
+                        const code = row.querySelector('code').textContent.trim();
+                        const name = row.querySelector('td:nth-child(2)').textContent.trim();
+                        const category = row.querySelector('td:nth-child(3)').textContent.trim();
+                        const qty = row.querySelector('td:nth-child(4)').getAttribute('data-original') || '1';
+                        const id = row.getAttribute('data-part-id');
+
+                        function addField(name, value) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = name;
+                            input.value = value;
+                            container.appendChild(input);
+                        }
+
+                        addField(`partsUsed[${index}].part.code`, code);
+                        addField(`partsUsed[${index}].part.name`, name);
+                        addField(`partsUsed[${index}].part.category`, category);
+                        addField(`partsUsed[${index}].part.id`, id);
+                        addField(`partsUsed[${index}].quantity`, qty);
+                    });
+                }
+
+                // Hidden input updater for contenteditable
+                function linkInputToHidden(inputId, ...hiddenIdConfigs) {
+                    const input = document.getElementById(inputId);
+                    if (!input) return;
+
+                    input.addEventListener('input', function () {
+                        const selectedOption = [...document.querySelectorAll(`#${input.list.id} option`)]
+                            .find(opt => opt.value === input.value);
+
+                        hiddenIdConfigs.forEach(config => {
+                            let value = '';
+                            if (typeof config === 'string') {
+                                value = input.value.trim();
+                            } else if (config.id && config.extract) {
+                                value = selectedOption ? selectedOption.dataset[config.extract] : '';
+                            }
+
+                            const field = document.getElementById(config.id || config);
+                            if (field) field.value = value;
+                        });
+                    });
+                }
+
+                // Set text input value
+                function setTextInput(inputId, value) {
+                    const input = document.getElementById(inputId);
+                    if (input) input.value = value;
+                }
+
+                // linkInputToHidden('assigneeInput',
+                //     { id: 'assigneeName', extract: null },
+                //     { id: 'assigneeEmployeeId', extract: 'employeeId' }
+                // );
+
+                // linkInputToHidden('areaInput',
+                //     { id: 'areaName', extract: null },
+                //     { id: 'areaCode', extract: 'code' }
+                // );
+
+                // linkInputToHidden('equipmentInput',
+                //     { id: 'equipmentName', extract: null },
+                //     { id: 'equipmentCode', extract: 'code' }
+                // );
+
+                if (COMPLAINT) {
+                    if (COMPLAINT.assignee) {
+                        const name = COMPLAINT.assignee.name;
+                        const id = COMPLAINT.assignee.employeeId;
+                        if (name && id) {
+                            document.getElementById('assigneeInput').value = `${name} (${id})`;
+                            document.getElementById('assigneeName').value = name;
+                            document.getElementById('assigneeEmployeeId').value = id;
+                        }
+                    }
+
+                    // Area
+                    if (COMPLAINT.area) {
+                        const name = COMPLAINT.area.name;
+                        const code = COMPLAINT.area.code;
+                        if (name && code) {
+                            document.getElementById('areaInput').value = `${name} (${code})`;
+                            document.getElementById('areaName').value = name;
+                            document.getElementById('areaCode').value = code;
+                        }
+                    }
+
+                    // Equipment
+                    if (COMPLAINT.equipment) {
+                        const name = COMPLAINT.equipment.name;
+                        const code = COMPLAINT.equipment.code;
+                        if (name && code) {
+                            document.getElementById('equipmentInput').value = `${name} (${code})`;
+                            document.getElementById('equipmentName').value = name;
+                            document.getElementById('equipmentCode').value = code;
+                        }
+                    }
+                }
+
+                // Editable badge/select handler
+                function makeEditable(fieldId, options, dynamicOptionsFn = null) {
+                    const field = document.getElementById(fieldId);
+                    if (!field) return;
+
+                    const originalValue = field.getAttribute('data-original') || field.innerText.trim();
+                    field.setAttribute('data-original', originalValue);
+                    field.style.cursor = 'pointer';
+                    field.title = 'Click to edit';
+
+                    field.addEventListener('click', function () {
+                        if (field.querySelector('select')) return; // Already editing
+
+                        let availableOptions = [];
+                        if (dynamicOptionsFn) {
+                            availableOptions = dynamicOptionsFn(originalValue);
+                        } else if (Array.isArray(options)) {
+                            availableOptions = options;
+                        }
+
+                        if (availableOptions.length === 0) return;
+
+                        const select = document.createElement('select');
+                        select.className = 'form-control form-control-sm';
+                        select.style.cssText = `
+                        padding: 0.3em 0.6em;
+                        font-size: ${window.getComputedStyle(field).fontSize};
+                        border-radius: 0.25rem;
+                        border: 2px solid ${window.getComputedStyle(field).color};
+                        background: ${window.getComputedStyle(field).backgroundColor};
+                        color: ${window.getComputedStyle(field).color};
+                    `;
+
+                        availableOptions.forEach(opt => {
+                            const option = document.createElement('option');
+                            option.value = opt;
+                            option.textContent = opt;
+                            if (opt === originalValue) option.selected = true;
+                            select.appendChild(option);
+                        });
+
+                        field.innerHTML = '';
+                        field.appendChild(select);
+                        select.focus();
+
+                        select.addEventListener('blur', function () {
+                            const newValue = select.value;
+                            if (newValue && newValue !== originalValue) {
+                                field.innerText = newValue;
+                                field.setAttribute('data-original', newValue);
+
+                                // Update badge class if needed
+                                if (field.classList.contains('badge')) {
+                                    updateBadgeClass(field, newValue);
+                                }
+                            } else {
+                                field.innerText = originalValue;
+                            }
+                        });
+
+                        select.addEventListener('change', function () {
+                            select.blur();
+                        });
+                    });
+                }
+
+                // Editable date/time handler
+                function makeDateEditable(fieldId, inputId, format = 'datetime-local') {
+                    const field = document.getElementById(fieldId);
+                    const hiddenInput = document.getElementById(inputId);
+                    if (!field || !hiddenInput) return;
+
+                    const originalDisplay = field.innerText.trim();
+                    const originalValue = field.getAttribute('data-original') || hiddenInput.value;
+
+                    field.style.cursor = 'pointer';
+                    field.title = 'Click to edit';
+
+                    field.addEventListener('click', function () {
+                        if (field.querySelector('input')) return; // Already editing
+
+                        const input = document.createElement('input');
+                        input.type = format;
+                        input.className = 'form-control form-control-sm';
+                        input.style.cssText = `
+                        width: auto;
+                        display: inline-block;
+                        padding: 0.3em 0.6em;
+                        font-size: ${window.getComputedStyle(field).fontSize};
+                        border: 1px solid #007bff;
+                        border-radius: 4px;
+                        background: white;`;
+
+                        // Convert "MMM d, yyyy HH:mm" → "yyyy-MM-ddTHH:mm"
+                        if (originalValue) {
+                            const date = new Date(originalValue);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        }
+
+                        field.innerHTML = '';
+                        field.appendChild(input);
+                        input.focus();
+
+                        input.addEventListener('blur', function () {
+                            const newValue = input.value;
+                            if (!newValue) {
+                                field.innerText = originalDisplay;
+                                return;
+                            }
+
+                            hiddenInput.value = newValue;
+
+                            // Update display: format as "MMM d, yyyy HH:mm"
+                            const date = new Date(newValue);
+                            const formatted = date.toLocaleDateString('en-US', {
+                                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                            });
+                            field.innerText = formatted;
+                            field.setAttribute('data-original', newValue);
+                        });
+
+                        // Allow Enter to save
+                        input.addEventListener('keydown', function (e) {
+                            if (e.key === 'Enter') input.blur();
+                        });
+                    });
+                }
+
+                // Initialize
+                // makeDateEditable('report-date-field', 'reportDateInput', 'datetime-local');
+
+                // === 6. Update Badge Class ===
+                function updateBadgeClass(badge, value) {
+                    badge.classList.remove(
+                        'badge-danger', 'badge-warning', 'badge-info', 'badge-primary', 'badge-success', 'badge-secondary'
+                    );
+
+                    if (value === 'OPEN') badge.classList.add('badge-warning');
+                    else if (value === 'PENDING') badge.classList.add('badge-danger');
+                    else badge.classList.add('badge-success');
+
+                    if (value === 'HIGH PRIORITY') badge.classList.add('badge-danger');
+                    else if (value === 'MEDIUM PRIORITY') badge.classList.add('badge-warning');
+                    else badge.classList.add('badge-secondary');
+
+                    if (value === 'MECHANICAL') badge.classList.add('badge-info');
+                    else if (value === 'ELECTRICAL') badge.classList.add('badge-danger');
+                    else if (value === 'IT') badge.classList.add('badge-success');
+                    else badge.classList.add('badge-dark');
+                }
+
+                // === 7. Dynamic Options for Status ===
+                function getStatusOptions(currentStatus) {
+                    const options = {
+                        'OPEN': ['PENDING', 'CLOSED'],
+                        'PENDING': ['OPEN', 'CLOSED'],
+                        'CLOSED': ['OPEN', 'PENDING']
+                    };
+                    return options[currentStatus] || [];
+                }
+
+                // === 8. Initialize Editable Badges ===
+                makeEditable('status-field', null, getStatusOptions);
+                makeEditable('priority-field', ['HIGH PRIORITY', 'MEDIUM PRIORITY', 'LOW PRIORITY']);
+                makeEditable('category-field', ['MECHANICAL', 'ELECTRICAL', 'IT']);
+
+
+
+                // === 9. Image Upload Preview ===
+                window.handleImageUpload = function (input, previewId, placeholderId) {
+                    const file = input.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const preview = document.getElementById(previewId);
+                        const placeholder = document.getElementById(placeholderId);
+
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        const containerId = previewId.replace('ImagePreview', 'ImageContainer');
+                        const container = document.getElementById(containerId);
+
+                        if (container) {
+                            const thImage = container.querySelector('img:not(#' + previewId + ')');
+                            if (thImage) thImage.style.display = 'none';
+                        }
+
+                        if (placeholder) placeholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+
+                const complaintForm = document.getElementById('complaintForm');
+
+                // Define updateHiddenInput
+                function updateHiddenInput(element, hiddenInputId) {
+                    const hiddenInput = document.getElementById(hiddenInputId);
+                    if (hiddenInput) {
+                        hiddenInput.value = element.textContent || element.value;
+                    }
+                }
+
+                console.log(complaintForm);
+                complaintForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    if (typeof updatePartsUsedInputs === 'function') {
+                        updatePartsUsedInputs();
+                    }
+
+                    // === Sync subject ===
+                    const subjectField = document.getElementById('subject-field');
+                    if (subjectField) {
+                        document.querySelector('input[name="subject"]').value = subjectField.innerText.trim();
+                    }
+
+                    // === Sync status, priority, category ===
+                    const statusField = document.getElementById('status-field');
+                    const priorityField = document.getElementById('priority-field');
+                    const categoryField = document.getElementById('category-field');
+
+                    const priorityMap = {
+                        'HIGH PRIORITY': 'HIGH',
+                        'MEDIUM PRIORITY': 'MEDIUM',
+                        'LOW PRIORITY': 'LOW'
+                    };
+
+                    // But map to actual value on submit:
+                    document.getElementById('priority-input').value = {
+                        'HIGH Priority': 'HIGH',
+                        'MEDIUM Priority': 'MEDIUM',
+                        'LOW Priority': 'LOW'
+                    }[priorityField.innerText.trim()] || 'MEDIUM';
+
+                    if (statusField) {
+                        const statusValue = statusField.getAttribute('data-original') || statusField.innerText.trim();
+                        document.getElementById('status-input').value = statusValue;
+                    }
+
+                    if (priorityField) {
+                        const priorityDisplay = (priorityField.getAttribute('data-original') || priorityField.innerText.trim()).toUpperCase();
+                        document.getElementById('priority-input').value = priorityMap[priorityDisplay] || 'MEDIUM';
+                    }
+
+                    if (categoryField) {
+                        const categoryValue = categoryField.getAttribute('data-original') || categoryField.innerText.trim();
+                        document.getElementById('category-input').value = categoryValue;
+                    }
+
+                    // === Sync description and action taken ===
+                    const description = document.getElementById('description-field');
+                    const actionTaken = document.getElementById('action-taken-field');
+
+                    if (description) {
+                        document.getElementById('description-input').value = description.value;
+                    }
+                    if (actionTaken) {
+                        document.getElementById('action-taken-input').value = actionTaken.value;
+                    }
+
+                    // === Sync parts used ===
+                    if (typeof updatePartsUsedInputs === 'function') {
+                        updatePartsUsedInputs();
+                    }
+
+                    complaintForm.submit();
+                });
+            });
+        </script>
+    </th:block>
+
+</body>
+
+</html>

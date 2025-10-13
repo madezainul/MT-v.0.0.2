@@ -1,0 +1,638 @@
+<div th:fragment="modal">
+    <!-- Modal Add -->
+    <div class="modal fade" id="addRowModal" tabindex="-1" role="dialog" aria-labelledby="addRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="addRowModalLabel">New User</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form th:action="@{/users}" th:object="${userDTO}" method="post" enctype="multipart/form-data"
+                        id="formAdd">
+
+                        <div class="form-row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{name}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"
+                                        th:errors="*{name}">Please enter a full name.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Employee ID <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{employeeId}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('employeeId')}"
+                                        th:errors="*{employeeId}">Please enter an employee ID.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" th:field="*{email}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+                                        th:errors="*{email}">Please enter a valid email.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" th:field="*{password}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Role(s) <span class="text-danger">*</span></label>
+
+                                    <select id="roleSelect" name="roleNames" multiple style="display: none;">
+                                        <option th:each="role : ${roles}" th:value="${role.name}"
+                                            th:text="${role.name}"></option>
+                                    </select>
+
+                                    <div class="tag-input" id="tagInput">
+                                        <div class="tag-list" id="tagList"></div>
+                                        <input type="text" id="tagSearch" class="tag-input-field"
+                                            placeholder="Add role..." list="roleOptions">
+                                    </div>
+
+                                    <datalist id="roleOptions">
+                                        <option th:each="role : ${roles}" th:value="${role.name}"></option>
+                                    </datalist>
+
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('roleNames')}"
+                                        th:errors="*{roleNames}">
+                                        Please select at least one role.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Designation</label>
+                                    <input type="text" class="form-control" th:field="*{designation}">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('designation')}"
+                                        th:errors="*{designation}">Please enter a designation.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <input type="checkbox" class="switch" id="statusSwitch">
+                                        <label class="switch-label mr-2 mb-0" for="statusSwitch"></label>
+                                        <span class="switch-text" id="statusText"></span>
+                                        <input type="hidden" name="status" id="statusTextHidden">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Nationality</label>
+                                    <input type="text" class="form-control" th:field="*{nationality}"
+                                        placeholder="e.g., Indonesian">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="text" class="form-control" th:field="*{phoneNumber}"
+                                        placeholder="+966 55 123 4567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Image</span></label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="addImageInput" name="imageFile"
+                                            accept="image/*">
+                                        <label class="custom-file-label" for="addImageInput">Choose file</label>
+                                    </div>
+                                    <div class="mt-2">
+                                        <img id="addImagePreview" src="" alt="Image Preview" class="img-thumbnail"
+                                            style="max-height: 150px; display: none;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Join Date</label>
+                                    <input type="date" class="form-control" th:field="*{joinDate}">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formAdd" class="btn btn-primary ml-2">Save User</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit -->
+    <div class="modal fade" id="editRowModal" tabindex="-1" role="dialog" aria-labelledby="editRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white no-bd">
+                    <h5 class="modal-title" id="editRowModalLabel">Edit User</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <form th:action="@{/users/update}" th:object="${user}" method="post" enctype="multipart/form-data"
+                        id="formEdit">
+                        <input type="hidden" name="id" id="editId">
+                        <input type="hidden" name="redirectUrl" id="redirectUrl">
+
+                        <div class="form-group">
+                            <label>Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" id="editName" required>
+                            <div class="invalid-feedback">Please enter a name.</div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Employee ID <span class="text-danger">*</span></label>
+                                    <input type="text" name="employeeId" class="form-control" id="editEmployeeId"
+                                        required>
+                                    <div class="invalid-feedback">Please enter an employee ID.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" class="form-control" id="editEmail" required>
+                                    <div class="invalid-feedback">Please enter a valid email.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Password <span class="text-muted">(leave blank to keep
+                                            current)</span></label>
+                                    <input type="password" name="password" class="form-control" id="editPassword">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Role(s) <span class="text-danger">*</span></label>
+                                    <select id="editRoleSelect" name="roleNames" multiple
+                                        style="display: none;"></select>
+
+                                    <div class="tag-input" id="editTagInput">
+                                        <div class="tag-list" id="editTagList"></div>
+                                        <input type="text" id="editTagSearch" class="tag-input-field"
+                                            placeholder="Add role..." list="roleOptions">
+                                    </div>
+                                    <datalist id="roleOptions">
+                                        <option th:each="role : ${roles}" th:value="${role.name}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Designation</label>
+                                    <input type="text" name="designation" class="form-control" id="editDesignation">
+                                    <div class="invalid-feedback">Please enter a designation.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <input type="checkbox" class="switch" id="editStatusSwitch">
+                                        <label class="switch-label mr-2 mb-0" for="editStatusSwitch"></label>
+                                        <span class="switch-text" id="editStatusText"></span>
+                                        <input type="hidden" name="status" id="editStatusTextHidden">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Nationality</label>
+                                    <input type="text" name="nationality" class="form-control" id="editNationality"
+                                        placeholder="e.g., Saudi Arabian">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="text" name="phoneNumber" class="form-control" id="editPhoneNumber"
+                                        placeholder="+966 55 123 4567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Current Image</label>
+                                    <div class="mb-2">
+                                        <img id="editImagePreview" src="" alt="No image" class="img-thumbnail"
+                                            style="max-height: 150px; display: none;">
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="deleteImage"
+                                            name="deleteImage" value="true">
+                                        <label class="custom-control-label" for="deleteImage">
+                                            <small>Remove current image</small>
+                                        </label>
+                                    </div>
+
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="editImageInput"
+                                            name="imageFile" accept="image/*">
+                                        <label class="custom-file-label" for="editImageInput">Change image...</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Join Date</label>
+                                    <input type="date" name="joinDate" class="form-control" id="editJoinDate">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-between">
+                    <small class="text-muted">
+                        <i class="fas fa-asterisk text-danger mr-1"></i> Required fields
+                    </small>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-border" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="formEdit" class="btn btn-primary ml-2">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete -->
+    <div class="modal fade" id="deleteRowModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white no-bd">
+                    <h5 class="modal-title" id="deleteRowModalLabel">Delete User</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Are you sure you want to delete this user?</p>
+                    <strong id="deleteDocName" class="text-dark"></strong>
+                    <p class="text-muted mt-2 mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-border" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="confirmDeleteButton" class="btn btn-danger ml-2">Yes, Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/error-modal :: error-modal}"></div>
+
+    <style>
+        /* --- Switch Toggle Styling --- */
+        .switch {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .switch+.switch-label {
+            position: relative;
+            background: #1a2035;
+            width: 50px;
+            height: 24px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s ease-in-out;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .switch+.switch-label::after {
+            content: "";
+            background: #fff;
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            border-radius: 50%;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .switch:checked+.switch-label {
+            background: #6861CE;
+        }
+
+        .switch:checked+.switch-label::after {
+            left: 28px;
+        }
+
+        .switch-text {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-left: 8px;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .switch:checked~.switch-text {
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .switch:focus+.switch-label {
+            box-shadow: 0 0 0 2px rgba(104, 97, 206, 0.25);
+        }
+
+        /* Tag Input Container - Bootstrap-like */
+        .tag-input {
+            /* Match .form-control */
+            border: 1px solid #ebedf2;
+            border-radius: 0.25rem;
+            /* 6px - Bootstrap default */
+            padding: 0.375rem 0.75rem;
+            /* 6px 12px - Bootstrap padding */
+            min-height: calc(1.5em + 0.75rem + 2px);
+            /* ~42px, matches input height */
+            line-height: 1.5;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.375rem;
+            /* 6px gap between tags */
+            background-color: #fff;
+            background-clip: padding-box;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            cursor: text;
+            width: 100%;
+        }
+
+        /* Focus style like Bootstrap */
+        .tag-input:focus-within {
+            border-color: #3e93ff;
+            outline: 0;
+        }
+
+        /* Optional: Disabled state */
+        .tag-input:has(input:disabled) {
+            background-color: #e9ecef;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        /* Tag List */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Individual Tag */
+        .tag {
+            background: #007bff;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .tag .remove-tag {
+            margin-left: 4px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            opacity: 0.8;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .tag .remove-tag:hover {
+            opacity: 1;
+        }
+
+        /* Input Field inside Tag Input */
+        .tag-input-field {
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+            padding: 4px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .tag-input-field::placeholder {
+            color: #999;
+        }
+    </style>
+
+    <!-- JavaScript -->
+    <script>
+        // Image Preview for Add
+        document.getElementById('addImageInput')?.addEventListener('change', function (evt) {
+            const preview = document.getElementById('addImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Image Preview for Edit
+        document.getElementById('editImageInput')?.addEventListener('change', function (evt) {
+            const preview = document.getElementById('editImagePreview');
+            const file = evt.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Unified Tag Input Logic
+        document.addEventListener("DOMContentLoaded", function () {
+            const redirectUrlInput = document.getElementById('redirectUrl');
+            if (redirectUrlInput) {
+                redirectUrlInput.value = window.location.href;
+            }
+
+            const datalist = document.getElementById("roleOptions");
+            const options = Array.from(datalist?.options || []).map(opt => opt.value);
+
+            function setupTagInput(inputId, tagListId, tagSearchId, selectId) {
+                const tagInput = document.getElementById(inputId);
+                const tagList = document.getElementById(tagListId);
+                const tagSearch = document.getElementById(tagSearchId);
+                const hiddenSelect = document.getElementById(selectId);
+
+                if (!tagInput || !tagList || !tagSearch || !hiddenSelect) return;
+
+                function syncSelect() {
+                    hiddenSelect.innerHTML = "";
+                    Array.from(tagList.querySelectorAll(".tag")).forEach(tag => {
+                        const option = document.createElement("option");
+                        option.value = tag.dataset.value;
+                        option.selected = true;
+                        hiddenSelect.appendChild(option);
+                    });
+                }
+
+                function addTag(value) {
+                    if (!value || Array.from(tagList.querySelectorAll(".tag")).some(t => t.dataset.value === value)) return;
+                    const tag = document.createElement("div");
+                    tag.className = "tag";
+                    tag.dataset.value = value;
+                    tag.innerHTML = `
+                ${value}
+                <span class="remove-tag" 
+                      onclick="window.removeTag(this, '${selectId}', '${tagListId}')">
+                    ×
+                </span>
+            `;
+                    tagList.appendChild(tag);
+                    syncSelect();
+                }
+
+                window.removeTag = function (el, selectId, tagListId) {
+                    const tag = el.parentElement;
+                    const value = tag.dataset.value;
+                    tag.remove();
+
+                    // Sync to hidden <select>
+                    const select = document.getElementById(selectId);
+                    const option = select.querySelector(`option[value="${value}"]`);
+                    if (option) option.remove();
+
+                    // Optional: trigger change event
+                    select.dispatchEvent(new Event('change'));
+                };
+
+                tagSearch.addEventListener("keydown", e => {
+                    if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                        e.preventDefault();
+                        const value = tagSearch.value.trim().replace(/,$/, "");
+                        if (options.includes(value)) {
+                            addTag(value);
+                            tagSearch.value = "";
+                        }
+                    }
+                });
+
+                tagSearch.addEventListener("change", () => {
+                    const value = tagSearch.value.trim();
+                    if (options.includes(value)) {
+                        addTag(value);
+                        tagSearch.value = "";
+                    }
+                });
+
+                tagInput.addEventListener("click", () => tagSearch.focus());
+            }
+
+            // Initialize both modals
+            setupTagInput("tagInput", "tagList", "tagSearch", "roleSelect");
+            setupTagInput("editTagInput", "editTagList", "editTagSearch", "editRoleSelect");
+
+            // Status Switch Toggle
+            // Status Switch Toggle for ADD form
+            const addSwitchEl = document.getElementById("statusSwitch");
+            const addStatusText = document.getElementById("statusText");
+            const addStatusHidden = document.getElementById("statusTextHidden");
+
+            if (addSwitchEl && addStatusText && addStatusHidden) {
+                // Set default state (optional)
+                addStatusText.textContent = "ACTIVE";
+                addStatusHidden.value = "ACTIVE";
+
+                addSwitchEl.addEventListener("change", () => {
+                    if (addSwitchEl.checked) {
+                        addStatusText.textContent = "ACTIVE";
+                        addStatusHidden.value = "ACTIVE";
+                    } else {
+                        addStatusText.textContent = "INACTIVE";
+                        addStatusHidden.value = "INACTIVE";
+                    }
+                });
+            }
+
+            const switchEl = document.getElementById("editStatusSwitch");
+            const statusText = document.getElementById("editStatusText");
+            const statusHidden = document.getElementById("editStatusTextHidden");
+
+            if (switchEl && statusText && statusHidden) {
+                switchEl.addEventListener("change", () => {
+                    if (switchEl.checked) {
+                        statusText.textContent = "ACTIVE";
+                        statusHidden.value = "ACTIVE";
+                    } else {
+                        statusText.textContent = "INACTIVE";
+                        statusHidden.value = "INACTIVE";
+                    }
+                });
+            }
+        });
+
+    </script>
+</div>

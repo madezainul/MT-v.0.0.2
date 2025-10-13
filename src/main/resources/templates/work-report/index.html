@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<body>
+    <div layout:fragment="content">
+        <div th:replace="~{work-report/modal :: modal}"></div>
+        <div th:replace="~{fragments/import-modal :: import-modal}"></div>
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title" th:text="${title}"></h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <a>
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Menu</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:text="${title}"></a>
+                    </li>
+                </ul>
+
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <button class="btn btn-primary mt-2 mr-2" data-toggle="modal" data-target="#importModal"
+                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
+                        <i class="fa fa-download mr-1"></i> Import
+                    </button>
+                    <button class="btn btn-primary dropdown-toggle mt-2 mr-2" type="button" id="exportDropdown"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-upload mr-1"></i> Export
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="exportDropdown">
+                        <a class="dropdown-item" href="#" id="exportExcel">
+                            <i class="fa fa-file-excel mr-2 text-success"></i> Excel
+                        </a>
+                        <a class="dropdown-item" href="#" id="exportPdf">
+                            <i class="fa fa-file-pdf mr-2 text-danger"></i> PDF
+                        </a>
+                    </div>
+                    <button class="btn btn-primary ml-auto mt-2" data-toggle="modal" data-target="#addRowModal"
+                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
+                        <i class="fa fa-plus-circle mr-2"></i> Add
+                    </button>
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h4 class="card-title" th:text="${title}"></h4>
+
+                                <div class="dropdown mr-2 form-inline ml-auto">
+                                    <button class="btn btn-primary dropdown-toggle" type="button" id="filterDropdownBtn"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                        style="padding: 0.375rem 0.75rem;">
+                                        <i class="fa fa-filter"></i> Filter
+                                    </button>
+                                    <div class="dropdown-menu p-3" aria-labelledby="filterDropdownBtn"
+                                        style="min-width: 350px; max-width: 400px; width: 100%;">
+                                        <div class="form-group pb-0">
+                                            <label class="form-label small d-block">Search</label>
+                                            <div class="input-icon w-100">
+                                                <input type="text" name="keyword" th:value="${param.keyword}"
+                                                    class="form-control form-control-sm w-100"
+                                                    placeholder="ID, Problem, Action...">
+                                                <span class="input-icon-addon"><i class="fa fa-search"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group pb-0">
+                                            <label class="form-label small d-block">Report Date</label>
+                                            <div class="input-group input-daterange w-100">
+                                                <input type="date" name="reportDateFrom"
+                                                    th:value="${param.reportDateFrom}"
+                                                    class="form-control form-control-sm" placeholder="From">
+                                                <div class="input-group-prepend input-group-append">
+                                                    <span class="input-group-text">to</span>
+                                                </div>
+                                                <input type="date" name="reportDateTo" th:value="${param.reportDateTo}"
+                                                    class="form-control form-control-sm" placeholder="To">
+                                            </div>
+                                        </div>
+                                        <div class="form-group pb-0">
+                                            <label class="form-label small d-block">Equipment(s)</label>
+
+                                            <select id="equipmentSelect" name="equipmentCode" multiple
+                                                style="display: none;">
+                                                <option th:each="equip : ${equipments}" th:value="${equip.code}"
+                                                    th:data-code="${equip.code}"
+                                                    th:text="${equip.name} + ' (' + ${equip.code} + ')'">
+                                                </option>
+                                            </select>
+
+                                            <div id="equipmentInput" style="min-height: calc(1.5em + 0.5rem + 2px); /* matches .form-control-sm */
+                                            padding: 0.25rem 0.5rem;
+                                            font-size: 0.875rem;
+                                            line-height: 1.5;
+                                            border: 1px solid #ced4da;
+                                            border-radius: 0.2rem;
+                                            background-color: #fff;
+                                            width: 100%;">
+                                                <div class="tag-list" id="equipmentTagList"></div>
+                                                <div class="position-relative w-100">
+                                                    <input type="text" id="equipmentTagSearch"
+                                                        class="tag-input-field border-0 w-100"
+                                                        placeholder="Add equipment..." autocomplete="off"
+                                                        style="outline: none; padding: 0; margin: 0; height: auto; min-height: auto; box-shadow: none;">
+                                                    <div id="equipmentTagSearchDropdown" class="dropdown-menu w-100"
+                                                        style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group pb-0">
+                                            <label class="form-label small d-block">Category</label>
+                                            <select name="group" class="form-control form-control-sm w-100">
+                                                <option value="">All Category</option>
+                                                <th:block
+                                                    th:each="category : ${T(ahqpck.maintenance.report.entity.WorkReport.Category).values()}">
+                                                    <option th:value="${category}" th:text="${category}"
+                                                        th:selected="${group == category}">
+                                                    </option>
+                                                </th:block>
+                                            </select>
+                                        </div>
+                                        <div class="form-group pb-0">
+                                            <label class="form-label small d-block">Scope</label>
+                                            <select name="field" class="form-control form-control-sm w-100">
+                                                <option value="">All Scope</option>
+                                                <th:block
+                                                    th:each="scope : ${T(ahqpck.maintenance.report.entity.WorkReport.Scope).values()}">
+                                                    <option th:value="${scope}" th:text="${scope}"
+                                                        th:selected="${field == scope}"></option>
+                                                </th:block>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label small d-block">Status</label>
+                                            <select name="state" class="form-control form-control-sm w-100">
+                                                <option value="">All Status</option>
+                                                <th:block
+                                                    th:each="status : ${T(ahqpck.maintenance.report.entity.WorkReport.Status).values()}">
+                                                    <option th:value="${status}" th:text="${status}"
+                                                        th:selected="${state == status}">
+                                                    </option>
+                                                </th:block>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm btn-block mt-2"
+                                            id="applyFilters">
+                                            <i class="fas fa-check"></i> Apply Filters
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm btn-block mt-2"
+                                            id="resetFilters">
+                                            <i class="fas fa-undo"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="dropdown mr-2">
+                                    <button class="btn btn-primary dropdown-toggle" type="button"
+                                        id="columnToggleDropdown" data-toggle="dropdown" aria-haspopup="true"
+                                        aria-expanded="false" style="padding: 0.375rem 0.5rem;">
+                                        <i class="fas fa-th-list"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right"
+                                        aria-labelledby="columnToggleDropdown"
+                                        style="min-width: 250px; max-height: 300px; overflow-y: auto; padding: 0.5rem 0;">
+                                        <h6 class="dropdown-header px-3 py-2">Show / Hide Columns</h6>
+                                        <div id="column-toggle-list"></div>
+                                    </div>
+                                </div>
+
+                                <div class="dropdown">
+                                    <button class="btn btn-primary dropdown-toggle" type="button" id="sortDropdown"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                        style="padding: 0.375rem 0.5rem;">
+                                        <i class="fa fa-sort"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="sortDropdown"
+                                        style="min-width: 200px;">
+                                        <input type="hidden" name="sortBy" id="sortByInput" th:value="${sortBy}" />
+                                        <input type="hidden" name="asc" id="ascInput" th:value="${asc}" />
+
+                                        <h6 class="dropdown-header">Sort Column</h6>
+                                        <div id="sort-column-container"></div>
+                                        <div class="dropdown-divider"></div>
+                                        <h6 class="dropdown-header">Sort Order</h6>
+                                        <a class="dropdown-item" href="#" data-asc="true"
+                                            th:classappend="${asc == true} ? 'active' : ''">Ascending</a>
+                                        <a class="dropdown-item" href="#" data-asc="false"
+                                            th:classappend="${asc == false} ? 'active' : ''">Descending</a>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="pageSizeSelect" class="sr-only">Items per page:</label>
+                                    <select name="size" id="pageSizeSelect" class="form-control form-control">
+                                        <option value="10" th:selected="${pageSize == '10'}">10</option>
+                                        <option value="30" th:selected="${pageSize == '30'}">30</option>
+                                        <option value="50" th:selected="${pageSize == '50'}">50</option>
+                                        <option value="100" th:selected="${pageSize == '100'}">100</option>
+                                        <option value="300" th:selected="${pageSize == '300'}">300</option>
+                                        <option value="500" th:selected="${pageSize == '500'}">500</option>
+                                        <!-- <option value="All" th:selected="${pageSize == 'All'}">All</option> -->
+                                    </select>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="table-responsive">
+                                <table id="work-report-table" class="display table table-striped table-hover">
+                                    <thead class="bg-primary text-white">
+                                        <tr>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="code">
+                                                Code <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="reportDate">
+                                                Report Date <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="shift">
+                                                Shift <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 150px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="area">
+                                                Area <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 150px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="equipment">
+                                                Equipment <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="category">
+                                                Category <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 200px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="problem">
+                                                Problem <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 150px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="solution">
+                                                Solution <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="startTime">
+                                                Start Time <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="stopTime">
+                                                Stop Time <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="totalTimeMinutes">
+                                                Total Time <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="technicians">
+                                                Technician(s) <i
+                                                    class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="supervisor">
+                                                Supervisor <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="status">
+                                                Status <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="scope">
+                                                Scope <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="workType">
+                                                Work Type <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px; cursor: pointer; white-space: nowrap;"
+                                                data-sort="remark">
+                                                Remark <i class="fas fa-sort text-white-50 ml-1 sort-indicator"></i>
+                                            </th>
+                                            <th style="min-width: 50px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="report : ${workReports.content}" th:data-id="${report.id}">
+                                            <td data-field="code" th:text="${report.code ?: ''}"></td>
+                                            <td data-field="reportDate"
+                                                th:data-full-datetime="${report.reportDate != null ? #temporals.format(report.reportDate, 'yyyy-MM-dd HH:mm') : ''}"
+                                                th:text="${report.reportDate != null ? #temporals.format(report.reportDate, 'MMM dd, yyyy') : ''}">
+                                            </td>
+                                            <td data-field="shift">
+                                                <span class="badge badge-sm" th:classappend="|badge-${
+                                                    report.shift == report.shift.DAY ? 'success' :
+                                                    report.shift == report.shift.NIGHT ? 'primary' : 'secondary'
+                                                }|" th:text="${
+                                                    report.shift == report.shift.DAY ? 'DAY' :
+                                                    report.shift == report.shift.NIGHT ? 'NIGHT' : ''
+                                                }">
+                                                </span>
+                                            </td>
+                                            <td data-field="area" th:data-area-code="${report.area?.code ?: ''}"
+                                                th:text="${report.area?.name ?: ''}"></td>
+                                            <td data-field="equipment"
+                                                th:data-equipment-code="${report.equipment?.code ?: ''}"
+                                                th:text="${report.equipment?.name ?: ''}"></td>
+                                            <td data-field="category">
+                                                <span class="badge badge-sm"
+                                                    th:data-enum-value="${report.category != null ? report.category : ''}"
+                                                    th:classappend="${
+                                                    report.category == report.category.CORRECTIVE_MAINTENANCE ? 'badge-warning' :
+                                                    report.category == report.category.PREVENTIVE_MAINTENANCE ? 'badge-info' :
+                                                    report.category == report.category.BREAKDOWN ? 'badge-danger' :
+                                                    'badge-dark'
+                                                }" th:text="${
+                                                    report.category == report.category.CORRECTIVE_MAINTENANCE ? 'CM' :
+                                                    report.category == report.category.PREVENTIVE_MAINTENANCE ? 'PM' :
+                                                    report.category == report.category.BREAKDOWN ? 'BD' :
+                                                    'OTHER'
+                                                }">
+                                                </span>
+                                            </td>
+                                            <td data-field="problem" th:text="${report.problem ?: ''}"></td>
+                                            <td data-field="solution" th:text="${report.solution ?: ''}"></td>
+                                            <td data-field="startTime"
+                                                th:data-full-datetime="${report.startTime != null ? #temporals.format(report.startTime, 'yyyy-MM-dd HH:mm') : ''}"
+                                                th:text="${report.startTime != null ? #temporals.format(report.startTime, 'HH:mm') : ''}">
+                                            </td>
+                                            <td data-field="stopTime"
+                                                th:data-full-datetime="${report.stopTime != null ? #temporals.format(report.stopTime, 'yyyy-MM-dd HH:mm') : ''}"
+                                                th:text="${report.stopTime != null ? #temporals.format(report.stopTime, 'HH:mm') : ''}">
+                                            </td>
+                                            <td data-field="totalTimeMinutes"
+                                                th:text="${report.totalTimeMinutes != null ? report.totalTimeMinutes + ' min' : ''}">
+                                            </td>
+                                            <td data-field="technicians">
+                                                <th:block
+                                                    th:if="${report.technicians != null and not #sets.isEmpty(report.technicians)}">
+                                                    <th:block th:each="technician : ${report.technicians}">
+                                                        <span class="badge badge-info mr-1"
+                                                            th:text="${technician.name + ' (' + technician.employeeId + ')'}">
+                                                        </span>
+                                                    </th:block>
+                                                </th:block>
+                                                <th:block
+                                                    th:if="${report.technicians == null or #sets.isEmpty(report.technicians)}">
+                                                    <span class="text-muted"></span>
+                                                </th:block>
+                                            </td>
+                                            <td data-field="supervisor"
+                                                th:data-employee-id="${report.supervisor?.employeeId ?: ''}"
+                                                th:text="${report.supervisor?.name ?: ''}"></td>
+                                            <td data-field="status">
+                                                <span class="badge badge-pill px-3 py-2" th:classappend="${
+                                                        report.status == report.status.OPEN ? 'badge-warning' :
+                                                        report.status == report.status.PENDING ? 'badge-danger' :
+                                                        'badge-success'
+                                                    }" th:text="${report.status ?: ''}">
+                                                </span>
+                                            </td>
+                                            <td data-field="scope">
+                                                <span class="badge badge-sm"
+                                                    th:data-enum-value="${report.scope != null ? report.scope : ''}"
+                                                    th:classappend="|badge-${
+                                                    report.scope == report.scope.MECHANICAL ? 'info' :
+                                                    report.scope == report.scope.ELECTRICAL ? 'danger' :
+                                                    report.scope == report.scope.IT ? 'success' : 'secondary'
+                                                }|" th:text="${
+                                                    report.scope == report.scope.MECHANICAL ? 'MECH' :
+                                                    report.scope == report.scope.ELECTRICAL ? 'ELEC' :
+                                                    report.scope == report.scope.IT ? 'IT' : 'OTHER'
+                                                }">
+                                                </span>
+                                            </td>
+                                            <td data-field="workType" th:text="${report.workType ?: ''}"></td>
+                                            <td data-field="remark" th:text="${report.remark ?: ''}"></td>
+                                            <td>
+                                                <div class="form-button-action">
+                                                    <span data-field="parts" th:data-parts="${report.partsUsed}"></span>
+                                                    <button type="button"
+                                                        class="btn btn-link btn-primary btn-lg edit-row"
+                                                        th:data-id="${report.id}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN', 'ADMIN')">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-link btn-danger delete-row"
+                                                        th:data-id="${report.id}"
+                                                        th:data-name="${report.equipment?.name ?: ''}"
+                                                        sec:authorize="hasAnyRole('SUPERADMIN')">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                    <span sec:authorize="!hasAnyRole('SUPERADMIN', 'ADMIN')"
+                                                        class="badge badge-danger mr-1">No Access</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${workReports.totalElements == 0}">
+                                            <td colspan="18" class="text-center">No report found</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination & Info -->
+                            <div class="row mt-3 align-items-center">
+                                <div class="col-md-6 col-sm-12">
+                                    <p class="text-muted mb-0">
+                                        Showing
+                                        <span th:text="${workReports.number * workReports.size + 1} ?: 0"></span>
+                                        -
+                                        <span
+                                            th:text="${workReports.number * workReports.size + workReports.numberOfElements} ?: 0"></span>
+                                        of <span th:text="${workReports.totalElements} ?: 0"></span> entries
+                                    </p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <nav class=" d-flex justify-content-end">
+                                        <ul class="pagination mb-0">
+                                            <li class="page-item"
+                                                th:classappend="${!workReports.hasPrevious} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/work-reports(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, field=${param.field}, page=${workReports.number}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${workReports.hasPrevious}">Prev</a>
+                                                <span class="page-link" th:if="${!workReports.hasPrevious}">Prev</span>
+                                            </li>
+
+                                            <li class="page-item" th:if="${workReports.number > 0}"
+                                                th:classappend="${!workReports.hasPrevious} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/work-reports(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, field=${param.field}, page=1, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">1</a>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${workReports.totalPages >= 3 and workReports.number > 1}">
+                                                <span class="page-link">...</span>
+                                            </li>
+
+                                            <li class="page-item active">
+                                                <span class="page-link" th:text="${workReports.number + 1}">1</span>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${workReports.totalPages >= 3 and workReports.number + 1 < workReports.totalPages - 1}">
+                                                <span class="page-link">...</span>
+                                            </li>
+
+                                            <li class="page-item"
+                                                th:if="${workReports.number + 1 < workReports.totalPages}"
+                                                th:classappend="${!workReports.hasNext} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/work-reports(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, field=${param.field}, page=${workReports.totalPages}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}">
+                                                    <span th:text="${workReports.totalPages}">20</span>
+                                                </a>
+                                            </li>
+
+                                            <li class="page-item" th:classappend="${!workReports.hasNext} ? 'disabled'">
+                                                <a class="page-link"
+                                                    th:href="@{/work-reports(keyword=${param.keyword}, reportDateFrom=${param.reportDateFrom}, reportDateTo=${param.reportDateTo}, equipmentCode=${param.equipmentCode}, hiddenColumns=${hiddenColumns}, group=${param.group}, state=${param.state}, field=${param.field}, page=${workReports.number + 2}, size=${pageSize}, sortBy=${sortBy}, asc=${asc})}"
+                                                    th:if="${workReports.hasNext}">Next</a>
+                                                <span class="page-link" th:if="${!workReports.hasNext}">Next</span>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <th:block layout:fragment="scripts">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="/assets/js/import-wizard.js"></script>
+        <script src="/assets/js/export-wizard.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+
+                // --- UI Helpers ---
+
+                // Extracts technicians from badge elements in a table cell (format: "Name (EMPID)")
+                function getTechniciansFromCell(cell) {
+                    if (!cell) return [];
+                    const technicians = [];
+                    const badges = cell.querySelectorAll('.badge');
+                    for (let badge of badges) {
+                        const text = badge.textContent.trim();
+                        const match = text.match(/^(.+) \((.+)\)$/);
+                        if (match) {
+                            technicians.push({
+                                name: match[1].trim(),
+                                empId: match[2].trim()
+                            });
+                        }
+                    }
+                    return technicians;
+                }
+
+                // Initializes tag input UI for editing technicians
+                function initEditTechnicianInput(technicians) {
+                    const tagList = document.getElementById("editTechnicianTagList");
+                    const hiddenSelect = document.getElementById("editTechnicianSelect");
+
+                    tagList.innerHTML = "";
+                    hiddenSelect.innerHTML = "";
+
+                    technicians.forEach(tech => {
+                        const tag = document.createElement("div");
+                        tag.className = "tag";
+                        tag.dataset.value = tech.empId;
+                        tag.innerHTML = `
+                        ${tech.name} (${tech.empId})
+                        <span class="remove-tag" onclick="window.removeTag(this, 'editTechnicianSelect', 'editTechnicianTagList')">×</span>`;
+                        tagList.appendChild(tag);
+
+                        const option = document.createElement("option");
+                        option.value = tech.empId;
+                        option.selected = true;
+                        hiddenSelect.appendChild(option);
+                    });
+
+                    hiddenSelect.dispatchEvent(new Event('change'));
+                }
+
+                // Update all pagination links to include current hiddenColumns
+                function updatePaginationLinks() {
+                    const currentUrl = new URL(window.location);
+                    const hiddenColumns = currentUrl.searchParams.get('hiddenColumns');
+
+                    document.querySelectorAll('.pagination .page-item a.page-link').forEach(link => {
+                        try {
+                            const linkUrl = new URL(link.href, window.location.origin);
+
+                            // Only update hiddenColumns — leave everything else as-is
+                            if (hiddenColumns !== null) {
+                                linkUrl.searchParams.set('hiddenColumns', hiddenColumns);
+                            } else {
+                                linkUrl.searchParams.delete('hiddenColumns');
+                            }
+
+                            link.href = linkUrl.toString();
+                        } catch (e) {
+                            console.warn('Failed to update pagination link:', link.href, e);
+                        }
+                    });
+                }
+
+                // --- Date Helpers ---
+
+                // Formats date string to YYYY-MM-DD
+                function toIsoDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+
+                // Formats datetime string to YYYY-MM-DDTHH:mm
+                function toIsoDateTime(dateTimeStr) {
+                    if (!dateTimeStr) return '';
+                    const d = new Date(dateTimeStr);
+                    if (isNaN(d.getTime())) return '';
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+
+                // --- Parsing Helpers ---
+
+                // Parses Java DTO string like "part=PartDTO(id=123, name=Gear), quantity=2"
+                function parseJavaDTOString(str) {
+                    if (!str || str === "undefined" || !str.trim()) return [];
+
+                    const startPart = str.indexOf("part=PartDTO(");
+                    const startQty = str.indexOf("quantity=");
+                    if (startPart === -1 || startQty === -1) return [];
+
+                    let depth = 1, endPart = -1;
+                    for (let i = startPart + "part=PartDTO(".length; i < str.length; i++) {
+                        if (str[i] === '(') depth++;
+                        if (str[i] === ')') depth--;
+                        if (depth === 0) { endPart = i; break; }
+                    }
+                    if (endPart === -1) return [];
+
+                    const partContent = str.slice(startPart + "part=PartDTO(".length, endPart);
+                    const qtyMatch = str.slice(startQty).match(/quantity=(\d+)/);
+                    if (!qtyMatch) return [];
+                    const quantity = parseInt(qtyMatch[1], 10);
+
+                    const partFields = partContent.split(',').reduce((acc, pair) => {
+                        const [key, value] = pair.split('=').map(s => s.trim());
+                        if (key) {
+                            acc[key] = value === 'null' ? null : value === '' ? '' : isNaN(value) ? value : Number(value);
+                        }
+                        return acc;
+                    }, {});
+
+                    return [{ part: partFields, quantity }];
+                }
+
+                // --- Table Helpers ---
+
+                // Sorts table rows by field (client-side)
+                function sortTable(field, direction) {
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+                    const noDataRow = tbody.querySelector('tr:not([data-id])');
+                    if (noDataRow) noDataRow.remove();
+
+                    rows.sort((a, b) => {
+                        let aVal = a.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+                        let bVal = b.querySelector(`[data-field="${field}"]`)?.textContent.trim() || '';
+
+                        if (field === 'totalTimeMinutes') {
+                            aVal = parseInt(aVal) || 0;
+                            bVal = parseInt(bVal) || 0;
+                            return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                        }
+
+                        if (['startTime', 'stopTime', 'reportDate'].includes(field)) {
+                            const aCell = a.querySelector(`[data-field="${field}"]`);
+                            const bCell = b.querySelector(`[data-field="${field}"]`);
+                            aVal = aCell?.dataset.fullDatetime || '';
+                            bVal = bCell?.dataset.fullDatetime || '';
+
+                            const parse = s => s ? new Date(s.replace(' ', 'T')).getTime() : 0;
+                            const aTime = parse(aVal);
+                            const bTime = parse(bVal);
+                            return direction === 'asc' ? aTime - bTime : bTime - aTime;
+                        }
+
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                }
+
+                // --- URL Helpers ---
+
+                // Gets URL query parameter by name
+                function findGetParam(name) {
+                    const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+                    return m ? decodeURIComponent(m[1]) : '';
+                }
+
+                // Builds URL with current params and new sort
+                function buildSortUrl(sortByValue) {
+                    const base = '/work-reports';
+                    const params = [];
+
+                    ['keyword', 'reportDateFrom', 'reportDateTo', 'equipmentCode', 'size', 'group', 'field']
+                        .forEach(k => params.push(`${k}=${encodeURIComponent(findGetParam(k))}`));
+
+                    const hidden = findGetParam('hiddenColumns');
+                    if (hidden) {
+                        params.push(`hiddenColumns=${encodeURIComponent(hidden)}`);
+                    }
+
+                    params.push(`sortBy=${encodeURIComponent(sortByValue)}`);
+                    params.push(`asc=${encodeURIComponent(ascInput.value)}`);
+
+                    return `${base}?${params.join('&')}`;
+                }
+
+                // Builds URL with current params and new filters
+                function buildFilterUrl() {
+                    const url = new URL(window.location);
+                    const fields = ['keyword', 'reportDateFrom', 'reportDateTo', 'group', 'field', 'state'];
+
+                    fields.forEach(k => {
+                        const el = document.querySelector(`[name="${k}"]`);
+                        url.searchParams.set(k, el?.value || '');
+                    });
+
+                    const equipment = Array.from(document.querySelectorAll('#equipmentTagList .tag'))
+                        .map(t => t.dataset.value)
+                        .filter(v => v?.trim() !== '');
+                    url.searchParams.set('equipmentCode', equipment.join(','));
+                    url.searchParams.set('page', '1');
+
+                    const hidden = findGetParam('hiddenColumns');
+                    if (hidden) {
+                        url.searchParams.set('hiddenColumns', hidden);
+                    }
+
+                    return url.toString();
+                }
+
+                // --- Edit & Delete Event Handlers ---
+
+                // Handles click on "Edit" buttons to populate modal with row data
+                document.querySelectorAll('.edit-row').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const row = this.closest('tr');
+                        const currentId = this.dataset.id;
+
+                        // Basic fields
+                        document.getElementById('editId').value = currentId;
+                        document.getElementById('editReportDate').value = toIsoDate(row.querySelector('[data-field="reportDate"]')?.textContent.trim() || '');
+                        document.getElementById('editShift').value = row.querySelector('[data-field="shift"]')?.textContent.trim() || '';
+
+                        // Badge-based fields (category, status, scope)
+                        const categoryBadge = row.querySelector('[data-field="category"] .badge');
+                        const realCategory = categoryBadge?.dataset.enumValue || '';
+                        document.getElementById('editCategory').value = realCategory;
+
+                        const statusBadge = row.querySelector('[data-field="status"] .badge');
+                        const statusText = statusBadge?.textContent.trim().toUpperCase() || '';
+                        document.getElementById('editStatus').value = statusText;
+
+                        const scopeBadge = row.querySelector('[data-field="scope"] .badge');
+                        const realScope = scopeBadge?.dataset.enumValue || '';
+                        document.getElementById('editScope').value = realScope;
+
+                        // Text content fields
+                        document.getElementById('editProblem').value = row.querySelector('[data-field="problem"]')?.textContent.trim() || '';
+                        document.getElementById('editSolution').value = row.querySelector('[data-field="solution"]')?.textContent.trim() || '';
+                        document.getElementById('editWorkType').value = row.querySelector('[data-field="workType"]')?.textContent.trim() || '';
+                        document.getElementById('editRemark').value = row.querySelector('[data-field="remark"]')?.textContent.trim() || '';
+
+                        // Datetime fields
+                        // In your edit-row click handler
+                        const startTimeCell = row.querySelector('[data-field="startTime"]');
+                        const fullStartDateTime = startTimeCell?.dataset.fullDatetime || '';
+                        document.getElementById('editStartTime').value = toIsoDateTime(fullStartDateTime);
+                        // In your edit-row click handler
+                        const stopTimeCell = row.querySelector('[data-field="stopTime"]');
+                        const fullStopDateTime = stopTimeCell?.dataset.fullDatetime || '';
+                        document.getElementById('editStopTime').value = toIsoDateTime(fullStopDateTime);
+
+                        // Total time (extract number from text like "120 min")
+                        const totalTimeText = row.querySelector('[data-field="totalTimeMinutes"]')?.textContent.trim() || '';
+                        const minutes = totalTimeText.match(/\d+/);
+                        document.getElementById('editTotalTime').value = minutes ? minutes[0] : '';
+                        calculateEditTotalTime();
+
+                        // Area (display name + code, store code)
+                        const areaCell = row.querySelector('[data-field="area"]');
+                        const areaName = areaCell?.textContent.trim() || '';
+                        const areaCode = areaCell?.dataset.areaCode || '';
+                        document.getElementById('editAreaInput').value = areaName && areaCode ? `${areaName} (${areaCode})` : '';
+                        document.getElementById('editAreaSelect').value = areaCode;
+
+                        // Equipment (display name + code, store code)
+                        const equipCell = row.querySelector('[data-field="equipment"]');
+                        const equipName = equipCell?.textContent.trim() || '';
+                        const equipCode = equipCell?.dataset.equipmentCode || '';
+                        document.getElementById('editEquipmentInput').value = equipName && equipCode ? `${equipName} (${equipCode})` : '';
+                        document.getElementById('editEquipmentSelect').value = equipCode;
+
+                        // Supervisor (display name + ID, store ID)
+                        const supCell = row.querySelector('[data-field="supervisor"]');
+                        const supName = supCell?.textContent.trim() || '';
+                        const supId = supCell?.dataset.employeeId || '';
+                        document.getElementById('editSupervisorInput').value = supName && supId ? `${supName} (${supId})` : '';
+                        document.getElementById('editSupervisorSelect').value = supId;
+
+                        // Technicians (from badge elements)
+                        const techCell = row.querySelector('[data-field="technicians"]');
+                        const technicians = getTechniciansFromCell(techCell);
+                        initEditTechnicianInput(technicians);
+
+                        // Parts used (from data attribute, parsed as Java DTO string)
+                        const partsUsedSpan = row.querySelector('[data-field="parts"]');
+                        const rawPartsData = partsUsedSpan?.dataset.parts;
+                        const partsUsedData = rawPartsData ? parseJavaDTOString(rawPartsData) : [];
+                        const partsTableBody = document.querySelector('#partsTable tbody');
+                        partsTableBody.innerHTML = '';
+
+                        partsUsedData.forEach(partDto => {
+                            const tr = document.createElement('tr');
+                            tr.dataset.partId = partDto.part.id;
+                            tr.dataset.partCode = partDto.part.code;
+
+                            tr.innerHTML = `
+                            <td><code class="bg-light px-2 py-1 rounded">${partDto.part.code || ''}</code></td>
+                            <td>${partDto.part.name || ''}</td>
+                            <td>${partDto.part.category || ''}</td>
+                            <td class="text-center font-weight-bold" contenteditable="true" data-original="${partDto.quantity || 0}">${partDto.quantity || 0}</td>
+                            <td class="text-center">
+                                <button class="btn btn-link text-danger btn-sm delete-row" type="button">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>`;
+                            partsTableBody.appendChild(tr);
+                        });
+
+                        // Show edit modal
+                        const modal = new bootstrap.Modal(document.getElementById('editRowModal'));
+                        modal.show();
+                    });
+                });
+
+                // Handles click on "Delete" buttons to confirm deletion
+                document.querySelectorAll('.delete-row').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const name = this.dataset.name;
+                        const id = this.dataset.id;
+
+                        // Build delete URL with redirect back to current page
+                        const redirectUrl = window.location.href;
+                        const deleteUrl = `/work-reports/delete/${encodeURIComponent(id)}?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+
+                        // Populate confirmation modal
+                        document.getElementById('deleteDocName').textContent = name;
+                        document.getElementById('confirmDeleteButton').href = deleteUrl;
+
+                        // Show delete modal
+                        const modal = new bootstrap.Modal(document.getElementById('deleteRowModal'));
+                        modal.show();
+                    });
+                });
+
+                // --- Client-Side Sorting ---
+
+                // Enables interactive column sorting in the table (client-side)
+                const table = document.getElementById('work-report-table');
+                const headers = table.querySelectorAll('th[data-sort]');
+                let currentSort = { field: null, direction: 'asc' };
+
+                headers.forEach(header => {
+                    header.addEventListener('click', () => {
+                        const field = header.dataset.sort;
+                        const isAsc = (currentSort.field === field && currentSort.direction === 'asc');
+                        const direction = isAsc ? 'desc' : 'asc';
+
+                        headers.forEach(h => {
+                            const icon = h.querySelector('.sort-indicator');
+                            if (icon) {
+                                icon.className = 'fas fa-sort text-white-50 ml-1 sort-indicator';
+                            }
+                        });
+
+                        // Update active sort indicator
+                        const activeIcon = header.querySelector('.sort-indicator');
+                        if (activeIcon) {
+                            activeIcon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-white ml-1 sort-indicator`;
+                        }
+
+                        currentSort = { field, direction };
+                        sortTable(field, direction);
+                    });
+                });
+
+                // --- Server-Side Sorting UI ---
+
+                // Maps sort fields to human-readable labels for the sort dropdown
+                const sortFieldLabels = {
+                    'code': 'Code',
+                    'reportDate': 'Report Date',
+                    'shift': 'Shift',
+                    'area': 'Area',
+                    'equipment': 'Equipment',
+                    'category': 'Category',
+                    'problem': 'Problem',
+                    'solution': 'Solution',
+                    'startTime': 'Start Time',
+                    'stopTime': 'Stop Time',
+                    'totalTimeMinutes': 'Total Time',
+                    'technicians': 'Technicians',
+                    'supervisor': 'Supervisor',
+                    'status': 'Status',
+                    'scope': 'Scope',
+                    'workType': 'Work Type',
+                    'remark': 'Remark'
+                };
+
+                const sortContainer = document.getElementById('sort-column-container');
+                const currentSortBy = sortByInput.value;
+
+                for (const [field, label] of Object.entries(sortFieldLabels)) {
+                    const a = document.createElement('a');
+                    a.className = 'dropdown-item sort-column';
+                    a.textContent = label;
+                    a.href = buildSortUrl(field);
+                    if (field === currentSortBy) a.classList.add('active');
+                    sortContainer.appendChild(a);
+                }
+
+                // Handle ascending/descending toggle in sort direction dropdown
+                document.querySelectorAll('.dropdown-item[data-asc]').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const asc = this.dataset.asc;
+                        document.getElementById('ascInput').value = asc;
+
+                        // Update active class
+                        document.querySelectorAll('.dropdown-item[data-asc]').forEach(el => el.classList.remove('active'));
+                        this.classList.add('active');
+
+                        window.location.href = buildSortUrl(sortByInput.value);
+                    });
+                });
+
+                // --- Column Visibility Toggle ---
+
+                // Initialize column visibility: use defaults from columnSettings, overridden by URL
+                const headerRow = table.querySelector("thead tr");
+                const dataRows = table.querySelectorAll("tbody tr");
+                const container = document.getElementById("column-toggle-list");
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const hiddenColumnsParam = urlParams.get('hiddenColumns');
+                const hiddenSet = hiddenColumnsParam ? new Set(hiddenColumnsParam.split(',')) : null;
+
+                const columnSettings = [
+                    { key: "code", label: "Code", visible: false },
+                    { key: "reportDate", label: "Report Date", visible: true },
+                    { key: "shift", label: "Shift", visible: true },
+                    { key: "area", label: "Area", visible: false },
+                    { key: "equipment", label: "Equipment", visible: true },
+                    { key: "category", label: "Category", visible: false },
+                    { key: "problem", label: "Problem", visible: true },
+                    { key: "solution", label: "Solution", visible: true },
+                    { key: "startTime", label: "Start Time", visible: false },
+                    { key: "stopTime", label: "Stop Time", visible: true },
+                    { key: "totalTimeMinutes", label: "Total Time", visible: true },
+                    { key: "technicians", label: "Technicians", visible: true },
+                    { key: "supervisor", label: "Supervisor", visible: false },
+                    { key: "status", label: "Status", visible: true },
+                    { key: "scope", label: "Scope", visible: false },
+                    { key: "workType", label: "Work Type", visible: false },
+                    { key: "remark", label: "Remark", visible: false }
+                ];
+
+                columnSettings.forEach((col, index) => {
+                    let isVisible = col.visible;
+                    // Override if URL specifies hidden state
+                    if (hiddenSet !== null) {
+                        isVisible = !hiddenSet.has(col.key);
+                    }
+
+                    const div = document.createElement("div");
+                    div.className = "px-3 py-1";
+                    div.style.cursor = "pointer";
+                    div.style.userSelect = "none";
+                    div.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="column-checkbox" data-index="${index}" 
+                            style="display: inline-block; width: 18px; height: 18px; border: 2px solid #adb5bd; border-radius: 4px; margin-right: 8px; text-align: center; line-height: 16px; font-size: 12px; transition: 0.2s background; 
+                            ${isVisible ? 'background-color: #007bff; border-color: #007bff;' : ''}">
+                            ${isVisible ? '<i class="fas fa-check" style="color: white;"></i>' : ''}
+                        </span>
+                        <span style="font-size: 0.95rem; color: #212529;">${col.label}</span>
+                    </div>`;
+
+                    const checkboxSpan = div.querySelector(".column-checkbox");
+                    const th = headerRow.children[index];
+                    const tds = Array.from(dataRows).map(row => row.children[index]);
+
+                    // Apply initial visibility
+                    if (!isVisible) {
+                        if (th) th.style.display = "none";
+                        tds.forEach(td => {
+                            if (td && !td.hasAttribute('colspan')) {
+                                td.style.display = "none";
+                            }
+                        });
+                    }
+
+                    // Toggle visibility on click
+                    div.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        const wasVisible = checkboxSpan.innerHTML.trim() !== "";
+                        const newVisible = !wasVisible;
+
+                        if (newVisible) {
+                            checkboxSpan.style.backgroundColor = "#007bff";
+                            checkboxSpan.style.borderColor = "#007bff";
+                            checkboxSpan.innerHTML = '<i class="fas fa-check" style="color: white;"></i>';
+                            th.style.display = "";
+                            tds.forEach(td => td.style.display = "");
+                        } else {
+                            checkboxSpan.style.backgroundColor = "";
+                            checkboxSpan.innerHTML = "";
+                            th.style.display = "none";
+                            tds.forEach(td => td.style.display = "none");
+                        }
+
+                        // Build list of currently hidden columns
+                        const currentlyHidden = [];
+                        columnSettings.forEach((c, idx) => {
+                            const thEl = headerRow.children[idx];
+                            if (thEl && thEl.style.display === "none") {
+                                currentlyHidden.push(c.key);
+                            }
+                        });
+
+                        // Update URL without reload
+                        const url = new URL(window.location);
+                        if (currentlyHidden.length > 0) {
+                            url.searchParams.set('hiddenColumns', currentlyHidden.join(','));
+                        } else {
+                            url.searchParams.delete('hiddenColumns');
+                        }
+                        window.history.replaceState({}, '', url);
+                        updatePaginationLinks();
+                    });
+
+                    container.appendChild(div);
+                });
+
+                // --- Page Size Control ---
+
+                // Reload page with new page size
+                document.getElementById('pageSizeSelect').addEventListener('change', function () {
+                    const url = new URL(window.location);
+                    url.searchParams.set('size', this.value);
+
+                    const hidden = new URLSearchParams(window.location.search).get('hiddenColumns');
+                    if (hidden) url.searchParams.set('hiddenColumns', hidden);
+                    window.location.href = url.toString();
+                });
+
+                // --- Filter Controls ---
+
+                // Initialize equipment tag input (setupTagInput is defined in modals.html)
+                setupTagInput('equipmentInput', 'equipmentTagList', 'equipmentTagSearch', 'equipmentSelect', 'equipmentOptions');
+
+                // Rebuild equipment tags from URL on page load (style-consistent)
+                (function restoreEquipmentTagsFromUrl() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const equipmentCodes = urlParams.get('equipmentCode');
+                    const tagList = document.getElementById('equipmentTagList');
+                    const datalist = document.getElementById('equipmentOptions');
+
+                    if (!equipmentCodes || !tagList || !datalist) return;
+
+                    const codes = equipmentCodes.split(',').filter(c => c.trim() !== '');
+                    tagList.innerHTML = '';
+
+                    // Build a lookup map: code → display text
+                    const codeToDisplay = {};
+                    const datalistOptions = datalist.querySelectorAll('option');
+                    datalistOptions.forEach(opt => {
+                        const code = opt.getAttribute('data-code');
+                        const display = opt.getAttribute('value'); // this is the full "Name (CODE)"
+                        if (code) {
+                            codeToDisplay[code] = display;
+                        }
+                    });
+
+                    codes.forEach(code => {
+                        const displayText = codeToDisplay[code] || code; // fallback to code if not found
+
+                        const tag = document.createElement('span');
+                        tag.className = 'tag';
+                        tag.dataset.value = code;
+                        tag.innerHTML = `
+                            ${displayText}
+                            <span class="remove-tag" onclick="this.parentElement.remove();">×</span>`;
+                        tagList.appendChild(tag);
+                    });
+
+                    // Update placeholder
+                    const searchInput = document.getElementById('equipmentTagSearch');
+                    if (searchInput) {
+                        searchInput.placeholder = codes.length > 0 ? '' : 'Add equipment...';
+                    }
+                })();
+
+                document.getElementById('applyFilters').addEventListener('click', (e) => {
+                    window.location.href = buildFilterUrl();
+                });
+
+                document.getElementById('resetFilters').addEventListener('click', () => {
+
+                    document.querySelector('[name="keyword"]').value = '';
+                    document.querySelector('[name="reportDateFrom"]').value = '';
+                    document.querySelector('[name="reportDateTo"]').value = '';
+                    document.querySelector('[name="group"]').value = '';
+                    document.querySelector('[name="field"]').value = '';
+                    document.querySelector('[name="state"]').value = '';
+
+                    const tagList = document.getElementById('equipmentTagList');
+                    if (tagList) tagList.innerHTML = '';
+
+                    const equipmentSelect = document.getElementById('equipmentSelect');
+                    if (equipmentSelect) equipmentSelect.innerHTML = '';
+
+                    const searchInput = document.getElementById('equipmentTagSearch');
+                    if (searchInput) searchInput.value = '';
+
+                    window.location.href = buildFilterUrl();
+                });
+
+                const filterDropdown = document.getElementById('filterDropdownBtn');
+                const dropdownMenu = filterDropdown.nextElementSibling;
+
+                dropdownMenu.addEventListener('click', e => e.stopPropagation());
+
+                // --- Flash Message Modal ---
+
+                // Auto-show flash message modal if present
+                const flashModalContainer = document.getElementById('flashMessageModalContainer');
+                if (flashModalContainer) {
+                    const flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
+                    flashModal.show();
+                }
+
+                // --- Import & Export ---
+
+                // Configures Excel import mapping for backend fields
+                const fieldMapping = {
+                    "Code": "code",
+                    "Report Date": "reportDate",
+                    "Shift": "shift",
+                    "Area": "area",
+                    "Equipment": "equipment",
+                    "Category": "category",
+                    "Problem": "problem",
+                    "Solution": "solution",
+                    "Start Time": "startTime",
+                    "Stop Time": "stopTime",
+                    "Total Time": "totalTimeMinutes",
+                    "Technician(s)": "technicians",
+                    "Supervisor": "supervisor",
+                    "Status": "status",
+                    "Scope": "scope",
+                    "Work Type": "workType",
+                    "Remark": "remark"
+                };
+
+                new ImportWizard({
+                    likelyFields: Object.keys(fieldMapping),
+                    fieldMapping: fieldMapping,
+                    formAction: '/work-reports/import',
+                    onError: (err) => {
+                        alert("Import Error: " + err.message);
+                    }
+                });
+
+                // Handles PDF & Excel exports using ExportWizard class
+                const exportWizard = new ExportWizard('work-report-table');
+
+                document.getElementById('exportExcel')?.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    exportWizard.exportToExcel('Work Reports List');
+                });
+
+                document.getElementById('exportPdf')?.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    exportWizard.exportToPdf('Work Reports List');
+                });
+
+            });
+        </script>
+    </th:block>
+</body>
+
+</html>
