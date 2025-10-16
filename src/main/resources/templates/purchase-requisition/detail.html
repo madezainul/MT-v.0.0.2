@@ -420,21 +420,21 @@
 
                 <!-- Actions Panel -->
                 <div class="col-md-4">
-                    <div class="card section-card">
+                    <div class="card section-card" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
                         <div class="section-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-cogs mr-2"></i>Actions
                             </h5>
                         </div>
                         <div class="card-body">
-                            <!-- Create PO Action -->
+                            <!-- Create QR Action -->
                             <div th:if="${pr.status.name() == 'APPROVED'}" class="action-section">
                                 <h6 class="text-primary">
-                                    <i class="fas fa-file-invoice mr-2"></i>Purchase Order
+                                    <i class="fas fa-file-invoice mr-2"></i>Quotation Request
                                 </h6>
-                                <p class="text-muted small mb-3">Create purchase orders from approved parts.</p>
-                                <a th:href="@{/purchase-order/create-multi}" class="btn btn-primary btn-sm btn-block">
-                                    <i class="fas fa-plus mr-1"></i> Create New PO
+                                <p class="text-muted small mb-3">Create quotation requests from approved parts.</p>
+                                <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary btn-sm btn-block">
+                                    <i class="fas fa-plus mr-1"></i> Create New QR
                                 </a>
                             </div>
 
@@ -565,7 +565,7 @@
                             </div>
 
                             <!-- Delete Action -->
-                            <div th:if="${pr.status.name() == 'SUBMITTED'}" class="action-section">
+                            <div th:if="${pr.status.name() == 'SUBMITTED'}" class="action-section" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
                                 <h6 class="text-danger">Danger Zone</h6>
                                 <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
                                         data-toggle="modal" data-target="#deleteModal">
@@ -576,7 +576,7 @@
                     </div>
 
                     <!-- Summary Card -->
-                    <div class="card section-card mt-3">
+                    <div class="card section-card">
                         <div class="section-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-chart-pie mr-2"></i>Summary

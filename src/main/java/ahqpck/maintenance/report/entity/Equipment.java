@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Equipment {
 
     @Id
@@ -39,6 +41,7 @@ public class Equipment {
     private String model;
     private String unit;
 
+    @Builder.Default
     private Integer qty = 0;
 
     private String manufacturer;
@@ -58,12 +61,15 @@ public class Equipment {
     private String image; // filename only
 
     @OneToMany(mappedBy = "equipment", fetch = FetchType.LAZY)
-    private final Set<Complaint> complaints = new HashSet<>();
+    @Builder.Default
+    private Set<Complaint> complaints = new HashSet<>();
 
     @OneToMany(mappedBy = "equipment", fetch = FetchType.LAZY)
-    private final Set<WorkReport> workReports = new HashSet<>();
+    @Builder.Default
+    private Set<WorkReport> workReports = new HashSet<>();
 
     @OneToMany(mappedBy = "equipment", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<EquipmentPartBOM> billOfMaterials = new HashSet<>();
 
     @PrePersist

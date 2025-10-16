@@ -99,13 +99,13 @@ public class QuotationRequestController {
         }
     }
 
-    // Show PO details
+    // Show QR details
     @GetMapping("/{id}")
-    public String showPurchaseOrder(@PathVariable String id, Model model) {
+    public String showQuotationRequest(@PathVariable String id, Model model) {
         try {
-            QuotationRequestDTO po = qrService.getQuotationRequestById(id);
-            model.addAttribute("title", "Purchase Order Details - " + po.getQuotationNumber());
-            model.addAttribute("po", po);
+            QuotationRequestDTO qr = qrService.getQuotationRequestById(id);
+            model.addAttribute("title", "Quotation Request Details - " + qr.getQuotationNumber());
+            model.addAttribute("qr", qr);
             
             // Load users list for assignment (only active reviewer users)
             var allUsers = userService.getAllUsers(null, 0, Integer.MAX_VALUE, "name", true);
@@ -232,18 +232,22 @@ public class QuotationRequestController {
     @PostMapping("/{id}/receive")
     public String receiveParts(
             @PathVariable String id,
-            @RequestParam String[] partIds,
-            @RequestParam Integer[] receivedQuantities,
+            @RequestParam(required = false) String[] partIds,
+            @RequestParam(required = false) Integer[] receivedQuantities,
             @RequestParam(required = false) String receivingNotes,
             RedirectAttributes ra) {
 
         try {
-            for (int i = 0; i < partIds.length; i++) {
-                if (receivedQuantities[i] != null && receivedQuantities[i] > 0) {
-                    qrService.receivePart(id, partIds[i], receivedQuantities[i], receivingNotes);
+            if (partIds != null && receivedQuantities != null) {
+                for (int i = 0; i < partIds.length; i++) {
+                    if (receivedQuantities[i] != null && receivedQuantities[i] > 0) {
+                        qrService.receivePart(id, partIds[i], receivedQuantities[i], receivingNotes);
+                    }
                 }
+                ra.addFlashAttribute("success", "Parts received successfully");
+            } else {
+                ra.addFlashAttribute("error", "No parts specified for receiving");
             }
-            ra.addFlashAttribute("success", "Parts received successfully");
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Failed to receive parts: " + e.getMessage());

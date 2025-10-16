@@ -268,7 +268,7 @@
                                     <tr th:each="partDto : ${complaint.partsUsed}">
                                         <td><code class="bg-light px-2 py-1 rounded" th:text="${partDto.part.code}"></code></td>
                                         <td th:text="${partDto.part.name}"></td>
-                                        <td th:text="${partDto.part.category}"></td>
+                                        <td th:text="${partDto.part.categoryName}"></td>
                                         <td class="text-center font-weight-bold" contenteditable="true"
                                             th:data-original="${partDto.quantity}"
                                             th:text="${partDto.quantity}"></td>

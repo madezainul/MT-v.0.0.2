@@ -1,10 +1,12 @@
 package ahqpck.maintenance.report.controller;
 
+import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.service.BOMService;
-import ahqpck.maintenance.report.service.EquipmentService;
-import ahqpck.maintenance.report.service.PartService;
+import ahqpck.maintenance.report.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +18,24 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class BOMController {
 
     private final BOMService bomService;
-    private final EquipmentService equipmentService;
-    private final PartService partService;
+    private final UserService userService;
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping
-    public String index(Model model) {
+    public String index(Authentication authentication, Model model) {
         try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
             var equipments = bomService.getAllEquipmentsForBOM();
             
             // Get comprehensive statistics
@@ -49,9 +63,22 @@ public class BOMController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping("/{equipmentId}")
-    public String equipmentDetail(@PathVariable String equipmentId, Model model) {
+    public String equipmentDetail(@PathVariable String equipmentId, Authentication authentication, Model model) {
         try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
             var equipment = bomService.getEquipmentWithParts(equipmentId);
             var bomEntries = bomService.getEquipmentBOM(equipmentId);
             var availableParts = bomService.getAvailablePartsForEquipment(equipmentId);
@@ -68,25 +95,45 @@ public class BOMController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping("/part-usage")
-    public String partUsage(@RequestParam(required = false) String partId, Model model) {
-        // Get all parts for dropdown
-        var parts = bomService.getAllPartsForBOM();
-        model.addAttribute("parts", parts);
-        model.addAttribute("title", "Part Usage Analysis");
-        
-        if (partId != null && !partId.trim().isEmpty()) {
-            var selectedPart = bomService.getPartWithEquipments(partId);
-            var usageEntries = bomService.getPartUsage(partId);
+    public String partUsage(@RequestParam(required = false) String partId, Authentication authentication, Model model) {
+        try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
+            // Get all parts for dropdown
+            var parts = bomService.getAllPartsForBOM();
+            model.addAttribute("parts", parts);
+            model.addAttribute("title", "Part Usage Analysis");
             
-            model.addAttribute("selectedPart", selectedPart);
-            model.addAttribute("usageEntries", usageEntries);
-            model.addAttribute("selectedPartId", partId);
+            if (partId != null && !partId.trim().isEmpty()) {
+                var selectedPart = bomService.getPartWithEquipments(partId);
+                var usageEntries = bomService.getPartUsage(partId);
+                
+                model.addAttribute("selectedPart", selectedPart);
+                model.addAttribute("usageEntries", usageEntries);
+                model.addAttribute("selectedPartId", partId);
+            }
+            
+            return "bom/part-usage";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load part usage: " + e.getMessage());
+            return "error/500";
         }
-        
-        return "bom/part-usage";
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping("/add-part")
     public String addPartToEquipment(@RequestParam String equipmentId,
                                    @RequestParam String partId,
@@ -103,6 +150,7 @@ public class BOMController {
         return "redirect:/bom/" + equipmentId;
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping("/remove-part")
     public String removePartFromEquipment(@RequestParam String equipmentId,
                                         @RequestParam String partId,
@@ -116,6 +164,7 @@ public class BOMController {
         return "redirect:/bom/" + equipmentId;
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping("/update-bom")
     public String updateBOMEntry(@RequestParam String bomId,
                                @RequestParam(defaultValue = "1") Integer quantity,

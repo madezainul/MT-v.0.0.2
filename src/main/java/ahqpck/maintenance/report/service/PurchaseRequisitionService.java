@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import ahqpck.maintenance.report.dto.DTOMapper;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
@@ -20,7 +19,6 @@ import ahqpck.maintenance.report.entity.PurchaseRequisition.PRStatus;
 import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.User;
 import ahqpck.maintenance.report.repository.PartRepository;
-import ahqpck.maintenance.report.repository.PurchaseRequisitionPartRepository;
 import ahqpck.maintenance.report.repository.PurchaseRequisitionRepository;
 import ahqpck.maintenance.report.repository.UserRepository;
 import ahqpck.maintenance.report.util.ZeroPaddedCodeGenerator;
@@ -31,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class PurchaseRequisitionService {
 
     private final PurchaseRequisitionRepository prRepository;
-    private final PurchaseRequisitionPartRepository prPartRepository;
     private final PartRepository partRepository;
     private final UserRepository userRepository;
     private final DTOMapper dtoMapper;
@@ -39,30 +36,31 @@ public class PurchaseRequisitionService {
 
     // CRUD Operations
     @Transactional
-    public PurchaseRequisitionDTO createPurchaseRequisition(PurchaseRequisitionDTO prDTO) {
+    public PurchaseRequisitionDTO createPurchaseRequisition(PurchaseRequisitionDTO prDTO, String currentUserId) {
         try {
-            // Validate requestor
-            User requestor = userRepository.findById(prDTO.getRequestorId())
-                    .orElseThrow(() -> new RuntimeException("Requestor not found with id: " + prDTO.getRequestorId()));
+            PurchaseRequisition pr = new PurchaseRequisition();
 
-            // Create PR entity
-            PurchaseRequisition pr = PurchaseRequisition.builder()
-                    .code(codeGenerator.generate(PurchaseRequisition.class, "code", "PR"))
-                    .title(prDTO.getTitle())
-                    .description(prDTO.getDescription())
-                    .requestor(requestor)
-                    .dateNeeded(prDTO.getDateNeeded())
-                    .targetEquipmentId(prDTO.getTargetEquipmentId())
-                    .targetEquipmentName(prDTO.getTargetEquipmentName())
-                    .build();
+            // Validate business rules
+            validatePurchaseRequisition(prDTO);
 
-            // Add parts if provided
-            if (prDTO.getParts() != null && !prDTO.getParts().isEmpty()) {
-                for (PurchaseRequisitionPartDTO partDTO : prDTO.getParts()) {
-                    PurchaseRequisitionPart prPart = createPRPart(pr, partDTO);
-                    pr.addPart(prPart);
-                }
+            // Handle code generation
+            if (prDTO.getCode() == null || prDTO.getCode().trim().isEmpty()) {
+                String generatedCode = codeGenerator.generate(PurchaseRequisition.class, "code", "PR");
+                pr.setCode(generatedCode);
+            } else {
+                pr.setCode(prDTO.getCode());
             }
+
+            // Get current user for audit fields
+            User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalStateException("User not found with ID: " + currentUserId));
+
+            // Set audit fields
+            pr.setCreatedBy(currentUser);
+            pr.setUpdatedBy(currentUser);
+
+            // Use mapper for complex entity mapping
+            mapPRFromDTO(pr, prDTO);
 
             pr = prRepository.save(pr);
             return mapToDTO(pr);
@@ -72,6 +70,62 @@ public class PurchaseRequisitionService {
         }
     }
 
+    private void validatePurchaseRequisition(PurchaseRequisitionDTO prDTO) {
+        // Validate requestor exists
+        if (prDTO.getRequestorId() == null) {
+            throw new IllegalArgumentException("Requestor ID is required");
+        }
+        
+        userRepository.findById(prDTO.getRequestorId())
+                .orElseThrow(() -> new IllegalArgumentException("Requestor not found with id: " + prDTO.getRequestorId()));
+
+        // Validate title and description
+        if (prDTO.getTitle() == null || prDTO.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Title is required");
+        }
+
+        // Validate parts
+        if (prDTO.getParts() == null || prDTO.getParts().isEmpty()) {
+            throw new IllegalArgumentException("At least one part must be specified");
+        }
+
+        // Validate each part
+        for (PurchaseRequisitionPartDTO partDTO : prDTO.getParts()) {
+            if (partDTO.getPartId() == null) {
+                throw new IllegalArgumentException("Part ID is required for all parts");
+            }
+            if (partDTO.getQuantityRequested() == null || partDTO.getQuantityRequested() <= 0) {
+                throw new IllegalArgumentException("Valid quantity is required for all parts");
+            }
+            // Verify part exists
+            partRepository.findById(partDTO.getPartId())
+                .orElseThrow(() -> new IllegalArgumentException("Part not found with id: " + partDTO.getPartId()));
+        }
+    }
+
+    private void mapPRFromDTO(PurchaseRequisition pr, PurchaseRequisitionDTO prDTO) {
+        // Get requestor
+        User requestor = userRepository.findById(prDTO.getRequestorId())
+                .orElseThrow(() -> new RuntimeException("Requestor not found"));
+
+        // Map basic fields
+        pr.setTitle(prDTO.getTitle());
+        pr.setDescription(prDTO.getDescription());
+        pr.setRequestor(requestor);
+        pr.setDateNeeded(prDTO.getDateNeeded());
+        pr.setTargetEquipmentId(prDTO.getTargetEquipmentId());
+        pr.setTargetEquipmentName(prDTO.getTargetEquipmentName());
+
+        // Add parts
+        if (prDTO.getParts() != null && !prDTO.getParts().isEmpty()) {
+            for (PurchaseRequisitionPartDTO partDTO : prDTO.getParts()) {
+                PurchaseRequisitionPart prPart = createPRPart(pr, partDTO);
+                pr.addPart(prPart);
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDTO> getAllPurchaseRequisitions(String searchTerm, int page, int size, String sortBy, boolean ascending) {
         Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -86,12 +140,14 @@ public class PurchaseRequisitionService {
         return prPage.map(this::mapToDTO);
     }
 
+    @Transactional(readOnly = true)
     public PurchaseRequisitionDTO getPurchaseRequisitionById(String id) {
         PurchaseRequisition pr = prRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Purchase Requisition not found with id: " + id));
         return mapToDTO(pr);
     }
 
+    @Transactional(readOnly = true)
     public PurchaseRequisitionDTO getPurchaseRequisitionByCode(String code) {
         PurchaseRequisition pr = prRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Purchase Requisition not found with code: " + code));
@@ -302,6 +358,7 @@ public class PurchaseRequisitionService {
         return prRepository.countReadyForPO();
     }
 
+    @Transactional(readOnly = true)
     public List<PurchaseRequisitionDTO> getRecentSubmissions(int days) {
         LocalDateTime since = LocalDateTime.now().minusDays(days);
         return prRepository.findRecentSubmissions(since).stream()
@@ -309,21 +366,25 @@ public class PurchaseRequisitionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDTO> getPurchaseRequisitionsByStatus(PRStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return prRepository.findByStatus(status, pageable).map(this::mapToDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDTO> getPendingApproval(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return prRepository.findPendingApproval(pageable).map(this::mapToDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDTO> getActionRequired(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return prRepository.findActionRequired(pageable).map(this::mapToDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDTO> getReadyForPO(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return prRepository.findReadyForPO(pageable).map(this::mapToDTO);

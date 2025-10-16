@@ -47,7 +47,7 @@
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a>Create PO</a>
+                        <a>Create QR</a>
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
@@ -57,7 +57,7 @@
                 </div>
             </div>
 
-            <form th:action="@{/purchase-order/create}" method="post" id="createPOForm">
+                        <form th:action="@{/quotation-request/create}" method="post" id="createQRForm">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card">
@@ -139,7 +139,7 @@
                                      class="text-center text-muted py-5">
                                     <i class="fas fa-box-open fa-3x mb-3"></i>
                                     <h5>No Available Parts</h5>
-                                    <p>There are no approved parts available for purchase order creation.</p>
+                                    <p>There are no approved parts available for quotation request creation.</p>
                                     <a th:href="@{/purchase-requisition}" class="btn btn-primary">
                                         <i class="fas fa-arrow-left mr-1"></i> Back to PRs
                                     </a>
@@ -152,7 +152,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <i class="fas fa-cog mr-2"></i>Purchase Order Details
+                                    <i class="fas fa-cog mr-2"></i>Quotation Request Details
                                 </div>
                             </div>
                             <div class="card-body">
@@ -170,22 +170,22 @@
                                 <div class="form-group">
                                     <label for="notes">Notes</label>
                                     <textarea class="form-control" name="notes" rows="3" 
-                                              placeholder="Optional notes for the purchase order"></textarea>
+                                              placeholder="Optional notes for the quotation request"></textarea>
                                 </div>
 
                                 <div class="alert alert-info">
                                     <h6><i class="fas fa-info-circle mr-1"></i> Information</h6>
                                     <ul class="mb-0">
                                         <li>Parts will be grouped by supplier</li>
-                                        <li>Separate POs will be created for each supplier</li>
+                                        <li>Separate QRs will be created for each supplier</li>
                                         <li>Parts are sorted alphabetically by name</li>
                                         <li>Only approved PR parts are shown</li>
                                     </ul>
                                 </div>
 
                                 <div class="d-flex flex-column">
-                                    <button type="submit" class="btn btn-success btn-block mb-2" id="createPOBtn" disabled>
-                                        <i class="fas fa-plus mr-1"></i> Create Purchase Order(s)
+                                    <button type="submit" class="btn btn-success btn-block mb-2" id="createQRBtn" disabled>
+                                        <i class="fas fa-plus mr-1"></i> Create Quotation Request(s)
                                     </button>
                                     <a th:href="@{/purchase-requisition}" class="btn btn-secondary btn-block">
                                         <i class="fas fa-times mr-1"></i> Cancel
@@ -231,14 +231,14 @@
                 const supplierCheckboxes = document.querySelectorAll('.supplier-checkbox');
                 const selectAllBtn = document.getElementById('selectAllBtn');
                 const clearAllBtn = document.getElementById('clearAllBtn');
-                const createPOBtn = document.getElementById('createPOBtn');
+                const createQRBtn = document.getElementById('createQRBtn');
                 const selectionSummary = document.getElementById('selectionSummary');
                 const summaryContent = document.getElementById('summaryContent');
 
                 // Update button state and summary
                 function updateUI() {
                     const selectedParts = document.querySelectorAll('input[name="selectedPartIds"]:checked');
-                    createPOBtn.disabled = selectedParts.length === 0;
+                    createQRBtn.disabled = selectedParts.length === 0;
                     
                     if (selectedParts.length > 0) {
                         // Show summary
@@ -326,11 +326,11 @@
                 });
 
                 // Form submission validation
-                document.getElementById('createPOForm').addEventListener('submit', function(e) {
+                document.getElementById('createQRForm').addEventListener('submit', function(e) {
                     const selectedParts = document.querySelectorAll('input[name="selectedPartIds"]:checked');
                     if (selectedParts.length === 0) {
                         e.preventDefault();
-                        alert('Please select at least one part to create a purchase order.');
+                        alert('Please select at least one part to create a quotation request.');
                         return false;
                     }
                 });

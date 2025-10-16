@@ -80,10 +80,6 @@
                                                 data-target="#addMachineTypeModal">
                                                 <i class="fa fa-plus-circle mr-2"></i> Add
                                             </button>
-                                            <!-- <div th:replace="~{fragments/cg-modal :: view-modal}"></div>
-                                            <button class="btn btn-secondary ml-2" data-toggle="modal"
-                                                data-target="#addViewModal"><i class="fa fa-eye mr-2"></i>
-                                                View</button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -114,8 +110,6 @@
                                                 data-target="#addCategoryModal">
                                                 <i class="fa fa-plus-circle mr-2"></i> Add
                                             </button>
-                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
-                                                View</button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -149,8 +143,6 @@
                                                 data-target="#addSubcategoryModal">
                                                 <i class="fa fa-plus-circle mr-2"></i> Add
                                             </button>
-                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
-                                                View</button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -158,29 +150,26 @@
                                     <div class="form-group">
                                         <label>Capacity/Part Number <span class="text-danger">*</span></label>
                                         <div class="d-flex align-items-center">
-                                            <input type="text" class="form-control" id="serialNumberInput"
+                                            <input type="text" class="form-control" id="capacityInput"
                                                 placeholder="Search Capacity/Part Number" autocomplete="off" required />
-                                            <div id="serialNumberDropdown" class="dropdown-menu"
+                                            <div id="capacityDropdown" class="dropdown-menu"
                                                 style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%;">
                                             </div>
-                                            <select class="d-none" name="serialNumber" id="serialNumberSelect">
-                                                <option th:each="sn : ${serialNumbers}" th:value="${sn.code}"
-                                                    th:text="${sn.code + ' - ' + sn.name}"></option>
+                                            <select class="d-none" name="capacity" id="capacitySelect">
+                                                <option th:each="cap : ${capacities}" th:value="${cap.code}"
+                                                    th:text="${cap.code + ' - ' + cap.name}"></option>
                                             </select>
 
-                                            <datalist id="serialNumberOptions">
-                                                <option th:each="sn : ${serialNumbers}"
-                                                    th:value="${sn.name} + ' (' + ${sn.id} + ')'"
-                                                    th:data-serial-number-id="${sn.id}"></option>
-                                                </option>
+                                            <datalist id="capacityOptions">
+                                                <option th:each="cap : ${capacities}"
+                                                    th:value="${cap.name} + ' (' + ${cap.id} + ')'"
+                                                    th:data-capacity-id="${cap.id}"></option>
                                             </datalist>
-                                            <div th:replace="~{fragments/cg-modal :: serial-number-modal}"></div>
+                                            <div th:replace="~{fragments/cg-modal :: capacity-modal}"></div>
                                             <button class="btn btn-primary ml-2" data-toggle="modal"
-                                                data-target="#addSerialNumberModal">
+                                                data-target="#addCapacityModal">
                                                 <i class="fa fa-plus-circle mr-2"></i> Add
                                             </button>
-                                            <!-- <button class="btn btn-secondary ml-2"><i class="fa fa-eye mr-2"></i>
-                                                View</button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -295,17 +284,17 @@
                                     const machineTypeCode = document.getElementById('machineTypeSelect').value;
                                     const categoryCode = document.getElementById('categorySelect').value;
                                     const subcategoryCode = document.getElementById('subcategorySelect').value;
-                                    const serialNumberCode = document.getElementById('serialNumberSelect').value;
+                                    const capacityCode = document.getElementById('capacitySelect').value;
                                     const supplierCode = document.getElementById('supplierSelect').value;
                                     const sectionCode = document.getElementById('sectionSelect').value;
 
-                                    if (!machineTypeCode || !categoryCode || !subcategoryCode || !serialNumberCode || !supplierCode || !sectionCode) {
+                                    if (!machineTypeCode || !categoryCode || !subcategoryCode || !capacityCode || !supplierCode || !sectionCode) {
                                         alert('Please select all required fields before generating the code.');
                                         return;
                                     }
 
                                     // Concatenate the codes directly
-                                    const generatedCode = `${machineTypeCode}${categoryCode}${subcategoryCode}${serialNumberCode}${supplierCode}${sectionCode}`;
+                                    const generatedCode = `${machineTypeCode}${categoryCode}${subcategoryCode}${capacityCode}${supplierCode}${sectionCode}`;
                                     document.getElementById('generatedCode').value = generatedCode;
                                 });
                             </script>
@@ -430,7 +419,7 @@
             setupLiveSearch('machineTypeInput', 'machineTypeSelect', 'machineTypeOptions');
             setupLiveSearch('categoryInput', 'categorySelect', 'categoryOptions');
             setupLiveSearch('subcategoryInput', 'subcategorySelect', 'subcategoryOptions');
-            setupLiveSearch('serialNumberInput', 'serialNumberSelect', 'serialNumberOptions');
+            setupLiveSearch('capacityInput', 'capacitySelect', 'capacityOptions');
             setupLiveSearch('supplierInput', 'supplierSelect', 'supplierOptions', 'supplier');
             setupLiveSearch('sectionInput', 'sectionSelect', 'sectionOptions', 'section');
         });

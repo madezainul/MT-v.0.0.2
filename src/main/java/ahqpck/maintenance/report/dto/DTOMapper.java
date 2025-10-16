@@ -12,9 +12,10 @@ import ahqpck.maintenance.report.entity.QuotationRequestPart;
 import ahqpck.maintenance.report.entity.PurchaseRequisition;
 import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.Section;
-import ahqpck.maintenance.report.entity.SerialNumber;
+import ahqpck.maintenance.report.entity.Capacity;
 import ahqpck.maintenance.report.entity.Subcategory;
 import ahqpck.maintenance.report.entity.Supplier;
+import ahqpck.maintenance.report.entity.User;
 
 @Component
 public class DTOMapper {
@@ -48,12 +49,12 @@ public class DTOMapper {
         return dto;
     }
 
-    public SerialNumberDTO mapToSerialNumberDTO(SerialNumber sn) {
-        SerialNumberDTO dto = new SerialNumberDTO();
-        dto.setId(sn.getId());
-        dto.setCode(sn.getCode());
-        dto.setName(sn.getName());
-        // dto.setSubcategory(mapToSubcategoryDTO(sn.getSubcategory()));
+    public CapacityDTO mapToCapacityDTO(Capacity cap) {
+        CapacityDTO dto = new CapacityDTO();
+        dto.setId(cap.getId());
+        dto.setCode(cap.getCode());
+        dto.setName(cap.getName());
+        // dto.setSubcategory(mapToSubcategoryDTO(cap.getSubcategory()));
 
         return dto;
     }
@@ -98,6 +99,15 @@ public class DTOMapper {
                 .reviewNotes(pr.getReviewNotes())
                 .createdAt(pr.getCreatedAt())
                 .updatedAt(pr.getUpdatedAt())
+                // Map audit fields with safe access
+                .createdById(safeGetUserId(pr.getCreatedBy()))
+                .createdByName(safeGetUserName(pr.getCreatedBy()))
+                .createdByEmail(safeGetUserEmail(pr.getCreatedBy()))
+                .createdByEmployeeId(safeGetUserEmployeeId(pr.getCreatedBy()))
+                .updatedById(safeGetUserId(pr.getUpdatedBy()))
+                .updatedByName(safeGetUserName(pr.getUpdatedBy()))
+                .updatedByEmail(safeGetUserEmail(pr.getUpdatedBy()))
+                .updatedByEmployeeId(safeGetUserEmployeeId(pr.getUpdatedBy()))
                 .build();
 
         // Map parts
@@ -205,10 +215,44 @@ public class DTOMapper {
         dto.setCategoryName(part.getCategoryName());
         dto.setSupplierName(part.getSupplierName());
         dto.setSectionCode(part.getSectionCode());
-        dto.setDescription(part.getDescription());
+        dto.setSpecification(part.getSpecification());
+        dto.setModel(part.getModel());
         dto.setImage(part.getImage());
         dto.setStockQuantity(part.getStockQuantity());
 
         return dto;
+    }
+
+    // Helper methods for safe User entity access
+    private String safeGetUserId(User user) {
+        try {
+            return user != null ? user.getId() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String safeGetUserName(User user) {
+        try {
+            return user != null ? user.getName() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String safeGetUserEmail(User user) {
+        try {
+            return user != null ? user.getEmail() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String safeGetUserEmployeeId(User user) {
+        try {
+            return user != null ? user.getEmployeeId() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

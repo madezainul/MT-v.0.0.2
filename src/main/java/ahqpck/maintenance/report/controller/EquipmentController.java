@@ -4,14 +4,10 @@ import ahqpck.maintenance.report.dto.EquipmentDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.service.EquipmentService;
 import ahqpck.maintenance.report.config.UserDetailsImpl;
-import ahqpck.maintenance.report.dto.EquipmentDTO;
-import ahqpck.maintenance.report.dto.UserDTO;
-import ahqpck.maintenance.report.service.EquipmentService;
 import ahqpck.maintenance.report.service.UserService;
 import ahqpck.maintenance.report.util.ImportUtil;
 import ahqpck.maintenance.report.util.WebUtil;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -31,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/equipments")
@@ -44,9 +38,6 @@ public class EquipmentController {
     @Value("${app.upload-equipment-image.dir:src/main/resources/static/upload/equipment/image}")
     private String uploadDir;
 
-    @GetMapping
-    public String listEquipments(
-            @RequestParam(required = false) String keyword,
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping
     public String listEquipments(
@@ -65,8 +56,6 @@ public class EquipmentController {
 
             Page<EquipmentDTO> equipmentPage = equipmentService.getAllEquipments(keyword, zeroBasedPage, parsedSize, sortBy, asc);
 
-            model.addAttribute("equipments", equipmentPage);
-            model.addAttribute("keyword", keyword);
             String currentUserId = null;
             if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
                 UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -79,8 +68,6 @@ public class EquipmentController {
                 model.addAttribute("currentUser", currentUser);
             }
 
-            Page<EquipmentDTO> equipmentPage = equipmentService.getAllEquipments(keyword, zeroBasedPage, parsedSize, sortBy, asc);
-            System.out.println("Equipment Page: " + equipmentPage.getContent());
             model.addAttribute("equipments", equipmentPage);
             model.addAttribute("keyword", keyword);
             model.addAttribute("hiddenColumns", hiddenColumns);

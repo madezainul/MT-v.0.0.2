@@ -12,18 +12,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import ahqpck.maintenance.report.dto.AreaDTO;
 import ahqpck.maintenance.report.dto.CategoryDTO;
 import ahqpck.maintenance.report.dto.DTOMapper;
 import ahqpck.maintenance.report.dto.MachineTypeDTO;
 import ahqpck.maintenance.report.dto.SectionDTO;
-import ahqpck.maintenance.report.dto.SerialNumberDTO;
+import ahqpck.maintenance.report.dto.CapacityDTO;
 import ahqpck.maintenance.report.dto.SubcategoryDTO;
 import ahqpck.maintenance.report.dto.SupplierDTO;
 import ahqpck.maintenance.report.service.CategoryService;
 import ahqpck.maintenance.report.service.MachineTypeService;
 import ahqpck.maintenance.report.service.SectionService;
-import ahqpck.maintenance.report.service.SerialNumberService;
+import ahqpck.maintenance.report.service.CapacityService;
 import ahqpck.maintenance.report.service.SubcategoryService;
 import ahqpck.maintenance.report.service.SupplierService;
 import jakarta.validation.Valid;
@@ -37,7 +36,7 @@ public class CodeGeneratorController {
     private final MachineTypeService machineTypeService;
     private final CategoryService categoryService;
     private final SubcategoryService subcategoryService;
-    private final SerialNumberService serialNumberService;
+    private final CapacityService capacityService;
     private final SupplierService supplierService;
     private final SectionService sectionService;
     private final DTOMapper dtoMapper;
@@ -56,9 +55,9 @@ public class CodeGeneratorController {
 
         model.addAttribute("subcategories", subcategoryService.getAll().stream()
                 .map(dtoMapper::mapToSubcategoryDTO).collect(Collectors.toList()));
-        
-        model.addAttribute("serialNumbers", serialNumberService.getAll().stream()
-                .map(dtoMapper::mapToSerialNumberDTO).collect(Collectors.toList()));
+
+        model.addAttribute("capacities", capacityService.getAll().stream()
+                .map(dtoMapper::mapToCapacityDTO).collect(Collectors.toList()));
 
         model.addAttribute("suppliers", supplierService.getAll().stream()
                 .map(dtoMapper::mapToSupplierDTO).collect(Collectors.toList()));
@@ -66,14 +65,17 @@ public class CodeGeneratorController {
         model.addAttribute("sections", sectionService.getAll().stream()
                 .map(dtoMapper::mapToSectionDTO).collect(Collectors.toList()));
 
+        // modal machine type
+        model.addAttribute("machineTypeDTO", new MachineTypeDTO());
+
         // modal category
         model.addAttribute("categoryDTO", new CategoryDTO());
 
         // modal subcategory
         model.addAttribute("subcategoryDTO", new SubcategoryDTO());
 
-        // modal serial number
-        model.addAttribute("serialNumberDTO", new SerialNumberDTO());
+        // modal capacity
+        model.addAttribute("capacityDTO", new CapacityDTO());
 
         // modal supplier
         model.addAttribute("supplierDTO", new SupplierDTO());
@@ -180,10 +182,10 @@ public class CodeGeneratorController {
         }
     }
 
-    // Serial Number Creation
-    @PostMapping("/save-serial-number")
-    public String createSerialNumber(
-            @Valid @ModelAttribute SerialNumberDTO serialNumberDTO,
+    // Capacity Creation
+    @PostMapping("/save-capacity")
+    public String createCapacity(
+            @Valid @ModelAttribute CapacityDTO capacityDTO,
             BindingResult bindingResult,
             RedirectAttributes ra) {
 
@@ -197,18 +199,18 @@ public class CodeGeneratorController {
                     .collect(Collectors.joining(" | "));
 
             ra.addFlashAttribute("error", errorMessage.isEmpty() ? "Invalid input" : errorMessage);
-            ra.addFlashAttribute("serialNumberDTO", serialNumberDTO);
+            ra.addFlashAttribute("capacityDTO", capacityDTO);
             return "redirect:/code-generator";
         }
 
         try {
-            serialNumberService.createSerialNumber(serialNumberDTO);
-            ra.addFlashAttribute("success", "Serial number created successfully.");
+            capacityService.createCapacity(capacityDTO);
+            ra.addFlashAttribute("success", "Capacity created successfully.");
             return "redirect:/code-generator";
 
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
-            ra.addFlashAttribute("serialNumberDTO", serialNumberDTO);
+            ra.addFlashAttribute("capacityDTO", capacityDTO);
             return "redirect:/code-generator";
         }
     }

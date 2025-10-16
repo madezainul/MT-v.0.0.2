@@ -6,9 +6,6 @@ import ahqpck.maintenance.report.exception.NotFoundException;
 import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.repository.EquipmentPartBOMRepository;
 import ahqpck.maintenance.report.dto.EquipmentStatusDTO;
-import ahqpck.maintenance.report.entity.Equipment;
-import ahqpck.maintenance.report.exception.NotFoundException;
-import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.specification.EquipmentSpecification;
 import ahqpck.maintenance.report.util.FileUploadUtil;
 import ahqpck.maintenance.report.util.ImportUtil;
@@ -29,9 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,17 +42,16 @@ public class EquipmentService {
 
     private final FileUploadUtil fileUploadUtil;
     private final ImportUtil importUtil;
+    private final Validator validator;
 
     public Page<EquipmentDTO> getAllEquipments(String keyword, int page, int size, String sortBy, boolean asc) {
-        // Keep your existing logic
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<Equipment> spec = EquipmentSpecification.search(keyword);
         Page<Equipment> equipmentPage = equipmentRepository.findAll(spec, pageable);
 
-        return equipmentPage.map(this::toDTO);
-        // >>> NEW: Fetch stats only for current page IDs <<<
+        // Fetch stats only for current page IDs
         List<String> ids = equipmentPage.getContent().stream()
                 .map(Equipment::getId)
                 .filter(Objects::nonNull)
@@ -93,7 +86,15 @@ public class EquipmentService {
         });
     }
 
+    public EquipmentDTO getEquipmentById(String id) {
+        Equipment equipment = equipmentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Equipment not found with ID: " + id));
+        return toDTO(equipment);
+    }
+
     public void createEquipment(EquipmentDTO dto, MultipartFile imageFile) {
+        validateEquipmentDTO(dto);
+        
         if (equipmentRepository.existsByCodeIgnoreCase(dto.getCode())) {
             throw new IllegalArgumentException("Equipment with this code already exists.");
         }
@@ -114,6 +115,8 @@ public class EquipmentService {
     }
 
     public void updateEquipment(EquipmentDTO dto, MultipartFile imageFile, boolean deleteImage) {
+        validateEquipmentDTO(dto);
+        
         String id = dto.getId();
         Equipment equipment = equipmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Equipment not found with ID: " + id));
@@ -199,6 +202,16 @@ public class EquipmentService {
         }
 
         return new ImportUtil.ImportResult(importedCount, errorMessages);
+    }
+
+    private void validateEquipmentDTO(EquipmentDTO dto) {
+        Set<ConstraintViolation<EquipmentDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            List<String> errorMessages = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .toList();
+            throw new IllegalArgumentException("Validation errors: " + String.join(", ", errorMessages));
+        }
     }
 
     private void mapToEntity(Equipment equipment, EquipmentDTO dto) {

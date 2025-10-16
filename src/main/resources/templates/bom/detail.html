@@ -204,7 +204,7 @@
                                         <th>Category</th>
                                         <th>Supplier</th>
                                         <th>Section</th>
-                                        <th>Description</th>
+                                        <th>Specification</th>
                                         <th>Stock Qty</th>
                                         <th>Used In</th>
                                         <th>BOM Qty</th>
@@ -232,7 +232,7 @@
                                             <span class="badge badge-secondary" th:text="${bom.part.sectionCode ?: 'N/A'}">N/A</span>
                                         </td>
                                         <td>
-                                            <small class="text-muted" th:text="${bom.part.description ?: 'No description'}">No description</small>
+                                            <small class="text-muted" th:text="${bom.part.specification ?: 'No specification'}">No specification</small>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge" 

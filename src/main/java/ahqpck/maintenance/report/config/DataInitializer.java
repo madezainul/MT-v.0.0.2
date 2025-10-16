@@ -2,17 +2,6 @@ package ahqpck.maintenance.report.config;
 
 import ahqpck.maintenance.report.dto.RoleDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
-import ahqpck.maintenance.report.entity.Complaint;
-import ahqpck.maintenance.report.entity.Part;
-import ahqpck.maintenance.report.entity.Role;
-import ahqpck.maintenance.report.entity.User;
-import ahqpck.maintenance.report.entity.Complaint.Priority;
-import ahqpck.maintenance.report.entity.Complaint.Category;
-import ahqpck.maintenance.report.entity.Complaint.Status;
-import ahqpck.maintenance.report.service.ComplaintService;
-import ahqpck.maintenance.report.service.UserService;
-import jakarta.transaction.Transactional;
-import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.entity.Role;
 import ahqpck.maintenance.report.entity.User;
 import ahqpck.maintenance.report.service.UserService;
@@ -21,21 +10,14 @@ import ahqpck.maintenance.report.repository.UserRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;

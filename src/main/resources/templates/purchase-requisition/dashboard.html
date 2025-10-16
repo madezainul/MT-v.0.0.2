@@ -5,14 +5,6 @@
 <head>
     <title>Purchase Requisition Dashboard</title>
     <style>
-        .stat-card {
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
         .section-card {
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -32,44 +24,22 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            transition: all 0.3s ease;
-        }
-
-        .section-header .btn:hover {
-            background: white;
-            border-color: white;
-            color: #2196F3;
-            transform: translateY(-1px);
+            /* Hover animation removed for performance */
         }
 
         .action-item {
             border-left: 4px solid #ff6b6b;
-            transition: all 0.3s;
-        }
-
-        .action-item:hover {
-            border-left-color: #ee5a24;
-            background-color: #fff8f8;
+            /* Hover animation removed for performance */
         }
 
         .monitoring-item {
             border-left: 4px solid #4834d4;
-            transition: all 0.3s;
+            /* Hover animation removed for performance */
         }
 
-        .monitoring-item:hover {
-            border-left-color: #686de0;
-            background-color: #f8f9ff;
-        }
-
-        .po-item {
+                        .qr-item {
             border-left: 4px solid #11998e;
-            transition: all 0.3s;
-        }
-
-        .po-item:hover {
-            border-left-color: #38ef7d;
-            background-color: #f0fff4;
+            /* Hover animation removed for performance */
         }
 
         .empty-state {
@@ -84,12 +54,7 @@
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: all 0.3s;
-        }
-
-        .quick-action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            /* Hover animation removed for performance */
         }
 
         .mini-stat-card {
@@ -98,11 +63,7 @@
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
-            transition: all 0.3s;
-        }
-
-        .mini-stat-card:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            /* Hover animation removed for performance */
         }
     </style>
 </head>
@@ -144,66 +105,81 @@
             <!-- Statistics Overview -->
             <div class="row mb-4">
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card stat-card text-white"
-                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card card-stats card-primary card-round stat-card">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-8">
-                                    <h2 class="fw-bold mb-1" th:text="${totalPRs ?: 0}">0</h2>
-                                    <p class="mb-0">Total PRs</p>
+                                <div class="col-5">
+                                    <div class="icon-big text-center">
+                                        <i class="fas fa-file-alt text-white"></i>
+                                    </div>
                                 </div>
-                                <div class="col-4 d-flex align-items-center justify-content-end">
-                                    <i class="fas fa-file-alt fa-3x opacity-75"></i>
+                                <div class="col-7 col-stats">
+                                    <div class="numbers">
+                                        <p class="card-category">Total PRs</p>
+                                        <h4 class="card-title" th:text="${totalPRs ?: 0}">0</h4>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card stat-card text-white"
-                        style="background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);">
+                    <div class="card card-stats card-warning card-round stat-card">
+                        <div class="card-body">
+                            <a th:href="@{/purchase-requisition/list(actionRequired=true)}" class="d-block text-decoration-none">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <div class="icon-big text-center">
+                                            <i class="fas fa-exclamation-triangle text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-7 col-stats">
+                                        <div class="numbers">
+                                            <p class="card-category">Action Required</p>
+                                            <h4 class="card-title" th:text="${actionRequired ?: 0}">0</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card card-stats card-danger card-round stat-card">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-8">
-                                    <h2 class="fw-bold mb-1" th:text="${actionRequired ?: 0}">0</h2>
-                                    <p class="mb-0">Action Required</p>
+                                <div class="col-5">
+                                    <div class="icon-big text-center">
+                                        <i class="fas fa-clock text-white"></i>
+                                    </div>
                                 </div>
-                                <div class="col-4 d-flex align-items-center justify-content-end">
-                                    <i class="fas fa-exclamation-triangle fa-3x opacity-75"></i>
+                                <div class="col-7 col-stats">
+                                    <div class="numbers">
+                                        <p class="card-category">Pending Approval</p>
+                                        <h4 class="card-title" th:text="${pendingApproval ?: 0}">0</h4>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card stat-card text-white"
-                        style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                    <div class="card card-stats card-success card-round stat-card">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-8">
-                                    <h2 class="fw-bold mb-1" th:text="${pendingApproval ?: 0}">0</h2>
-                                    <p class="mb-0">Pending Approval</p>
+                                <div class="col-5">
+                                    <div class="icon-big text-center">
+                                        <i class="fas fa-check-circle text-white"></i>
+                                    </div>
                                 </div>
-                                <div class="col-4 d-flex align-items-center justify-content-end">
-                                    <i class="fas fa-clock fa-3x opacity-75"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card stat-card text-white"
-                        style="background: linear-gradient(135deg, #55efc4 0%, #00b894 100%);">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-8">
-                                    <h2 class="fw-bold mb-1"
-                                        th:text="${(totalPRs ?: 0) - (actionRequired ?: 0) - (pendingApproval ?: 0)}">0
-                                    </h2>
-                                    <p class="mb-0">Completed</p>
-                                </div>
-                                <div class="col-4 d-flex align-items-center justify-content-end">
-                                    <i class="fas fa-check-circle fa-3x opacity-75"></i>
+                                <div class="col-7 col-stats">
+                                    <div class="numbers">
+                                        <p class="card-category">Completed</p>
+                                        <h4 class="card-title"
+                                            th:text="${(totalPRs ?: 0) - (actionRequired ?: 0) - (pendingApproval ?: 0)}">
+                                            0
+                                        </h4>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -218,9 +194,11 @@
                         <div class="section-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-exclamation-triangle mr-2"></i>Action Required
-                                <small class="ml-2" style="font-size: 0.75rem; opacity: 0.8;">Pending Approval & Rejected</small>
+                                <small class="ml-2" style="font-size: 0.75rem; opacity: 0.8;">Pending Approval &
+                                    Rejected</small>
                             </h5>
-                            <a th:href="@{/purchase-requisition/list(actionRequired=true)}" class="btn btn-outline-light btn-sm">
+                            <a th:href="@{/purchase-requisition/list(actionRequired=true)}"
+                                class="btn btn-outline-light btn-sm">
                                 View All
                             </a>
                         </div>
@@ -231,21 +209,22 @@
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="flex-grow-1">
                                                 <h6 class="card-title mb-1">
-                                                    <a th:href="@{/purchase-requisition/{id}(id=${pr.id})}" th:text="${pr.code}"
-                                                        class="text-decoration-none"></a>
+                                                    <a th:href="@{/purchase-requisition/{id}(id=${pr.id})}"
+                                                        th:text="${pr.code}" class="text-decoration-none"></a>
                                                 </h6>
                                                 <p class="card-text small text-muted mb-2" th:text="${pr.title}"></p>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <small class="text-muted" th:text="${pr.requestorName}"></small>
                                                     <div class="d-flex align-items-center">
-                                                        <span class="badge badge-pill mr-2" 
-                                                              th:class="${pr.statusBadgeClass} + ' badge-pill mr-2'"
-                                                              th:text="${pr.statusDisplay}"></span>
-                                                        <span th:if="${pr.isApproved != null}" 
-                                                              class="badge badge-pill mr-2"
-                                                              th:class="'badge-' + (${pr.isApproved} ? 'success' : 'danger') + ' badge-pill mr-2'"
-                                                              th:text="${pr.approvalStatusDisplay}"></span>
-                                                        <small class="text-muted" th:text="${pr.totalParts + ' items'}"></small>
+                                                        <span class="badge badge-pill mr-2"
+                                                            th:class="${pr.statusBadgeClass} + ' badge-pill mr-2'"
+                                                            th:text="${pr.statusDisplay}"></span>
+                                                        <span th:if="${pr.isApproved != null}"
+                                                            class="badge badge-pill mr-2"
+                                                            th:class="'badge-' + (${pr.isApproved} ? 'success' : 'danger') + ' badge-pill mr-2'"
+                                                            th:text="${pr.approvalStatusDisplay}"></span>
+                                                        <small class="text-muted"
+                                                            th:text="${pr.totalParts + ' items'}"></small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -303,6 +282,9 @@
                             <div th:if="${monitoringPRs == null or monitoringPRs.empty}" class="empty-state">
                                 <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
                                 <p>No purchase requisitions to monitor at this time.</p>
+                                <a th:href="@{/purchase-requisition/create}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus mr-2"></i>Create PR
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -327,7 +309,8 @@
                                             <div>
                                                 <h6 class="card-title mb-1">
                                                     <a th:href="@{'/quotation-request/' + ${qr.id}}"
-                                                        th:text="${qr.quotationNumber}" class="text-decoration-none"></a>
+                                                        th:text="${qr.quotationNumber}"
+                                                        class="text-decoration-none"></a>
                                                 </h6>
                                                 <p class="card-text small text-muted mb-2" th:text="${qr.supplierName}">
                                                 </p>
@@ -342,7 +325,7 @@
                                                 </div>
                                             </div>
                                             <small class="text-muted"
-                                                th:text="${#temporals.format(qr.orderDate, 'MMM dd')}"></small>
+                                                th:text="${#temporals.format(qr.requestDate, 'MMM dd')}"></small>
                                         </div>
                                     </div>
                                 </div>

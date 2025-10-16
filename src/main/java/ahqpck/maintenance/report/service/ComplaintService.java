@@ -562,7 +562,7 @@ public class ComplaintService {
         dto.setId(part.getId());
         dto.setName(part.getName());
         dto.setCode(part.getCode());
-        dto.setDescription(part.getDescription());
+        dto.setSpecification(part.getSpecification());
         return dto;
     }
 }

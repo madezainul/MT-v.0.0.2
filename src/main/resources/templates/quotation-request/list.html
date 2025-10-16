@@ -56,7 +56,7 @@
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
                     <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary ml-auto mt-2">
-                        <i class="fa fa-plus mr-1"></i> Create New PO
+                        <i class="fa fa-plus mr-1"></i> Create New QR
                     </a>
                     <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
                         <i class="fa fa-tachometer-alt mr-1"></i> Dashboard
@@ -95,8 +95,8 @@
                                 <table class="table table-hover">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th data-sort="poNumber">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='poNumber', ascending=${!ascending})}" 
+                                            <th data-sort="quotationNumber">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='quotationNumber', ascending=${!ascending})}" 
                                                    class="text-decoration-none">
                                                     QR Number
                                                     <i class="fas fa-sort ml-1"></i>
@@ -125,10 +125,10 @@
                                             </th>
                                             <th>Parts</th>
                                             <th>Total Amount</th>
-                                            <th data-sort="orderDate">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='orderDate', ascending=${!ascending})}" 
+                                            <th data-sort="requestDate">
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='requestDate', ascending=${!ascending})}" 
                                                    class="text-decoration-none">
-                                                    Order Date
+                                                    Request Date
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
@@ -143,60 +143,60 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="po : ${pos}">
+                                        <tr th:each="qr : ${qrs}">
                                             <td>
-                                                <a th:href="@{'/quotation-request/' + ${po.id}}" 
-                                                   th:text="${po.poNumber}" class="text-decoration-none font-weight-bold text-primary"></a>
+                                                <a th:href="@{'/quotation-request/' + ${qr.id}}" 
+                                                   th:text="${qr.quotationNumber}" class="text-decoration-none font-weight-bold text-primary"></a>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-truck text-muted mr-2"></i>
-                                                    <span th:text="${po.supplierName}"></span>
+                                                    <span th:text="${qr.supplierName}"></span>
                                                 </div>
                                             </td>
-                                            <td th:text="${po.createdByName}"></td>
+                                            <td th:text="${qr.createdByName}"></td>
                                             <td>
                                                 <span class="badge status-badge" 
-                                                      th:class="${po.status.name() == 'CREATED'} ? 'badge-warning' : 
-                                                                 (${po.status.name() == 'SENT'} ? 'badge-info' : 
-                                                                 (${po.status.name() == 'CONFIRMED'} ? 'badge-primary' : 
-                                                                 (${po.status.name() == 'DELIVERED'} ? 'badge-success' : 
-                                                                 (${po.status.name() == 'COMPLETED'} ? 'badge-success' : 'badge-secondary'))))"
-                                                      th:text="${po.status.displayName}"></span>
+                                                      th:class="${qr.status.name() == 'CREATED'} ? 'badge-warning' : 
+                                                                 (${qr.status.name() == 'SENT'} ? 'badge-info' : 
+                                                                 (${qr.status.name() == 'CONFIRMED'} ? 'badge-primary' : 
+                                                                 (${qr.status.name() == 'DELIVERED'} ? 'badge-success' : 
+                                                                 (${qr.status.name() == 'COMPLETED'} ? 'badge-success' : 'badge-secondary'))))"
+                                                      th:text="${qr.status.displayName}"></span>
                                             </td>
                                             <td>
-                                                <span class="font-weight-bold" th:text="${po.totalParts ?: 0}"></span> parts
+                                                <span class="font-weight-bold" th:text="${qr.totalParts ?: 0}"></span> parts
                                                 <br>
-                                                <small class="text-muted" th:text="${po.totalQuantity ?: 0} + ' qty'"></small>
+                                                <small class="text-muted" th:text="${qr.totalQuantity ?: 0} + ' qty'"></small>
                                             </td>
                                             <td>
-                                                <div th:if="${po.totalAmount != null}">
-                                                    <span class="font-weight-bold" th:text="${po.currency + ' ' + #numbers.formatDecimal(po.totalAmount, 1, 2)}"></span>
+                                                <div th:if="${qr.totalAmount != null}">
+                                                    <span class="font-weight-bold" th:text="${qr.currency + ' ' + #numbers.formatDecimal(qr.totalAmount, 1, 2)}"></span>
                                                 </div>
-                                                <div th:unless="${po.totalAmount != null}">
+                                                <div th:unless="${qr.totalAmount != null}">
                                                     <span class="text-muted">-</span>
                                                 </div>
                                             </td>
-                                            <td th:text="${po.orderDate != null ? #temporals.format(po.orderDate, 'MMM dd, yyyy') : '-'}"></td>
-                                            <td th:text="${#temporals.format(po.createdAt, 'MMM dd, yyyy')}"></td>
+                                            <td th:text="${qr.requestDate != null ? #temporals.format(qr.requestDate, 'MMM dd, yyyy') : '-'}"></td>
+                                            <td th:text="${#temporals.format(qr.createdAt, 'MMM dd, yyyy')}"></td>
                                             <td>
                                                 <div class="form-button-action">
-                                                    <a th:href="@{'/quotation-request/' + ${po.id}}" 
+                                                    <a th:href="@{'/quotation-request/' + ${qr.id}}" 
                                                        class="btn btn-link btn-primary btn-lg" 
                                                        data-original-title="View Details">
                                                         <i class="fa fa-eye"></i>
                                                     </a>
-                                                    <a th:if="${po.status.name() == 'CREATED'}"
-                                                       th:href="@{'/quotation-request/' + ${po.id} + '/edit'}" 
+                                                    <a th:if="${qr.status.name() == 'CREATED'}"
+                                                       th:href="@{'/quotation-request/' + ${qr.id} + '/edit'}" 
                                                        class="btn btn-link btn-info btn-lg" 
                                                        data-original-title="Edit">
                                                         <i class="fa fa-edit"></i>
                                                     </a>
-                                                    <button th:if="${po.status.name() == 'CREATED'}"
+                                                    <button th:if="${qr.status.name() == 'CREATED'}"
                                                             type="button" 
                                                             class="btn btn-link btn-danger btn-lg" 
                                                             data-toggle="modal" 
-                                                            th:data-target="'#deleteModal' + ${po.id}"
+                                                            th:data-target="'#deleteModal' + ${qr.id}"
                                                             data-original-title="Delete">
                                                         <i class="fa fa-times"></i>
                                                     </button>
@@ -247,7 +247,7 @@
                             </div>
 
                             <!-- No Results -->
-                            <div th:if="${pos == null or pos.empty}" class="text-center text-muted py-5">
+                            <div th:if="${qrs == null or qrs.empty}" class="text-center text-muted py-5">
                                 <i class="fas fa-file-invoice fa-3x mb-3"></i>
                                 <h5>No Quotations Found</h5>
                                 <p th:if="${searchTerm}">
@@ -326,7 +326,7 @@
         </div>
 
         <!-- Delete Confirmation Modals -->
-        <div th:each="po : ${pos}" class="modal fade" th:id="'deleteModal' + ${po.id}" tabindex="-1" role="dialog">
+        <div th:each="qr : ${qrs}" class="modal fade" th:id="'deleteModal' + ${qr.id}" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -336,11 +336,11 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to delete Quotation Request <strong th:text="${po.poNumber}"></strong>?</p>
+                        <p>Are you sure you want to delete Quotation Request <strong th:text="${qr.quotationNumber}"></strong>?</p>
                         <p class="text-danger"><strong>This action cannot be undone.</strong></p>
                     </div>
                     <div class="modal-footer">
-                        <form th:action="@{'/quotation-request/' + ${po.id} + '/delete'}" method="post">
+                        <form th:action="@{'/quotation-request/' + ${qr.id} + '/delete'}" method="post">
                             <button type="submit" class="btn btn-danger">Delete</button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </form>

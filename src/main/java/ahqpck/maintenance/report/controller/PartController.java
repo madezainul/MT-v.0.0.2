@@ -1,20 +1,14 @@
 package ahqpck.maintenance.report.controller;
 
-import ahqpck.maintenance.report.dto.CategoryDTO;
 import ahqpck.maintenance.report.dto.DTOMapper;
 import ahqpck.maintenance.report.dto.PartDTO;
-import ahqpck.maintenance.report.dto.SerialNumberDTO;
-import ahqpck.maintenance.report.dto.SubcategoryDTO;
-import ahqpck.maintenance.report.dto.SupplierDTO;
+import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.service.CategoryService;
 import ahqpck.maintenance.report.service.PartService;
 import ahqpck.maintenance.report.service.SectionService;
 import ahqpck.maintenance.report.service.SupplierService;
-import ahqpck.maintenance.report.config.UserDetailsImpl;
-import ahqpck.maintenance.report.dto.PartDTO;
-import ahqpck.maintenance.report.dto.UserDTO;
-import ahqpck.maintenance.report.service.PartService;
 import ahqpck.maintenance.report.service.UserService;
+import ahqpck.maintenance.report.config.UserDetailsImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +43,6 @@ public class PartController {
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "true") boolean asc,
-            Model model) {
-
-        try {
             Authentication authentication,
             Model model) {
 

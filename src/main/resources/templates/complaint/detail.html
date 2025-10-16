@@ -391,7 +391,7 @@
                                                     <td><code class="bg-light px-2 py-1 rounded"
                                                             th:text="${partDto.part.code ?: '-'}"></code></td>
                                                     <td th:text="${partDto.part.name ?: '-'}"></td>
-                                                    <td th:text="${partDto.part.category ?: '-'}"></td>
+                                                    <td th:text="${partDto.part.categoryName ?: '-'}"></td>
                                                     <td class="text-center font-weight-bold" contenteditable="true"
                                                         th:data-original="${partDto.quantity ?: 0}"
                                                         th:text="${partDto.quantity ?: 0}"></td>
@@ -653,7 +653,7 @@
 
                         addField(`partsUsed[${index}].part.code`, code);
                         addField(`partsUsed[${index}].part.name`, name);
-                        addField(`partsUsed[${index}].part.category`, category);
+                        addField(`partsUsed[${index}].part.categoryName`, category);
                         addField(`partsUsed[${index}].part.id`, id);
                         addField(`partsUsed[${index}].quantity`, qty);
                     });

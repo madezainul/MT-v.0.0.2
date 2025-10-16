@@ -1,7 +1,5 @@
 package ahqpck.maintenance.report.dto;
 
-import java.time.LocalDate;
-
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

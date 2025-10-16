@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import ahqpck.maintenance.report.entity.User;
 import ahqpck.maintenance.report.entity.Role;
 import ahqpck.maintenance.report.repository.UserRepository;
-import jakarta.transaction.Transactional;
 
 import java.util.Collection;
 import java.util.Set;

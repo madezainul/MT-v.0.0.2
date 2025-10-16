@@ -12,7 +12,6 @@ import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.dto.ComplaintDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.entity.Complaint;
-import ahqpck.maintenance.report.entity.User;
 import ahqpck.maintenance.report.service.ComplaintService;
 import ahqpck.maintenance.report.service.UserService;
 import lombok.RequiredArgsConstructor;

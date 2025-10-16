@@ -91,7 +91,7 @@
                     tr.innerHTML = `
                     <td><code class="bg-light px-2 py-1 rounded">${part.code}</code></td>
                     <td>${part.name}</td>
-                    <td>${part.category}</td>
+                    <td>${part.categoryName}</td>
                     <td class="text-center font-weight-bold"
                         contenteditable="true"
                         data-original="1"
@@ -141,7 +141,7 @@
                     // Add all fields
                     addField(`partsUsed[${index}].part.code`, code);
                     addField(`partsUsed[${index}].part.name`, name);
-                    addField(`partsUsed[${index}].part.category`, category);
+                    addField(`partsUsed[${index}].part.categoryName`, category);
                     addField(`partsUsed[${index}].part.id`, id); // 👈 ADD THIS LINE
                     addField(`partsUsed[${index}].quantity`, qty);
                 });
@@ -199,14 +199,14 @@
                     tr.innerHTML = `
                   <td><code>${part.code}</code></td>
                   <td>${part.name}</td>
-                  <td><span class="badge badge-secondary">${part.category}</span></td>
+                  <td><span class="badge badge-secondary">${part.categoryName}</span></td>
                   <td class="text-center">${part.stockQuantity}</td>
                   <td class="text-center">
                       <a href="javascript:void(0)" class="btn btn-primary btn-sm add-from-modal"
                          data-id="${part.id}"
                          data-code="${part.code}"
                          data-name="${part.name}"
-                         data-category="${part.category}">
+                         data-category="${part.categoryName}">
                          Add
                       </a>
                   </td>

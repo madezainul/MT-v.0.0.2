@@ -126,10 +126,12 @@
                                         <tr>
                                             <th>Code</th>
                                             <th>Name</th>
+                                            <th>Model</th>
+                                            <th>Manufacturer</th>
                                             <th>Category</th>
                                             <th>Supplier</th>
                                             <th>Quantity</th>
-                                            <th>Description</th>
+                                            <th>Specification</th>
                                             <th>Image</th>
                                             <th>Action</th>
                                         </tr>
@@ -140,14 +142,16 @@
                                             th:if="${parts.totalElements > 0}">
                                             <td data-field="code" th:text="${part.code}"></td>
                                             <td data-field="name" th:text="${part.name}"></td>
-                                            <td data-field="category" th:text="${part.category}"></td>
-                                            <td data-field="supplier" th:text="${part.supplier}">
+                                            <td data-field="model" th:text="${part.model}"></td>
+                                            <td data-field="manufacturer" th:text="${part.manufacturer}"></td>
+                                            <td data-field="category" th:text="${part.categoryName}"></td>
+                                            <td data-field="supplier" th:text="${part.supplierName}">
                                             </td>
                                             <td data-field="stockQuantity" class="text-center"
                                                 th:text="${part.stockQuantity}">
                                             </td>
-                                            <td data-field="description" class="text-center"
-                                                th:text="${part.description}">
+                                            <td data-field="specification" class="text-center"
+                                                th:text="${part.specification}">
                                             </td>
                                             <td data-field="image">
                                                 <div class="avatar-lg my-2" th:if="${part.image}">
@@ -280,7 +284,7 @@
                     $('#editCategory').val(row.find('[data-field="category"]').text().trim());
                     $('#editSupplier').val(row.find('[data-field="supplier"]').text().trim());
                     $('#editStockQuantity').val(row.find('[data-field="stockQuantity"]').text().trim());
-                    $('#editDescription').val(row.find('[data-field="description"]').text().trim());
+                    $('#editSpecification').val(row.find('[data-field="specification"]').text().trim());
 
                     // Set image preview if exists
                     const imgSrc = row.find('[data-field="image"] img').attr('src');

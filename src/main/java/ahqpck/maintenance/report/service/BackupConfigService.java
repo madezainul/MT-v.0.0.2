@@ -512,9 +512,11 @@ public class BackupConfigService {
             part.setId(dto.getId());
             part.setCode(dto.getCode());
             part.setName(dto.getName());
-            part.setDescription(dto.getDescription());
-            part.setCategory(dto.getCategory());
-            part.setSupplier(dto.getSupplier());
+            part.setSpecification(dto.getSpecification());
+            part.setModel(dto.getModel());
+            part.setCategoryName(dto.getCategoryName());
+            part.setSupplierName(dto.getSupplierName());
+            part.setSectionCode(dto.getSectionCode());
             part.setImage(dto.getImage());
             part.setStockQuantity(dto.getStockQuantity());
         } else {
@@ -525,9 +527,11 @@ public class BackupConfigService {
         map.put("ID", part.getId());
         map.put("Code", part.getCode());
         map.put("Name", part.getName());
-        map.put("Description", part.getDescription());
-        map.put("Category", part.getCategory());
-        map.put("Supplier", part.getSupplier());
+        map.put("Specification", part.getSpecification());
+        map.put("Model", part.getModel());
+        map.put("Category", part.getCategoryName());
+        map.put("Supplier", part.getSupplierName());
+        map.put("Section Code", part.getSectionCode());
         map.put("Image", part.getImage());
         map.put("Stock Quantity", part.getStockQuantity());
 

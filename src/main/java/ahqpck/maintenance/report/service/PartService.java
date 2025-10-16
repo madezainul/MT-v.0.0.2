@@ -7,8 +7,6 @@ import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.repository.EquipmentPartBOMRepository;
 import ahqpck.maintenance.report.specification.PartSpecification;
 import ahqpck.maintenance.report.util.FileUploadUtil;
-import ahqpck.maintenance.report.specification.PartSpecification;
-import ahqpck.maintenance.report.util.FileUploadUtil;
 import ahqpck.maintenance.report.util.ImportUtil;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +34,6 @@ public class PartService {
 
     private final FileUploadUtil fileUploadUtil;
     private final Validator validator;
-
-    private final FileUploadUtil fileUploadUtil;
     private final ImportUtil importUtil;
 
     public Page<PartDTO> getAllParts(String keyword, int page, int size, String sortBy, boolean asc) {
@@ -63,15 +59,7 @@ public class PartService {
         }
 
         Part part = new Part();
-        part.setCode(dto.getCode().trim());
-        part.setName(dto.getName().trim());
-        part.setDescription(dto.getDescription());
-        part.setCategoryName(dto.getCategoryName());
-        part.setSupplierName(dto.getSupplierName());
-        part.setSectionCode(dto.getSectionCode());
-        part.setCategory(dto.getCategory());
-        part.setSupplier(dto.getSupplier());
-        part.setStockQuantity(dto.getStockQuantity() != null ? dto.getStockQuantity() : 0);
+        mapToEntity(part, dto);
 
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
@@ -126,12 +114,11 @@ public class PartService {
     private void mapToEntity(Part part, PartDTO dto) {
         part.setCode(dto.getCode().trim());
         part.setName(dto.getName().trim());
-        part.setDescription(dto.getDescription());
+        part.setModel(dto.getModel() != null ? dto.getModel().trim() : null);
+        part.setSpecification(dto.getSpecification());
         part.setCategoryName(dto.getCategoryName());
         part.setSupplierName(dto.getSupplierName());
         part.setSectionCode(dto.getSectionCode());
-        part.setCategory(dto.getCategory());
-        part.setSupplier(dto.getSupplier());
         part.setStockQuantity(dto.getStockQuantity() != null ? dto.getStockQuantity() : 0);
     }
 
@@ -140,7 +127,8 @@ public class PartService {
         dto.setId(part.getId());
         dto.setCode(part.getCode());
         dto.setName(part.getName());
-        dto.setDescription(part.getDescription());
+        dto.setModel(part.getModel());
+        dto.setSpecification(part.getSpecification());
         dto.setCategoryName(part.getCategoryName());
         dto.setSupplierName(part.getSupplierName());
         dto.setSectionCode(part.getSectionCode());
@@ -151,10 +139,6 @@ public class PartService {
         long equipmentCount = equipmentPartBOMRepository.countEquipmentByPartId(part.getId());
         dto.setEquipmentCount((int) equipmentCount);
         
-        dto.setCategory(part.getCategory());
-        dto.setSupplier(part.getSupplier());
-        dto.setImage(part.getImage());
-        dto.setStockQuantity(part.getStockQuantity());
         return dto;
     }
 }

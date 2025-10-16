@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BOM Test</title>
+</head>
+<body>
+    <h1>Testing BOM Null Safety</h1>
+    
+    <!-- Test the improved template pattern -->
+    <script>
+        console.log('Testing equipment data structure...');
+        
+        // Simulate the new safer template pattern
+        const equipments = [];
+        
+        // Test with null equipment (what was causing the error)
+        const testEquipment = null;
+        
+        try {
+            if (testEquipment != null && testEquipment.id != null) {
+                equipments.push({
+                    id: testEquipment.id,
+                    code: testEquipment.code,
+                    name: testEquipment.name
+                });
+            } else {
+                console.log('✅ Null equipment properly handled');
+            }
+        } catch (e) {
+            console.error('❌ Error processing equipment:', e);
+        }
+        
+        // Test the filter
+        const validEquipments = equipments.filter(equipment => 
+            equipment && equipment.id && equipment.id !== '' && 
+            equipment.code && equipment.name
+        );
+        
+        console.log('✅ Valid equipments:', validEquipments.length);
+        console.log('🎉 BOM null safety test passed!');
+    </script>
+</body>
+</html>

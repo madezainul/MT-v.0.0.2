@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -75,6 +76,14 @@ public class PurchaseRequisition {
     @Column(name = "review_notes", columnDefinition = "TEXT")
     private String reviewNotes;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = true)
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = true)
+    private User updatedBy;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -97,6 +106,11 @@ public class PurchaseRequisition {
         if (this.updatedAt == null) {
             this.updatedAt = LocalDateTime.now();
         }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Helper methods

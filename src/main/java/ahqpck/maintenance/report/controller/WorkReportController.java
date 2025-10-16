@@ -5,7 +5,6 @@ import ahqpck.maintenance.report.dto.AreaDTO;
 import ahqpck.maintenance.report.dto.EquipmentDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.dto.WorkReportDTO;
-import ahqpck.maintenance.report.entity.Complaint;
 import ahqpck.maintenance.report.entity.WorkReport;
 import ahqpck.maintenance.report.service.AreaService;
 import ahqpck.maintenance.report.service.EquipmentService;

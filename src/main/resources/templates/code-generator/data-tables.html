@@ -51,7 +51,7 @@
                                     <a class="nav-link" id="pills-subcategories-tab" data-toggle="pill" href="#pills-subcategories" role="tab" aria-controls="pills-subcategories" aria-selected="false">Subcategories</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="pills-serialNumbers-tab" data-toggle="pill" href="#pills-serialNumbers" role="tab" aria-controls="pills-serialNumbers" aria-selected="false">Capacity/Part Number</a>
+                                    <a class="nav-link" id="pills-capacities-tab" data-toggle="pill" href="#pills-capacities" role="tab" aria-controls="pills-capacities" aria-selected="false">Capacity/Part Number</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="pills-suppliers-tab" data-toggle="pill" href="#pills-suppliers" role="tab" aria-controls="pills-suppliers" aria-selected="false">Suppliers/SN</a>
@@ -184,10 +184,10 @@
                                     </div>
                                 </div>
 
-                                <!-- Serial Numbers Tab -->
-                                <div class="tab-pane fade" id="pills-serialNumbers" role="tabpanel" aria-labelledby="pills-serialNumbers-tab">
+                                <!-- Capacities Tab -->
+                                <div class="tab-pane fade" id="pills-capacities" role="tabpanel" aria-labelledby="pills-capacities-tab">
                                     <div class="table-responsive">
-                                        <table id="serialNumbers-table" class="display table table-striped table-hover">
+                                        <table id="capacities-table" class="display table table-striped table-hover">
                                             <thead class="bg-primary text-white">
                                                 <tr>
                                                     <th data-sort="code" style="cursor: pointer;">
@@ -200,25 +200,25 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr th:each="serialNumber,iter : ${serialNumbers}">
-                                                    <td data-field="code" th:text="${serialNumber.code}"></td>
-                                                    <td data-field="name" th:text="${serialNumber.name}"></td>
+                                                <tr th:each="capacity,iter : ${capacities}">
+                                                    <td data-field="code" th:text="${capacity.code}"></td>
+                                                    <td data-field="name" th:text="${capacity.name}"></td>
                                                     <td>
                                                         <div class="form-button-action">
                                                             <button type="button"
                                                                 class="btn btn-link btn-primary btn-lg edit-row"
-                                                                th:data-id="${serialNumber.id}" data-type="serialNumber">
+                                                                th:data-id="${capacity.id}" data-type="capacity">
                                                                 <i class="fa fa-edit"></i>
                                                             </button>
                                                             <button type="button" class="btn btn-link btn-danger delete-row"
-                                                                th:data-id="${serialNumber.id}" th:data-name="${serialNumber.name}" data-type="serialNumber">
+                                                                th:data-id="${capacity.id}" th:data-name="${capacity.name}" data-type="capacity">
                                                                 <i class="fa fa-times"></i>
                                                             </button>
                                                         </div>
                                                     </td>
                                                 </tr>
-                                                <tr th:if="${#lists.isEmpty(serialNumbers)}">
-                                                    <td colspan="3" class="text-center text-muted">No capacity/part numbers available</td>
+                                                <tr th:if="${#lists.isEmpty(capacities)}">
+                                                    <td colspan="3" class="text-center text-muted">No capacities available</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -323,7 +323,7 @@
                     'machineTypes-table',
                     'categories-table',
                     'subcategories-table', 
-                    'serialNumbers-table',
+                    'capacities-table',
                     'suppliers-table',
                     'sections-table'
                 ];

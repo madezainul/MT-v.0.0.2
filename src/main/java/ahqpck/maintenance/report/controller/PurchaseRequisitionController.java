@@ -1,21 +1,23 @@
 package ahqpck.maintenance.report.controller;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
 import ahqpck.maintenance.report.entity.PurchaseRequisition.PRStatus;
@@ -25,6 +27,7 @@ import ahqpck.maintenance.report.service.PartService;
 import ahqpck.maintenance.report.service.QuotationRequestService;
 import ahqpck.maintenance.report.service.PurchaseRequisitionService;
 import ahqpck.maintenance.report.service.UserService;
+import ahqpck.maintenance.report.util.WebUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -40,47 +43,57 @@ public class PurchaseRequisitionController {
     private final QuotationRequestService qrService;
 
     // Smart Dashboard - Entry point
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'USER')")
     @GetMapping
-    public String showDashboard(Model model) {
-        model.addAttribute("title", "Purchase Requisition Dashboard");
+    public String showDashboard(Authentication authentication, Model model) {
+        try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
 
-        // Statistics for dashboard cards
-        model.addAttribute("totalPRs", prService.getTotalPRsCount());
-        model.addAttribute("pendingApproval", prService.getPendingApprovalCount());
-        model.addAttribute("actionRequired", prService.getActionRequiredCount());
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
 
-        // Action Required Section (submitted PRs needing approval + rejected PRs)
-        Page<PurchaseRequisitionDTO> actionRequiredPRs = prService.getActionRequired(0, 5);
-        model.addAttribute("actionRequiredPRs", actionRequiredPRs.getContent());
+            model.addAttribute("title", "Purchase Requisition Dashboard");
 
-        // Monitoring Section (approved PRs)
-        Page<PurchaseRequisitionDTO> approvedPRs = prService.getPurchaseRequisitionsByStatus(PRStatus.APPROVED, 0, 5);
-        model.addAttribute("monitoringPRs", approvedPRs.getContent());
+            // Statistics for dashboard cards
+            model.addAttribute("totalPRs", prService.getTotalPRsCount());
+            model.addAttribute("pendingApproval", prService.getPendingApprovalCount());
+            model.addAttribute("actionRequired", prService.getActionRequiredCount());
 
-        // PO Monitoring Section (replace recent activity)
-        // try {
-        //     // Get recent POs from PO service
-        //     var recentPOs = poService.getRecentPOs(10);
-        //     model.addAttribute("recentPOs", recentPOs);
-            
-        //     // PO statistics
-        //     model.addAttribute("totalPOs", poService.getTotalPOsCount());
-        //     model.addAttribute("pendingPOs", poService.getPendingPOsCount());
-        //     model.addAttribute("inProgressPOs", poService.getInProgressPOsCount());
-        //     model.addAttribute("completedPOs", poService.getCompletedPOsCount());
-        // } catch (Exception e) {
-        //     // Fallback in case PO service is not available
-        //     model.addAttribute("recentPOs", java.util.Collections.emptyList());
-        //     model.addAttribute("totalPOs", 0);
-        //     model.addAttribute("pendingPOs", 0);
-        //     model.addAttribute("inProgressPOs", 0);
-        //     model.addAttribute("completedPOs", 0);
-        // }
+            // Action Required Section (submitted PRs needing approval + rejected PRs)
+            Page<PurchaseRequisitionDTO> actionRequiredPRs = prService.getActionRequired(0, 5);
+            model.addAttribute("actionRequiredPRs", actionRequiredPRs.getContent());
 
-        return "purchase-requisition/dashboard";
+            // Monitoring Section (approved PRs)
+            Page<PurchaseRequisitionDTO> approvedPRs = prService.getPurchaseRequisitionsByStatus(PRStatus.APPROVED, 0, 5);
+            model.addAttribute("monitoringPRs", approvedPRs.getContent());
+
+            // Quotation Request Monitoring Section
+            try {
+                // Get recent QRs for monitoring
+                var recentQRs = qrService.getAllQuotationRequests(null, 0, 5, "createdAt", false);
+                model.addAttribute("recentQRs", recentQRs.getContent());
+            } catch (Exception e) {
+                // Fallback in case QR service is not available
+                model.addAttribute("recentQRs", java.util.Collections.emptyList());
+            }
+
+            return "purchase-requisition/dashboard";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load dashboard: " + e.getMessage());
+            return "error/500";
+        }
     }
 
     // List all PRs with search and pagination
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'USER')")
     @GetMapping("/list")
     public String listPurchaseRequisitions(
             @RequestParam(value = "search", required = false) String searchTerm,
@@ -89,9 +102,21 @@ public class PurchaseRequisitionController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
             @RequestParam(value = "ascending", defaultValue = "false") boolean ascending,
+            Authentication authentication,
             Model model) {
 
         try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
             Page<PurchaseRequisitionDTO> prPage;
             
             if (actionRequired) {
@@ -122,9 +147,22 @@ public class PurchaseRequisitionController {
     }
 
     // Show PR details
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'USER')")
     @GetMapping("/{id}")
-    public String showPurchaseRequisition(@PathVariable String id, Model model) {
+    public String showPurchaseRequisition(@PathVariable String id, Authentication authentication, Model model) {
         try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
             PurchaseRequisitionDTO pr = prService.getPurchaseRequisitionById(id);
             model.addAttribute("title", "Purchase Requisition Details - " + pr.getCode());
             model.addAttribute("pr", pr);
@@ -154,54 +192,85 @@ public class PurchaseRequisitionController {
     }
 
     // Create new PR - show form
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'ENGINEER')")
     @GetMapping("/create")
-    public String showCreateForm(Model model) {
-        model.addAttribute("title", "Create Purchase Requisition");
-        model.addAttribute("prDTO", new PurchaseRequisitionDTO());
-        
-        // Load dropdown data
-        loadFormData(model);
-        
-        return "purchase-requisition/create";
+    public String showCreateForm(Authentication authentication, Model model) {
+        try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
+            model.addAttribute("title", "Create Purchase Requisition");
+            model.addAttribute("prDTO", new PurchaseRequisitionDTO());
+            
+            // Load dropdown data
+            loadFormData(model);
+            
+            return "purchase-requisition/create";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load create form: " + e.getMessage());
+            return "error/500";
+        }
     }
 
     // Create new PR - handle form submission
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'ENGINEER')")
     @PostMapping("/create")
     public String createPurchaseRequisition(
             @Valid @ModelAttribute("prDTO") PurchaseRequisitionDTO prDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "attachmentFile", required = false) MultipartFile attachmentFile,
+            @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+            Authentication authentication,
             RedirectAttributes ra,
             Model model) {
 
-        if (bindingResult.hasErrors()) {
-            String errorMessage = bindingResult.getAllErrors().stream()
-                    .map(error -> {
-                        String field = (error instanceof FieldError) ? ((FieldError) error).getField() : "Input";
-                        String message = error.getDefaultMessage();
-                        return field + ": " + message;
-                    })
-                    .collect(Collectors.joining(" | "));
-
-            model.addAttribute("error", errorMessage.isEmpty() ? "Invalid input" : errorMessage);
+        if (WebUtil.hasErrors(bindingResult)) {
+            ra.addFlashAttribute("error", WebUtil.getErrorMessage(bindingResult));
             model.addAttribute("title", "Create Purchase Requisition");
             loadFormData(model);
             return "purchase-requisition/create";
+        }
+
+        String currentUserId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            currentUserId = userDetails.getId();
         }
 
         try {
-            PurchaseRequisitionDTO createdPR = prService.createPurchaseRequisition(prDTO);
-            ra.addFlashAttribute("success", "Purchase Requisition created successfully: " + createdPR.getCode());
-            return "redirect:/purchase-requisition/list";
+            if (currentUserId != null) {
+                PurchaseRequisitionDTO createdPR = prService.createPurchaseRequisition(prDTO, currentUserId);
+                ra.addFlashAttribute("success", "Purchase Requisition created successfully: " + createdPR.getCode());
+            } else {
+                ra.addFlashAttribute("error", "Unable to identify current user");
+                model.addAttribute("title", "Create Purchase Requisition");
+                loadFormData(model);
+                return "purchase-requisition/create";
+            }
 
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to create purchase requisition: " + e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("prDTO", prDTO);
             model.addAttribute("title", "Create Purchase Requisition");
             loadFormData(model);
             return "purchase-requisition/create";
         }
+        
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/purchase-requisition/list");
     }
 
     // Edit PR - show form
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable String id, Model model) {
         try {
@@ -226,42 +295,54 @@ public class PurchaseRequisitionController {
     }
 
     // Edit PR - handle form submission
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/{id}/edit")
     public String updatePurchaseRequisition(
             @PathVariable String id,
             @Valid @ModelAttribute("prDTO") PurchaseRequisitionDTO prDTO,
             BindingResult bindingResult,
+            @RequestParam(value = "attachmentFile", required = false) MultipartFile attachmentFile,
+            @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+            Authentication authentication,
             RedirectAttributes ra,
             Model model) {
 
-        if (bindingResult.hasErrors()) {
-            String errorMessage = bindingResult.getAllErrors().stream()
-                    .map(error -> {
-                        String field = (error instanceof FieldError) ? ((FieldError) error).getField() : "Input";
-                        String message = error.getDefaultMessage();
-                        return field + ": " + message;
-                    })
-                    .collect(Collectors.joining(" | "));
-
-            model.addAttribute("error", errorMessage.isEmpty() ? "Invalid input" : errorMessage);
+        if (WebUtil.hasErrors(bindingResult)) {
+            ra.addFlashAttribute("error", WebUtil.getErrorMessage(bindingResult));
             model.addAttribute("title", "Edit Purchase Requisition");
             model.addAttribute("pr", prDTO);  // Add pr object for template
             loadFormData(model);
             return "purchase-requisition/edit";
+        }
+
+        String currentUserId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            currentUserId = userDetails.getId();
         }
 
         try {
-            PurchaseRequisitionDTO updatedPR = prService.updatePurchaseRequisition(id, prDTO);
-            ra.addFlashAttribute("success", "Purchase Requisition updated successfully");
-            return "redirect:/purchase-requisition/" + updatedPR.getId();
+            if (currentUserId != null) {
+                prService.updatePurchaseRequisition(id, prDTO);
+                ra.addFlashAttribute("success", "Purchase Requisition updated successfully");
+            } else {
+                ra.addFlashAttribute("error", "Unable to identify current user");
+                model.addAttribute("title", "Edit Purchase Requisition");
+                model.addAttribute("pr", prDTO);
+                loadFormData(model);
+                return "purchase-requisition/edit";
+            }
 
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to update purchase requisition: " + e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("prDTO", prDTO);
             model.addAttribute("title", "Edit Purchase Requisition");
-            model.addAttribute("pr", prDTO);  // Add pr object for template
+            model.addAttribute("pr", prDTO);
             loadFormData(model);
             return "purchase-requisition/edit";
         }
+        
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/purchase-requisition/" + id);
     }
 
     // Approve PR

@@ -5,6 +5,27 @@
 
 <head>
     <title th:text="${title}">Bill of Materials</title>
+    <style>
+        /* Live search dropdown styling */
+        #equipmentDropdown .dropdown-item:hover,
+        #equipmentDropdown .dropdown-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        #equipmentDropdown .dropdown-item {
+            transition: background-color 0.2s ease;
+        }
+        
+        #equipmentInput:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .form-group {
+            position: relative;
+        }
+    </style>
 </head>
 
 <body>
@@ -27,6 +48,15 @@
             </ul>
         </div>
         
+        <!-- Error Message Display -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
@@ -45,15 +75,15 @@
                                     <div class="card-body">
                                         <p>Manage parts assigned to each equipment. Select an equipment below to view and manage its Bill of Materials.</p>
                                         
-                                        <!-- Equipment Selection Dropdown -->
+                                        <!-- Equipment Live Search -->
                                         <div class="form-group">
-                                            <label for="equipmentSelect">Select Equipment:</label>
-                                            <select class="form-control" id="equipmentSelect" onchange="goToEquipmentBOM()">
-                                                <option value="">-- Select Equipment --</option>
-                                                <option th:each="equipment : ${equipments}"
-                                                        th:value="${equipment.id}"
-                                                        th:text="${equipment.code + ' - ' + equipment.name}"></option>
-                                            </select>
+                                            <label for="equipmentInput">Select Equipment:</label>
+                                            <input type="text" class="form-control" id="equipmentInput"
+                                                   placeholder="Search equipment by name or code..." autocomplete="off" />
+                                            <div id="equipmentDropdown" class="dropdown-menu w-100"
+                                                 style="position: absolute; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                            </div>
+                                            <input type="hidden" id="selectedEquipmentId" />
                                         </div>
                                     </div>
                                 </div>
@@ -94,7 +124,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Total Equipment</p>
-                                                                    <h4 class="card-title" th:text="${totalEquipments}">0</h4>
+                                                                    <h4 class="card-title" th:text="${totalEquipments ?: '0'}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -113,7 +143,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Total Parts</p>
-                                                                    <h4 class="card-title" th:text="${totalParts}">0</h4>
+                                                                    <h4 class="card-title" th:text="${totalParts ?: '0'}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -132,7 +162,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">BOM Entries</p>
-                                                                    <h4 class="card-title" th:text="${totalBOMEntries}">0</h4>
+                                                                    <h4 class="card-title" th:text="${totalBOMEntries ?: '0'}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -151,7 +181,7 @@
                                                             <div class="col col-stats ml-3 ml-sm-0">
                                                                 <div class="numbers">
                                                                     <p class="card-category">Critical Parts</p>
-                                                                    <h4 class="card-title" th:text="${criticalParts}">0</h4>
+                                                                    <h4 class="card-title" th:text="${criticalParts ?: '0'}">0</h4>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -172,14 +202,158 @@
 </body>
 
 <div layout:fragment="scripts">
-<script>
+<script th:inline="javascript">
+// Equipment data for live search
+/*<![CDATA[*/
+const equipments = [];
+/*[# th:if="${equipments != null and not #lists.isEmpty(equipments)}" th:each="equipment : ${equipments}"]*/
+/*[# th:if="${equipment != null and equipment.id != null and equipment.code != null and equipment.name != null}"]*/
+try {
+    equipments.push({
+        id: /*[[${equipment.id}]]*/ '',
+        code: /*[[${equipment.code}]]*/ '',
+        name: /*[[${equipment.name}]]*/ '',
+        display: /*[[${equipment.code + ' - ' + equipment.name}]]*/ ''
+    });
+} catch (e) {
+    console.warn('Error processing equipment:', e);
+}
+/*[/]*/
+/*[/]*/
+
+// Filter out any invalid entries
+const validEquipments = equipments.filter(equipment => 
+    equipment && equipment.id && equipment.id !== '' && 
+    equipment.code && equipment.name
+);
+
+console.log('Loaded equipments:', validEquipments.length);
+/*]]>*/
+
+// Live search functionality for equipment
+function setupEquipmentLiveSearch() {
+    const input = document.getElementById('equipmentInput');
+    const dropdown = document.getElementById('equipmentDropdown');
+    const hiddenInput = document.getElementById('selectedEquipmentId');
+
+    if (!input || !dropdown || !hiddenInput) {
+        console.warn('Missing elements for equipment live search');
+        return;
+    }
+
+    // Filter and show dropdown on input
+    input.addEventListener('input', function () {
+        const term = this.value.toLowerCase().trim();
+        dropdown.innerHTML = '';
+
+        if (term === '') {
+            dropdown.style.display = 'none';
+            hiddenInput.value = '';
+            return;
+        }
+
+        const filtered = validEquipments.filter(equipment =>
+            equipment.display.toLowerCase().includes(term) ||
+            equipment.code.toLowerCase().includes(term) ||
+            equipment.name.toLowerCase().includes(term)
+        );
+
+        if (filtered.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        filtered.forEach(equipment => {
+            const div = document.createElement('div');
+            div.className = 'dropdown-item';
+            div.style.cursor = 'pointer';
+            div.style.whiteSpace = 'normal';
+            div.style.padding = '8px 12px';
+
+            // Highlight matched text
+            const regex = new RegExp(`(${term})`, 'gi');
+            const highlighted = equipment.display.replace(regex, '<strong>$1</strong>');
+            div.innerHTML = highlighted;
+
+            div.addEventListener('click', () => {
+                input.value = equipment.display;
+                hiddenInput.value = equipment.id;
+                dropdown.style.display = 'none';
+                
+                // Automatically navigate to equipment BOM
+                if (equipment.id) {
+                    window.location.href = '/bom/' + equipment.id;
+                }
+            });
+
+            dropdown.appendChild(div);
+        });
+
+        // Position dropdown
+        const inputRect = input.getBoundingClientRect();
+        const parentRect = input.offsetParent ? input.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+        dropdown.style.display = 'block';
+        dropdown.style.width = input.offsetWidth + 'px';
+        dropdown.style.left = (inputRect.left - parentRect.left) + 'px';
+        dropdown.style.top = (inputRect.top - parentRect.top + input.offsetHeight) + 'px';
+    });
+
+    // Handle keyboard navigation
+    input.addEventListener('keydown', function (e) {
+        const items = dropdown.querySelectorAll('.dropdown-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+            current = (current + 1) % items.length;
+            items.forEach(item => item.classList.remove('active'));
+            items[current].classList.add('active');
+            items[current].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+            current = current <= 0 ? items.length - 1 : current - 1;
+            items.forEach(item => item.classList.remove('active'));
+            items[current].classList.add('active');
+            items[current].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const active = dropdown.querySelector('.dropdown-item.active');
+            if (active) {
+                active.click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+// Legacy function (kept for compatibility)
 function goToEquipmentBOM() {
-    const select = document.getElementById('equipmentSelect');
-    const equipmentId = select.value;
+    const hiddenInput = document.getElementById('selectedEquipmentId');
+    const equipmentId = hiddenInput ? hiddenInput.value : '';
     if (equipmentId) {
         window.location.href = '/bom/' + equipmentId;
     }
 }
+
+// Initialize live search when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('BOM Index: Initializing equipment live search');
+    console.log('Equipment data loaded:', equipments.length, 'items');
+    if (equipments.length === 0) {
+        console.warn('No equipment data available for live search');
+    }
+    setupEquipmentLiveSearch();
+});
 </script>
 </div>
 

@@ -3,7 +3,7 @@
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
 
 <head>
-    <title>Purchase Order Details</title>
+    <title>Quotation Request Details</title>
     <style>
         /* Enhanced Card Styling */
         .section-card {
@@ -235,37 +235,37 @@
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a th:href="@{/purchase-order}">Purchase Order</a>
+                        <a th:href="@{/quotation-request}">Quotation Request</a>
                     </li>
                     <li class="separator">
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a th:text="${po.poNumber}"></a>
+                        <a th:text="${qr.quotationNumber}"></a>
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <a th:if="${po.status.name() == 'CREATED'}" 
-                       th:href="@{'/purchase-order/' + ${po.id} + '/edit'}" 
+                    <a th:if="${qr.status.name() == 'CREATED'}" 
+                       th:href="@{'/quotation-request/' + ${qr.id} + '/edit'}" 
                        class="btn btn-info ml-auto mt-2">
                         <i class="fa fa-edit mr-1"></i> Edit
                     </a>
-                    <a th:href="@{/purchase-order/list}" class="btn btn-secondary ml-2 mt-2">
+                    <a th:href="@{/quotation-request/list}" class="btn btn-secondary ml-2 mt-2">
                         <i class="fa fa-list mr-1"></i> Back to List
                     </a>
                 </div>
             </div>
 
             <div class="row">
-                <!-- PO Information -->
+                <!-- QR Information -->
                 <div class="col-md-8">
                     <div class="card section-card">
                         <div class="section-header">
                             <div class="d-flex align-items-center">
-                                <h5 class="mb-0 mr-3" th:text="${po.poNumber}"></h5>
+                                <h5 class="mb-0 mr-3" th:text="${qr.quotationNumber}"></h5>
                                 <span class="badge mr-2" 
-                                      th:class="${po.statusBadgeClass}"
-                                      th:text="${po.statusDisplay}"></span>
+                                      th:class="${qr.statusBadgeClass}"
+                                      th:text="${qr.statusDisplay}"></span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -273,23 +273,23 @@
                                 <div class="col-md-6">
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td class="font-weight-bold">PO Number:</td>
-                                            <td th:text="${po.poNumber}"></td>
+                                            <td class="font-weight-bold">QR Number:</td>
+                                            <td th:text="${qr.quotationNumber}"></td>
                                         </tr>
                                         <tr>
                                             <td class="font-weight-bold">Supplier:</td>
                                             <td>
                                                 <i class="fas fa-truck text-muted mr-2"></i>
-                                                <span th:text="${po.supplierName}"></span>
+                                                <span th:text="${qr.supplierName}"></span>
                                             </td>
                                         </tr>
-                                        <tr th:if="${po.supplierContact}">
+                                        <tr th:if="${qr.supplierContact}">
                                             <td class="font-weight-bold">Contact:</td>
-                                            <td th:text="${po.supplierContact}"></td>
+                                            <td th:text="${qr.supplierContact}"></td>
                                         </tr>
                                         <tr>
-                                            <td class="font-weight-bold">Order Date:</td>
-                                            <td th:text="${po.formattedOrderDate}"></td>
+                                            <td class="font-weight-bold">Request Date:</td>
+                                            <td th:text="${qr.formattedRequestDate}"></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -297,52 +297,52 @@
                                     <table class="table table-borderless">
                                         <tr>
                                             <td class="font-weight-bold">Created By:</td>
-                                            <td th:text="${po.createdByName}"></td>
+                                            <td th:text="${qr.createdByName}"></td>
                                         </tr>
                                         <tr>
                                             <td class="font-weight-bold">Created:</td>
-                                            <td th:text="${po.formattedCreatedAt}"></td>
+                                            <td th:text="${qr.formattedCreatedAt}"></td>
                                         </tr>
-                                        <tr th:if="${po.expectedDeliveryDate}">
+                                        <tr th:if="${qr.expectedDeliveryDate}">
                                             <td class="font-weight-bold">Expected Delivery:</td>
-                                            <td th:text="${po.formattedExpectedDeliveryDate}"></td>
+                                            <td th:text="${qr.formattedExpectedDeliveryDate}"></td>
                                         </tr>
-                                        <tr th:if="${po.actualDeliveryDate}">
+                                        <tr th:if="${qr.actualDeliveryDate}">
                                             <td class="font-weight-bold">Actual Delivery:</td>
-                                            <td th:text="${po.formattedActualDeliveryDate}"></td>
+                                            <td th:text="${qr.formattedActualDeliveryDate}"></td>
                                         </tr>
                                     </table>
                                 </div>
                             </div>
 
-                            <div th:if="${po.notes}" class="row mt-3">
+                            <div th:if="${qr.notes}" class="row mt-3">
                                 <div class="col-md-12">
                                     <strong>Notes:</strong>
-                                    <p th:text="${po.notes}" class="text-muted mt-2"></p>
+                                    <p th:text="${qr.notes}" class="text-muted mt-2"></p>
                                 </div>
                             </div>
 
                             <!-- Total Amount -->
-                            <div th:if="${po.totalAmount}" class="row mt-3">
+                            <div th:if="${qr.totalAmount}" class="row mt-3">
                                 <div class="col-md-12">
                                     <div class="alert alert-info">
                                         <h6 class="mb-2"><i class="fas fa-dollar-sign mr-2"></i>Total Amount</h6>
-                                        <h4 class="mb-0 text-primary" th:text="${po.formattedTotalAmount}"></h4>
+                                        <h4 class="mb-0 text-primary" th:text="${qr.formattedTotalAmount}"></h4>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- PO Parts -->
+                    <!-- QR Parts -->
                     <div class="card section-card mt-3">
                         <div class="section-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-boxes mr-2"></i>PO Parts (<span th:text="${po.totalParts ?: 0}"></span> parts)
+                                <i class="fas fa-boxes mr-2"></i>QR Parts (<span th:text="${qr.totalParts ?: 0}"></span> parts)
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div th:if="${po.parts != null && !po.parts.empty}">
+                            <div th:if="${qr.parts != null && !qr.parts.empty}">
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-hover">
                                         <thead class="thead-light">
@@ -353,11 +353,11 @@
                                                 <th class="text-center">Total Price</th>
                                                 <th class="text-center">Received</th>
                                                 <th class="text-center">Status</th>
-                                                <th th:if="${po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED'}" class="text-center">Receive</th>
+                                                <th th:if="${qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED'}" class="text-center">Receive</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr th:each="part : ${po.parts}">
+                                            <tr th:each="part : ${qr.parts}">
                                                 <td class="part-details">
                                                     <div class="part-code" th:text="${part.partCode ?: part.partName}">Part Code</div>
                                                     <div th:if="${part.partName != null && part.partCode != null}" 
@@ -368,7 +368,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="font-weight-bold" th:text="${part.quantityOrdered ?: 0}"></span>
+                                                    <span class="font-weight-bold" th:text="${part.quantityRequested ?: 0}"></span>
                                                 </td>
                                                 <td class="text-center">
                                                     <span th:text="${part.formattedUnitPrice}"></span>
@@ -389,14 +389,14 @@
                                                           th:class="${part.receiveStatusBadgeClass}"
                                                           th:text="${part.receiveStatus}"></span>
                                                 </td>
-                                                <td th:if="${po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED'}" class="text-center">
+                                                <td th:if="${qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED'}" class="text-center">
                                                     <form th:if="${part.canBeReceived()}" 
-                                                          th:action="@{'/purchase-order/' + ${po.id} + '/receive-part'}" 
+                                                          th:action="@{'/quotation-request/' + ${qr.id} + '/receive'}" 
                                                           method="post" class="d-inline">
-                                                        <input type="hidden" name="partId" th:value="${part.id}">
+                                                        <input type="hidden" name="partIds" th:value="${part.id}">
                                                         <div class="input-group input-group-sm">
                                                             <input type="number" 
-                                                                   name="receivedQuantity" 
+                                                                   name="receivedQuantities" 
                                                                    class="form-control quantity-input" 
                                                                    th:max="${part.remainingQuantity}"
                                                                    min="1" 
@@ -418,9 +418,9 @@
                                     </table>
                                 </div>
                             </div>
-                            <div th:if="${po.parts == null || po.parts.empty}" class="text-center text-muted py-4">
+                            <div th:if="${qr.parts == null || qr.parts.empty}" class="text-center text-muted py-4">
                                 <i class="fas fa-box-open fa-3x mb-3"></i>
-                                <p>No parts in this purchase order</p>
+                                <p>No parts in this quotation request</p>
                             </div>
                         </div>
                     </div>
@@ -435,52 +435,59 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <!-- Send PO Action -->
-                            <div th:if="${po.status.name() == 'CREATED'}" class="action-section">
+                            <!-- Send QR Action -->
+                            <div th:if="${qr.status.name() == 'CREATED'}" class="action-section">
                                 <h6 class="text-primary">
-                                    <i class="fas fa-paper-plane mr-2"></i>Send Purchase Order
+                                    <i class="fas fa-paper-plane mr-2"></i>Send Quotation Request
                                 </h6>
-                                <p class="text-muted small mb-3">Send this PO to the supplier for confirmation.</p>
-                                <form th:action="@{'/purchase-order/' + ${po.id} + '/send'}" method="post">
+                                <p class="text-muted small mb-3">Send this QR to the supplier for quotation.</p>
+                                <form th:action="@{'/quotation-request/' + ${qr.id} + '/status'}" method="post">
+                                    <input type="hidden" name="status" value="SENT" />
                                     <div class="form-group">
                                         <label for="sendNotes">Notes</label>
                                         <textarea class="form-control form-control-sm" name="notes" rows="2" 
                                                   placeholder="Optional notes for supplier"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-sm btn-block">
-                                        <i class="fas fa-paper-plane mr-1"></i> Send PO
+                                        <i class="fas fa-paper-plane mr-1"></i> Send QR
                                     </button>
                                 </form>
                             </div>
 
-                            <!-- Confirm PO Action -->
-                            <div th:if="${po.status.name() == 'SENT'}" class="action-section">
+                            <!-- Confirm QR Action -->
+                            <div th:if="${qr.status.name() == 'SENT'}" class="action-section">
                                 <h6 class="text-success">
-                                    <i class="fas fa-check mr-2"></i>Confirm Purchase Order
+                                    <i class="fas fa-check mr-2"></i>Confirm Quotation Request
                                 </h6>
-                                <p class="text-muted small mb-3">Confirm that supplier has accepted this PO.</p>
-                                <form th:action="@{'/purchase-order/' + ${po.id} + '/confirm'}" method="post">
+                                <p class="text-muted small mb-3">Confirm that supplier has provided quotation.</p>
+                                <form th:action="@{'/quotation-request/' + ${qr.id} + '/status'}" method="post">
+                                    <input type="hidden" name="status" value="CONFIRMED" />
                                     <div class="form-group">
                                         <label for="confirmNotes">Confirmation Notes</label>
                                         <textarea class="form-control form-control-sm" name="notes" rows="2" 
                                                   placeholder="Optional confirmation notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-sm btn-block">
-                                        <i class="fas fa-check mr-1"></i> Confirm PO
+                                        <i class="fas fa-check mr-1"></i> Confirm QR
                                     </button>
                                 </form>
                             </div>
 
                             <!-- Receive All Parts -->
-                            <div th:if="${(po.status.name() == 'SENT' || po.status.name() == 'CONFIRMED') && !po.isFullyReceived}" class="action-section">
+                            <div th:if="${(qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED') && (qr.isFullyReceived == null || !qr.isFullyReceived)}" class="action-section">
                                 <h6 class="text-info">
                                     <i class="fas fa-truck mr-2"></i>Receive All Parts
                                 </h6>
                                 <p class="text-muted small mb-3">Mark all parts as received with full quantities.</p>
-                                <form th:action="@{'/purchase-order/' + ${po.id} + '/receive-all'}" method="post">
+                                <form th:action="@{'/quotation-request/' + ${qr.id} + '/receive'}" method="post">
+                                    <!-- Include all parts that can be received -->
+                                    <div th:each="part : ${qr.parts}" th:if="${part.canBeReceived()}">
+                                        <input type="hidden" name="partIds" th:value="${part.id}">
+                                        <input type="hidden" name="receivedQuantities" th:value="${part.remainingQuantity}">
+                                    </div>
                                     <div class="form-group">
                                         <label for="receiveNotes">Receiving Notes</label>
-                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
+                                        <textarea class="form-control form-control-sm" name="receivingNotes" rows="2" 
                                                   placeholder="Optional receiving notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-info btn-sm btn-block">
@@ -489,13 +496,13 @@
                                 </form>
                             </div>
 
-                            <!-- Complete PO -->
-                            <div th:if="${po.canBeCompleted}" class="action-section">
+                            <!-- Complete QR -->
+                            <div th:if="${qr.canBeCompleted != null && qr.canBeCompleted}" class="action-section">
                                 <h6 class="text-primary">
-                                    <i class="fas fa-flag-checkered mr-2"></i>Complete Purchase Order
+                                    <i class="fas fa-flag-checkered mr-2"></i>Complete Quotation Request
                                 </h6>
-                                <p class="text-muted small mb-3">Mark this PO as completed.</p>
-                                <form th:action="@{'/purchase-order/' + ${po.id} + '/complete'}" method="post">
+                                <p class="text-muted small mb-3">Mark this QR as completed.</p>
+                                <form th:action="@{'/quotation-request/' + ${qr.id} + '/complete'}" method="post">
                                     <div class="form-group">
                                         <label for="completionNotes">Completion Notes</label>
                                         <textarea class="form-control form-control-sm" name="notes" rows="2" 
@@ -508,32 +515,32 @@
                             </div>
 
                             <!-- Completed Status -->
-                            <div th:if="${po.status.name() == 'COMPLETED'}" class="action-section">
+                            <div th:if="${qr.status.name() == 'COMPLETED'}" class="action-section">
                                 <h6 class="text-success">
                                     <i class="fas fa-check-circle mr-2"></i>Completed
                                 </h6>
                                 <div class="mb-2">
                                     <small class="text-muted">
-                                        Completed: <span th:text="${po.formattedActualDeliveryDate ?: 'Recently'}"></span>
+                                        Completed: <span th:text="${qr.formattedActualDeliveryDate ?: 'Recently'}"></span>
                                     </small>
                                 </div>
                                 <div class="alert alert-success">
                                     <i class="fas fa-check-circle mr-2"></i>
-                                    This purchase order has been completed successfully.
+                                    This quotation request has been completed successfully.
                                 </div>
                             </div>
 
-                            <!-- Cancel PO -->
-                            <div th:if="${po.status.name() == 'CREATED' || po.status.name() == 'SENT'}" class="action-section">
-                                <h6 class="text-danger">Cancel Purchase Order</h6>
+                            <!-- Cancel QR -->
+                            <div th:if="${qr.status.name() == 'CREATED' || qr.status.name() == 'SENT'}" class="action-section">
+                                <h6 class="text-danger">Cancel Quotation Request</h6>
                                 <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
                                         data-toggle="modal" data-target="#cancelModal">
-                                    <i class="fas fa-ban mr-1"></i> Cancel PO
+                                    <i class="fas fa-ban mr-1"></i> Cancel QR
                                 </button>
                             </div>
 
                             <!-- Delete Action -->
-                            <div th:if="${po.status.name() == 'CREATED'}" class="action-section">
+                            <div th:if="${qr.status.name() == 'CREATED'}" class="action-section">
                                 <h6 class="text-danger">Danger Zone</h6>
                                 <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
                                         data-toggle="modal" data-target="#deleteModal">
@@ -553,23 +560,23 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Parts:</span>
-                                <strong th:text="${po.totalParts ?: 0}"></strong>
+                                <strong th:text="${qr.totalParts ?: 0}"></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Total Quantity:</span>
-                                <strong th:text="${po.totalQuantity ?: 0}"></strong>
+                                <strong th:text="${qr.totalQuantity ?: 0}"></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Received:</span>
-                                <strong class="text-success" th:text="${po.totalReceivedQuantity ?: 0}"></strong>
+                                <strong class="text-success" th:text="${qr.totalReceivedQuantity ?: 0}"></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Completion:</span>
-                                <strong th:text="${#numbers.formatDecimal(po.receivePercentage, 1, 0)} + '%'"></strong>
+                                <strong th:text="${#numbers.formatDecimal(qr.receivePercentage, 1, 0)} + '%'"></strong>
                             </div>
-                            <div th:if="${po.totalAmount}" class="d-flex justify-content-between">
+                            <div th:if="${qr.totalAmount}" class="d-flex justify-content-between">
                                 <span>Total Amount:</span>
-                                <strong class="text-primary" th:text="${po.formattedTotalAmount}"></strong>
+                                <strong class="text-primary" th:text="${qr.formattedTotalAmount}"></strong>
                             </div>
                         </div>
                     </div>
@@ -597,21 +604,21 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Cancel Purchase Order</h5>
+                        <h5 class="modal-title">Cancel Quotation Request</h5>
                         <button type="button" class="close" data-dismiss="modal">
                             <span>&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to cancel this purchase order?</p>
-                        <form th:action="@{'/purchase-order/' + ${po.id} + '/cancel'}" method="post">
+                        <p>Are you sure you want to cancel this quotation request?</p>
+                        <form th:action="@{'/quotation-request/' + ${qr.id} + '/cancel'}" method="post">
                             <div class="form-group">
                                 <label for="cancellationReason">Cancellation Reason <span class="text-danger">*</span></label>
                                 <textarea class="form-control" name="cancellationReason" rows="3" 
                                           placeholder="Please provide reason for cancellation" required></textarea>
                             </div>
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-danger">Cancel PO</button>
+                                <button type="submit" class="btn btn-danger">Cancel QR</button>
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                             </div>
                         </form>
@@ -631,11 +638,11 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to delete this purchase order?</p>
+                        <p>Are you sure you want to delete this quotation request?</p>
                         <p class="text-danger"><strong>This action cannot be undone.</strong></p>
                     </div>
                     <div class="modal-footer">
-                        <form th:action="@{'/purchase-order/' + ${po.id} + '/delete'}" method="post">
+                        <form th:action="@{'/quotation-request/' + ${qr.id} + '/delete'}" method="post">
                             <button type="submit" class="btn btn-danger">Delete</button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         </form>

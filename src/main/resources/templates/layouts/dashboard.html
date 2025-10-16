@@ -73,7 +73,7 @@
 				<div class="sidebar-content">
 
 					<!-- User Profile -->
-					<div class="user">
+					<div class="user" th:if="${currentUser != null}">
 						<div class="avatar-sm float-left mr-3">
 							<img th:src="${currentUser.image != null} 
 								? @{/upload/user/image/__${currentUser.image}__} 
@@ -84,7 +84,7 @@
 							<a data-toggle="collapse" href="#collapseUserMenu" aria-expanded="false">
 								<span>
 									<span th:text="${currentUser.name}"></span>
-									<span class="user-level" th:text="${currentUser.designation}"></span>
+									<span class="user-level" th:text="${currentUser.designation ?: 'User'}"></span>
 									<span class="caret"></span>
 								</span>
 							</a>
@@ -98,12 +98,59 @@
 										</a>
 									</li>
 									<li class="nav-item">
-										<a class="nav-link" href="logout">
+										<a class="nav-link" href="/logout">
 											<i class="fas fa-sign-out-alt mr-2"></i> Logout
 										</a>
 									</li>
 								</ul>
 							</div>
+						</div>
+					</div>
+
+					<!-- Fallback User Profile when currentUser is not available -->
+					<div class="user" th:if="${currentUser == null}" sec:authorize="isAuthenticated()">
+						<div class="avatar-sm float-left mr-3">
+							<img src="/assets/img/arashmil.jpg" alt="Default Avatar" class="avatar-img rounded-circle border border-primary"
+								style="border-width: 2px !important;">
+						</div>
+						<div class="info">
+							<a data-toggle="collapse" href="#collapseUserMenu" aria-expanded="false">
+								<span>
+									<span sec:authentication="name">User</span>
+									<span class="user-level">User</span>
+									<span class="caret"></span>
+								</span>
+							</a>
+							<div class="clearfix"></div>
+
+							<div class="collapse" id="collapseUserMenu">
+								<ul class="nav nav-small mt-2">
+									<li class="nav-item">
+										<a class="nav-link" href="/users/profile">
+											<i class="fas fa-user-circle mr-2"></i> My Profile
+										</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" href="/logout">
+											<i class="fas fa-sign-out-alt mr-2"></i> Logout
+										</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+
+					<!-- Anonymous User Profile -->
+					<div class="user" th:if="${currentUser == null}" sec:authorize="!isAuthenticated()">
+						<div class="avatar-sm float-left mr-3">
+							<img src="/assets/img/arashmil.jpg" alt="Guest Avatar" class="avatar-img rounded-circle border border-secondary"
+								style="border-width: 2px !important;">
+						</div>
+						<div class="info">
+							<span>
+								<span>Guest</span>
+								<span class="user-level">Visitor</span>
+							</span>
 						</div>
 					</div>
 
@@ -167,11 +214,35 @@
 							</a>
 						</li>
 
+						<!-- Bill of Materials -->
+						<li class="nav-item" th:classappend="${title == 'Bill of Materials'} ? 'active' : ''">
+							<a th:href="@{/bom}">
+								<i class="fas fa-list-alt"></i>
+								<p class="nav-label">Bill of Materials</p>
+							</a>
+						</li>
+
+						<!-- Code Generator -->
+						<li class="nav-item" th:classappend="${title == 'Code Generator'} ? 'active' : ''">
+							<a th:href="@{/code-generator}">
+								<i class="fas fa-barcode"></i>
+								<p class="nav-label">Code Generator</p>
+							</a>
+						</li>
+
 						<!-- Parts -->
 						<li class="nav-item" th:classappend="${title == 'Parts Inventory'} ? 'active' : ''">
 							<a th:href="@{/parts}">
 								<i class="fas fa-toolbox"></i>
 								<p class="nav-label">Parts Inventory</p>
+							</a>
+						</li>
+
+						<!-- Purchase Requisition -->
+						<li class="nav-item" th:classappend="${title.contains('Purchase Requisition')} ? 'active' : ''">
+							<a th:href="@{/purchase-requisition}">
+								<i class="fas fa-shopping-cart"></i>
+								<p class="nav-label">Purchase Requisition</p>
 							</a>
 						</li>
 
@@ -183,25 +254,6 @@
 								<p class="nav-label">Backup Configuration</p>
 							</a>
 						</li>
-
-						<!-- Reports (Optional)
-						<li class="nav-item">
-							<a href="#reports" data-toggle="collapse" aria-expanded="false">
-								<i class="fas fa-chart-bar"></i>
-								<p class="nav-label">Reports</p>
-								<span class="caret"></span>
-							</a>
-							<div class="collapse" id="reports">
-								<ul class="nav nav-collapse">
-									<li><a href="/reports/complaint"><span class="sub-item">Complaint Summary</span></a>
-									</li>
-									<li><a href="/reports/machine-uptime"><span class="sub-item">Machine
-												Uptime</span></a></li>
-									<li><a href="/reports/parts-usage"><span class="sub-item">Parts Usage</span></a>
-									</li>
-								</ul>
-							</div>
-						</li> -->
 					</ul>
 				</div>
 			</div>

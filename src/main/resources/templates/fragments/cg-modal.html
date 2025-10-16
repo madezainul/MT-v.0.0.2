@@ -112,39 +112,31 @@
     </div>
 </div>
 
-<!-- Add Serial Number Modal -->
-<div th:fragment="serial-number-modal">
-    <div class="modal fade" id="addSerialNumberModal" tabindex="-1" role="dialog" aria-labelledby="addSerialNumberModalLabel" aria-hidden="true">
+<!-- Add Capacity Modal -->
+<div th:fragment="capacity-modal">
+    <div class="modal fade" id="addCapacityModal" tabindex="-1" role="dialog" aria-labelledby="addCapacityModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addSerialNumberModalLabel">Add Serial Number</h5>
+                    <h5 class="modal-title" id="addCapacityModalLabel">Add Capacity</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form th:object="${serialNumberDTO}" th:action="@{/code-generator/save-serial-number}" method="post" id="addSerialNumberForm">
+                    <form th:object="${capacityDTO}" th:action="@{/code-generator/save-capacity}" method="post" id="addCapacityForm">
                         <div class="form-group">
-                            <label for="serialNumberName">Name</label>
+                            <label for="capacityName">Name</label>
                             <input type="text" class="form-control" th:field="*{name}" required>
                             <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name
                                 is required.</div>
                         </div>
                         <div class="form-group">
-                            <label for="serialNumberCode">Code</label>
+                            <label for="capacityCode">Code</label>
                             <input type="text" class="form-control" th:field="*{code}" required>
                             <div class="invalid-feedback" th:if="${#fields.hasErrors('code')}" th:errors="*{code}">Code
                                 is required.</div>
                         </div>
-                        <!-- <div class="form-group">
-                            <label for="serialNumberSubcategory">Subcategory</label>
-                            <select class="form-control" id="serialNumberSubcategory" th:field="*{subcategory.code}" required>
-                                <option value="">Select Subcategory</option>
-                                <option th:each="subcategory : ${subcategories}" th:value="${subcategory.code}"
-                                    th:text="${subcategory.name}"></option>
-                            </select>
-                        </div> -->
                         <button type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>
@@ -175,14 +167,6 @@
                             <label for="supplierCode">Code</label>
                             <input type="text" class="form-control" id="supplierCode" th:field="*{code}" required>
                         </div>
-                        <!-- <div class="form-group">
-                            <label for="supplierSerialNumber">Serial Number</label>
-                            <select class="form-control" id="supplierSerialNumber" th:field="*{serialNumber.code}" required>
-                                <option value="">Select Serial Number</option>
-                                <option th:each="serialNumber : ${serialNumbers}" th:value="${serialNumber.code}"
-                                    th:text="${serialNumber.name}"></option>
-                            </select>
-                        </div> -->
                         <button type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>
@@ -357,7 +341,7 @@
                     // Add all fields
                     addField(`partsUsed[${index}].part.code`, code);
                     addField(`partsUsed[${index}].part.name`, name);
-                    addField(`partsUsed[${index}].part.category`, category);
+                    addField(`partsUsed[${index}].part.categoryName`, category);
                     addField(`partsUsed[${index}].part.id`, id); // 👈 ADD THIS LINE
                     addField(`partsUsed[${index}].quantity`, qty);
                 });
@@ -415,14 +399,14 @@
                     tr.innerHTML = `
                   <td><code>${part.code}</code></td>
                   <td>${part.name}</td>
-                  <td><span class="badge badge-secondary">${part.category}</span></td>
+                  <td><span class="badge badge-secondary">${part.categoryName}</span></td>
                   <td class="text-center">${part.stockQuantity}</td>
                   <td class="text-center">
                       <a href="javascript:void(0)" class="btn btn-primary btn-sm add-from-modal"
                          data-id="${part.id}"
                          data-code="${part.code}"
                          data-name="${part.name}"
-                         data-category="${part.category}">
+                         data-category="${part.categoryName}">
                          Add
                       </a>
                   </td>

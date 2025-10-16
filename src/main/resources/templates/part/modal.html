@@ -34,6 +34,17 @@
                                         th:errors="*{name}">Error</div>
                                 </div>
                             </div>
+
+                            <!-- Model -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Model</label>
+                                    <input type="text" class="form-control" th:field="*{model}" 
+                                           placeholder="Enter part model...">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('model')}"
+                                        th:errors="*{model}">Error</div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Category & Supplier -->
@@ -101,12 +112,12 @@
                                     </datalist>
                                 </div>
                             </div>
-                            <!-- Description -->
+                            <!-- Specification -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea class="form-control" th:field="*{description}" rows="3"
-                                        placeholder="Enter item description..."></textarea>
+                                    <label>Specification</label>
+                                    <textarea class="form-control" th:field="*{specification}" rows="3"
+                                        placeholder="Enter technical specifications..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -255,14 +266,14 @@
                                     </datalist>
                                 </div>
                             </div>
-                            <!-- Description -->
+                            <!-- Specification -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea class="form-control" id="editDescription" name="description" rows="3"
-                                        placeholder="Enter item description..."></textarea>
-                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
-                                        th:errors="*{description}">Please enter a description.</div>
+                                    <label>Specification</label>
+                                    <textarea class="form-control" id="editSpecification" name="specification" rows="3"
+                                        placeholder="Enter technical specifications..."></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('specification')}"
+                                        th:errors="*{specification}">Please enter specifications.</div>
                                 </div>
                             </div>
                         </div>

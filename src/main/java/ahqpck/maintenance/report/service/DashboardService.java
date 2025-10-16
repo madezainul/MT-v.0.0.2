@@ -7,7 +7,6 @@ import ahqpck.maintenance.report.dto.DailyBreakdownDTO;
 import ahqpck.maintenance.report.dto.DailyComplaintDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportDTO;
 import ahqpck.maintenance.report.dto.DailyWorkReportEquipmentDTO;
-import ahqpck.maintenance.report.dto.EquipmentComplaintCountDTO;
 import ahqpck.maintenance.report.dto.EquipmentCountDTO;
 import ahqpck.maintenance.report.dto.EquipmentStatusDTO;
 import ahqpck.maintenance.report.dto.EquipmentWorkReportDTO;
@@ -43,33 +42,20 @@ public class DashboardService {
     }
 
     public List<DailyComplaintDTO> getDailyComplaint(LocalDateTime from, LocalDateTime to) {
-        // Default: last 7 days (today + 6 previous days)
-        LocalDateTime defaultTo = LocalDateTime.now().with(LocalTime.MAX); // 23:59:59.999
-        LocalDateTime defaultFrom = defaultTo.minusDays(6).with(LocalTime.MIN); // 00:00:00.000
-
-        LocalDateTime effectiveFrom = from != null ? from : defaultFrom;
-        LocalDateTime effectiveTo = to != null ? to : defaultTo;
-
-        // Ensure from <= to
-        // if (effectiveFrom.isAfter(effectiveTo)) {
-        // throw new IllegalArgumentException("Invalid date range: 'from' must be before
-        // or equal to 'to'");
-        // }
-
-        return dashboardRepository.getDailyComplaint(effectiveFrom, effectiveTo);
+        DateRange dateRange = getDefaultDateTimeRange(from, to, 6);
+        return dashboardRepository.getDailyComplaint(dateRange.from(), dateRange.to());
     }
 
     public List<MonthlyComplaintDTO> getMonthlyComplaint(Integer year) {
-
-        Integer effectiveYear = (year != null && year > 1900) ? year : LocalDate.now().getYear();
+        Integer effectiveYear = getEffectiveYear(year);
         return dashboardRepository.getMonthlyComplaint(effectiveYear);
     }
 
     public AssigneeDailyStatusDTO getAssigneeDailyStatus(LocalDateTime from, LocalDateTime to) {
-
         if (from == null || to == null) {
-            to = LocalDateTime.now().with(LocalTime.MAX);
-            from = to.minusDays(6);
+            DateRange dateRange = getDefaultDateTimeRange(null, null, 6);
+            from = dateRange.from();
+            to = dateRange.to();
         }
 
         LocalDate fromDate = from.toLocalDate();
@@ -87,63 +73,8 @@ public class DashboardService {
                 .takeWhile(d -> !d.isAfter(toDate))
                 .collect(Collectors.toList());
 
-        int numDays = dateList.size();
-
-        Map<String, AssigneeDailyStatusDetailDTO> assigneeMap = new LinkedHashMap<>();
-
-        // Pre-initialize all assignees with empty lists of zeros
-        for (Object[] row : results) {
-            String assigneeName = (String) row[0]; // u.name
-            String assigneeEmpId = (String) row[1]; // u.employee_id
-
-            // Create a unique key using name + empId to avoid collisions if names are
-            // duplicated
-            String assigneeKey = assigneeName + "|" + assigneeEmpId;
-
-            assigneeMap.computeIfAbsent(assigneeKey, k -> {
-                AssigneeDailyStatusDetailDTO dto = new AssigneeDailyStatusDetailDTO();
-                dto.setAssigneeName(assigneeName);
-                dto.setAssigneeEmpId(assigneeEmpId);
-                List<Integer> zeros = Collections.nCopies(numDays, 0);
-                dto.setOpen(new ArrayList<>(zeros));
-                dto.setPending(new ArrayList<>(zeros));
-                dto.setClosed(new ArrayList<>(zeros));
-                return dto;
-            });
-        }
-
-        // Now populate the counts
-        for (Object[] row : results) {
-            String assigneeName = (String) row[0];
-            String assigneeEmpId = (String) row[1];
-            String status = (String) row[2];
-            LocalDate reportDate = ((java.sql.Date) row[3]).toLocalDate();
-            Long count = ((Number) row[4]).longValue();
-
-            if (!dateList.contains(reportDate)) {
-                continue;
-            }
-
-            int dayIndex = dateList.indexOf(reportDate);
-
-            // Use composite key to look up DTO
-            String assigneeKey = assigneeName + "|" + assigneeEmpId;
-            AssigneeDailyStatusDetailDTO dto = assigneeMap.get(assigneeKey);
-
-            if ("OPEN".equals(status)) {
-                List<Integer> open = dto.getOpen();
-                open.set(dayIndex, Math.toIntExact(count));
-                dto.setOpen(open); // Not strictly needed since it's mutable, but safe
-            } else if ("PENDING".equals(status)) {
-                List<Integer> pending = dto.getPending();
-                pending.set(dayIndex, Math.toIntExact(count));
-                dto.setPending(pending);
-            } else if ("CLOSED".equals(status)) {
-                List<Integer> closed = dto.getClosed();
-                closed.set(dayIndex, Math.toIntExact(count));
-                dto.setClosed(closed);
-            }
-        }
+        Map<String, AssigneeDailyStatusDetailDTO> assigneeMap = initializeAssigneeMap(results, dateList.size());
+        populateAssigneeData(results, assigneeMap, dateList);
 
         AssigneeDailyStatusDTO response = new AssigneeDailyStatusDTO();
         response.setDates(dateList.stream().map(LocalDate::toString).collect(Collectors.toList()));
@@ -189,17 +120,12 @@ public class DashboardService {
     }
 
     public List<DailyBreakdownDTO> getDailyBreakdownTime(LocalDate from, LocalDate to) {
-        LocalDate defaultTo = LocalDate.now();
-        LocalDate defaultFrom = defaultTo.minusDays(6); // last 7 days
-
-        LocalDate effectiveFrom = from != null ? from : defaultFrom;
-        LocalDate effectiveTo = to != null ? to : defaultTo;
-
-        return dashboardRepository.getDailyBreakdownTime(effectiveFrom, effectiveTo);
+        DateRangeLocal dateRange = getDefaultDateRange(from, to, 6);
+        return dashboardRepository.getDailyBreakdownTime(dateRange.from(), dateRange.to());
     }
 
     public List<MonthlyBreakdownDTO> getMonthlyBreakdownTime(Integer year) {
-        Integer effectiveYear = (year != null && year > 1900) ? year : LocalDate.now().getYear();
+        Integer effectiveYear = getEffectiveYear(year);
         return dashboardRepository.getMonthlyBreakdownTime(effectiveYear);
     }
 
@@ -208,38 +134,29 @@ public class DashboardService {
     }
 
     public List<DailyWorkReportDTO> getDailyWorkReport(LocalDate from, LocalDate to) {
-        LocalDate defaultTo = LocalDate.now();
-        LocalDate defaultFrom = defaultTo.minusDays(6); // last 7 days
-
-        LocalDate effectiveFrom = from != null ? from : defaultFrom;
-        LocalDate effectiveTo = to != null ? to : defaultTo;
-
-        return dashboardRepository.getDailyWorkReport(effectiveFrom, effectiveTo);
+        DateRangeLocal dateRange = getDefaultDateRange(from, to, 6);
+        return dashboardRepository.getDailyWorkReport(dateRange.from(), dateRange.to());
     }
 
     // === Monthly Work Report Count ===
     public List<MonthlyWorkReportDTO> getMonthlyWorkReport(Integer year) {
-        Integer effectiveYear = (year != null && year > 1900) ? year : LocalDate.now().getYear();
+        Integer effectiveYear = getEffectiveYear(year);
         return dashboardRepository.getMonthlyWorkReport(effectiveYear);
     }
 
     public List<DailyWorkReportEquipmentDTO> getDailyWorkReportEquipment(LocalDate from, LocalDate to,
             String equipmentCode) {
-        LocalDate defaultTo = LocalDate.now();
-        LocalDate defaultFrom = defaultTo.minusDays(6); // Last 7 days
-
-        LocalDate effectiveFrom = from != null ? from : defaultFrom;
-        LocalDate effectiveTo = to != null ? to : defaultTo;
+        DateRangeLocal dateRange = getDefaultDateRange(from, to, 6);
 
         String effectiveEquipmentCode = (equipmentCode != null && !equipmentCode.trim().isEmpty())
                 ? equipmentCode.trim()
                 : null;
 
-        return dashboardRepository.getDailyWorkReportEquipment(effectiveFrom, effectiveTo, effectiveEquipmentCode);
+        return dashboardRepository.getDailyWorkReportEquipment(dateRange.from(), dateRange.to(), effectiveEquipmentCode);
     }
 
     public List<MonthlyWorkReportEquipmentDTO> getMonthlyWorkReportEquipment(Integer year, String equipmentCode) {
-        Integer effectiveYear = (year != null && year > 1900) ? year : LocalDate.now().getYear();
+        Integer effectiveYear = getEffectiveYear(year);
         return dashboardRepository.getMonthlyWorkReportEquipment(effectiveYear, equipmentCode);
     }
 
@@ -249,5 +166,96 @@ public class DashboardService {
 
     public List<EquipmentStatusDTO> getEquipmentStatus() {
         return dashboardRepository.getEquipmentStatus();
+    }
+
+    // Helper record for date range handling
+    private record DateRange(LocalDateTime from, LocalDateTime to) {}
+    
+    private record DateRangeLocal(LocalDate from, LocalDate to) {}
+
+    // Helper method for DateTime range with default lookback days
+    private DateRange getDefaultDateTimeRange(LocalDateTime from, LocalDateTime to, int defaultLookbackDays) {
+        LocalDateTime defaultTo = LocalDateTime.now().with(LocalTime.MAX);
+        LocalDateTime defaultFrom = defaultTo.minusDays(defaultLookbackDays).with(LocalTime.MIN);
+        
+        LocalDateTime effectiveFrom = from != null ? from : defaultFrom;
+        LocalDateTime effectiveTo = to != null ? to : defaultTo;
+        
+        return new DateRange(effectiveFrom, effectiveTo);
+    }
+    
+    // Helper method for LocalDate range with default lookback days
+    private DateRangeLocal getDefaultDateRange(LocalDate from, LocalDate to, int defaultLookbackDays) {
+        LocalDate defaultTo = LocalDate.now();
+        LocalDate defaultFrom = defaultTo.minusDays(defaultLookbackDays);
+        
+        LocalDate effectiveFrom = from != null ? from : defaultFrom;
+        LocalDate effectiveTo = to != null ? to : defaultTo;
+        
+        return new DateRangeLocal(effectiveFrom, effectiveTo);
+    }
+    
+    // Helper method for year validation
+    private Integer getEffectiveYear(Integer year) {
+        return (year != null && year > 1900) ? year : LocalDate.now().getYear();
+    }
+
+    // Helper methods for getAssigneeDailyStatus
+    private Map<String, AssigneeDailyStatusDetailDTO> initializeAssigneeMap(List<Object[]> results, int numDays) {
+        Map<String, AssigneeDailyStatusDetailDTO> assigneeMap = new LinkedHashMap<>();
+        
+        // Pre-initialize all assignees with empty lists of zeros
+        for (Object[] row : results) {
+            String assigneeName = (String) row[0]; // u.name
+            String assigneeEmpId = (String) row[1]; // u.employee_id
+            String assigneeKey = createAssigneeKey(assigneeName, assigneeEmpId);
+
+            assigneeMap.computeIfAbsent(assigneeKey, k -> {
+                AssigneeDailyStatusDetailDTO dto = new AssigneeDailyStatusDetailDTO();
+                dto.setAssigneeName(assigneeName);
+                dto.setAssigneeEmpId(assigneeEmpId);
+                List<Integer> zeros = Collections.nCopies(numDays, 0);
+                dto.setOpen(new ArrayList<>(zeros));
+                dto.setPending(new ArrayList<>(zeros));
+                dto.setClosed(new ArrayList<>(zeros));
+                return dto;
+            });
+        }
+        
+        return assigneeMap;
+    }
+
+    private void populateAssigneeData(List<Object[]> results, Map<String, AssigneeDailyStatusDetailDTO> assigneeMap, List<LocalDate> dateList) {
+        for (Object[] row : results) {
+            String assigneeName = (String) row[0];
+            String assigneeEmpId = (String) row[1];
+            String status = (String) row[2];
+            LocalDate reportDate = ((java.sql.Date) row[3]).toLocalDate();
+            Long count = ((Number) row[4]).longValue();
+
+            if (!dateList.contains(reportDate)) {
+                continue;
+            }
+
+            int dayIndex = dateList.indexOf(reportDate);
+            String assigneeKey = createAssigneeKey(assigneeName, assigneeEmpId);
+            AssigneeDailyStatusDetailDTO dto = assigneeMap.get(assigneeKey);
+
+            if (dto != null) {
+                updateStatusCount(dto, status, dayIndex, Math.toIntExact(count));
+            }
+        }
+    }
+
+    private String createAssigneeKey(String assigneeName, String assigneeEmpId) {
+        return assigneeName + "|" + assigneeEmpId;
+    }
+
+    private void updateStatusCount(AssigneeDailyStatusDetailDTO dto, String status, int dayIndex, int count) {
+        switch (status) {
+            case "OPEN" -> dto.getOpen().set(dayIndex, count);
+            case "PENDING" -> dto.getPending().set(dayIndex, count);
+            case "CLOSED" -> dto.getClosed().set(dayIndex, count);
+        }
     }
 }

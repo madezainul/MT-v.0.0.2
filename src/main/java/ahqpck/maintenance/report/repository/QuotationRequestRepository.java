@@ -42,11 +42,11 @@ public interface QuotationRequestRepository
        // Find by supplier and status
        List<QuotationRequest> findBySupplierNameAndStatus(String supplierName, QRStatus status);
 
-       // Find by created by
-       @Query("SELECT qr FROM QuotationRequest qr WHERE qr.createdBy.id = :createdById")
+       // Find by created by (safer queries)
+       @Query("SELECT qr FROM QuotationRequest qr LEFT JOIN FETCH qr.createdBy u WHERE u.id = :createdById")
        List<QuotationRequest> findByCreatedById(@Param("createdById") String createdById);
 
-       @Query("SELECT qr FROM QuotationRequest qr WHERE qr.createdBy.id = :createdById")
+       @Query("SELECT qr FROM QuotationRequest qr LEFT JOIN FETCH qr.createdBy u WHERE u.id = :createdById")
        Page<QuotationRequest> findByCreatedById(@Param("createdById") String createdById, Pageable pageable);
 
        // Find by date range

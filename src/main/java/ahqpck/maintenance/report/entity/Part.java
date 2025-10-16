@@ -35,6 +35,12 @@ public class Part {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = true)
+    private String model;
+
+    @Column(nullable = true)
+    private String manufacturer;
+
     @Column(name = "category_name", nullable = false)
     private String categoryName;
 
@@ -44,18 +50,14 @@ public class Part {
     @Column(name = "section_code", nullable = false)
     private String sectionCode;
 
-    private String description;
-
-    private String category;
-
-    private String supplier;
-
+    private String specification;
     private String image;
 
     @Builder.Default
     private Integer stockQuantity = 0;
 
     @OneToMany(mappedBy = "part", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<EquipmentPartBOM> equipmentBOMs = new HashSet<>();
 
     @PrePersist

@@ -35,6 +35,18 @@ public class PurchaseRequisitionDTO {
     private String requestorEmail;
     private String requestorEmployeeId;
 
+    // CreatedBy fields (system tracking - not displayed in UI)
+    private String createdById;
+    private String createdByName;
+    private String createdByEmail;
+    private String createdByEmployeeId;
+
+    // UpdatedBy fields (system tracking - not displayed in UI)
+    private String updatedById;
+    private String updatedByName;
+    private String updatedByEmail;
+    private String updatedByEmployeeId;
+
     @NotNull(message = "Date needed is required")
     private LocalDate dateNeeded;
 
