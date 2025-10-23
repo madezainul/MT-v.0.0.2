@@ -128,53 +128,34 @@
                                             <th>Name</th>
                                             <th>Model</th>
                                             <th>Manufacturer</th>
-                                            <th>Category</th>
-                                            <th>Supplier</th>
                                             <th>Quantity</th>
-                                            <th>Specification</th>
-                                            <th>Image</th>
-                                            <th>Action</th>
+                                            <th>PR Quantity</th>
+                                            <th>Safety Min Qty</th>
+                                            <th>Location</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- Sample Row 1 -->
-                                        <tr th:each="part : ${parts.content}" class="table-row-hover"
-                                            th:if="${parts.totalElements > 0}">
-                                            <td data-field="code" th:text="${part.code}"></td>
-                                            <td data-field="name" th:text="${part.name}"></td>
-                                            <td data-field="model" th:text="${part.model}"></td>
-                                            <td data-field="manufacturer" th:text="${part.manufacturer}"></td>
-                                            <td data-field="category" th:text="${part.categoryName}"></td>
-                                            <td data-field="supplier" th:text="${part.supplierName}">
-                                            </td>
-                                            <td data-field="stockQuantity" class="text-center"
-                                                th:text="${part.stockQuantity}">
-                                            </td>
-                                            <td data-field="specification" class="text-center"
-                                                th:text="${part.specification}">
-                                            </td>
-                                            <td data-field="image">
-                                                <div class="avatar-lg my-2" th:if="${part.image}">
-                                                    <img th:src="@{/upload/part/image/__${part.image}__}"
-                                                        class="rounded avatar-img" alt="Part Image" />
-                                                </div>
-                                            </td>
+                                        <tr th:each="part : ${parts.content}" class="table-row-hover" th:if="${parts.totalElements > 0}">
                                             <td>
-                                                <div class="form-button-action">
-                                                    <button type="button"
-                                                        class="btn btn-link btn-primary btn-lg edit-row"
-                                                        th:data-id="${part.id}" th:data-name="${part.name}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-link btn-danger delete-row"
-                                                        th:data-id="${part.id}" th:data-name="${part.name}">
-                                                        <i class="fa fa-times"></i>
-                                                    </button>
-                                                </div>
+                                                <a th:href="@{'/parts/' + ${part.id}}" th:text="${part.code}" class="d-block text-decoration-none text-dark font-weight-bold">
                                             </td>
+                                            <td th:text="${part.name}"></td>
+                                            <td th:text="${part.model}"></td>
+                                            <td th:text="${part.manufacturer}"></td>
+                                            <td>
+                                                <span th:text="${part.stockQuantity}"></span>
+                                                <span th:if="${part.isStockWithPRBelowSafetyMinimum()}" 
+                                                      class="badge badge-warning ml-2" 
+                                                      title="Stock below safety minimum. Current: ${part.stockQuantity}, With PR: ${part.stockQuantity + part.prQuantity}, Min: ${part.safetyMinQty}">
+                                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                                </span>
+                                            </td>
+                                            <td th:text="${part.prQuantity}"></td>
+                                            <td th:text="${part.safetyMinQty}"></td>
+                                            <td th:text="${part.sectionCode}"></td>
                                         </tr>
                                         <tr th:if="${parts.totalElements == 0}">
-                                            <td colspan="8" class="text-center">No parts found</td>
+                                            <td colspan="9" class="text-center">No parts found</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -281,8 +262,10 @@
                     $('#editId').val(currentId);
                     $('#editCode').val(row.find('[data-field="code"]').text().trim());
                     $('#editName').val(row.find('[data-field="name"]').text().trim());
-                    $('#editCategory').val(row.find('[data-field="category"]').text().trim());
-                    $('#editSupplier').val(row.find('[data-field="supplier"]').text().trim());
+                    $('#editModel').val(row.find('[data-field="model"]').text().trim());
+                    $('#editManufacturer').val(row.find('[data-field="manufacturer"]').text().trim());
+                    $('#editCategoryInput').val(row.find('[data-field="category"]').text().trim());
+                    $('#editSupplierInput').val(row.find('[data-field="supplier"]').text().trim());
                     $('#editStockQuantity').val(row.find('[data-field="stockQuantity"]').text().trim());
                     $('#editSpecification').val(row.find('[data-field="specification"]').text().trim());
 

@@ -2,6 +2,7 @@ package ahqpck.maintenance.report.controller;
 
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ahqpck.maintenance.report.dto.CategoryDTO;
-import ahqpck.maintenance.report.dto.DTOMapper;
 import ahqpck.maintenance.report.dto.MachineTypeDTO;
 import ahqpck.maintenance.report.dto.SectionDTO;
 import ahqpck.maintenance.report.dto.CapacityDTO;
 import ahqpck.maintenance.report.dto.SubcategoryDTO;
 import ahqpck.maintenance.report.dto.SupplierDTO;
+import ahqpck.maintenance.report.mapper.DTOMapper;
 import ahqpck.maintenance.report.service.CategoryService;
 import ahqpck.maintenance.report.service.MachineTypeService;
 import ahqpck.maintenance.report.service.SectionService;
@@ -42,6 +43,7 @@ public class CodeGeneratorController {
     private final DTOMapper dtoMapper;
 
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @GetMapping
     public String showGenerator(Model model) {
         model.addAttribute("title", "Code Generator");
@@ -84,6 +86,7 @@ public class CodeGeneratorController {
     }
 
     // Machine Type Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-machine-type")
     public String createMachineType(
             @Valid @ModelAttribute MachineTypeDTO machineTypeDTO,
@@ -115,8 +118,9 @@ public class CodeGeneratorController {
             return "redirect:/code-generator";
         }
     }
-    
+
     // Category Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-category")
     public String createCategory(
             @Valid @ModelAttribute CategoryDTO categoryDTO,
@@ -148,8 +152,9 @@ public class CodeGeneratorController {
             return "redirect:/code-generator";
         }
     }
-    
+
     // Subcategory Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-subcategory")
     public String createSubcategory(
             @Valid @ModelAttribute SubcategoryDTO subcategoryDTO,
@@ -183,6 +188,7 @@ public class CodeGeneratorController {
     }
 
     // Capacity Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-capacity")
     public String createCapacity(
             @Valid @ModelAttribute CapacityDTO capacityDTO,
@@ -216,6 +222,7 @@ public class CodeGeneratorController {
     }
 
     // Supplier Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-supplier")
     public String createSupplier(
             @Valid @ModelAttribute SupplierDTO supplierDTO,
@@ -247,8 +254,9 @@ public class CodeGeneratorController {
             return "redirect:/code-generator";
         }
     }
-    
+
     // Section Creation
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/save-section")
     public String createSection(
             @Valid @ModelAttribute SectionDTO sectionDTO,

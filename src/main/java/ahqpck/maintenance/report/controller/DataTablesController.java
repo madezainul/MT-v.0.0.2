@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import ahqpck.maintenance.report.service.MachineTypeService;
 import ahqpck.maintenance.report.service.CategoryService;
 import ahqpck.maintenance.report.service.SubcategoryService;
+import ahqpck.maintenance.report.mapper.DTOMapper;
 import ahqpck.maintenance.report.service.CapacityService;
 import ahqpck.maintenance.report.service.SupplierService;
 import ahqpck.maintenance.report.service.SectionService;
-import ahqpck.maintenance.report.dto.DTOMapper;
 
 @Controller
 @RequiredArgsConstructor

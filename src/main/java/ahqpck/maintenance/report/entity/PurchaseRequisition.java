@@ -95,6 +95,10 @@ public class PurchaseRequisition {
     @Builder.Default
     private List<PurchaseRequisitionPart> requisitionParts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "purchaseRequisition", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
+    private List<QuotationRequest> quotationRequests = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         if (this.id == null) {

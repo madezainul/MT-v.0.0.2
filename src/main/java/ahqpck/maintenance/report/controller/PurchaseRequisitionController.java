@@ -168,20 +168,26 @@ public class PurchaseRequisitionController {
             model.addAttribute("pr", pr);
             
             // Load users list for reviewer/inspector selection (only active reviewer users)
-            var allUsers = userService.getAllUsers(null, 0, Integer.MAX_VALUE, "name", true);
-            var reviewerUsers = allUsers.getContent().stream()
-                    .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
-                    .filter(user -> user.getRoleNames() != null && user.getRoleNames().contains("REVIEWER"))
-                    .collect(java.util.stream.Collectors.toList());
-            
-            // Fallback: if no reviewer users found, show all active users
-            if (reviewerUsers.isEmpty()) {
-                reviewerUsers = allUsers.getContent().stream()
+            try {
+                var allUsers = userService.getAllUsers(null, 0, Integer.MAX_VALUE, "name", true);
+                var reviewerUsers = allUsers.getContent().stream()
                         .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                        .filter(user -> user.getRoleNames() != null && user.getRoleNames().contains("REVIEWER"))
                         .collect(java.util.stream.Collectors.toList());
+                
+                // Fallback: if no reviewer users found, show all active users
+                if (reviewerUsers.isEmpty()) {
+                    reviewerUsers = allUsers.getContent().stream()
+                            .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                            .collect(java.util.stream.Collectors.toList());
+                }
+                
+                model.addAttribute("usersList", reviewerUsers);
+            } catch (Exception e) {
+                // If there's an error loading users, add empty list as fallback
+                model.addAttribute("usersList", java.util.Collections.emptyList());
+                model.addAttribute("userListError", "Unable to load users list: " + e.getMessage());
             }
-            
-            model.addAttribute("usersList", reviewerUsers);
             
             return "purchase-requisition/detail";
 
@@ -323,7 +329,7 @@ public class PurchaseRequisitionController {
 
         try {
             if (currentUserId != null) {
-                prService.updatePurchaseRequisition(id, prDTO);
+                prService.updatePurchaseRequisition(id, prDTO, currentUserId);
                 ra.addFlashAttribute("success", "Purchase Requisition updated successfully");
             } else {
                 ra.addFlashAttribute("error", "Unable to identify current user");
@@ -402,6 +408,7 @@ public class PurchaseRequisitionController {
     }
 
     // Delete PR
+    @PreAuthorize("hasRole('SUPERADMIN')")
     @PostMapping("/{id}/delete")
     public String deletePurchaseRequisition(@PathVariable String id, RedirectAttributes ra) {
         try {

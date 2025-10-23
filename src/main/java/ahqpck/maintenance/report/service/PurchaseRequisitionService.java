@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ahqpck.maintenance.report.dto.DTOMapper;
+import ahqpck.maintenance.report.mapper.PurchaseRequisitionMapper;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
 import ahqpck.maintenance.report.entity.Part;
@@ -31,7 +31,7 @@ public class PurchaseRequisitionService {
     private final PurchaseRequisitionRepository prRepository;
     private final PartRepository partRepository;
     private final UserRepository userRepository;
-    private final DTOMapper dtoMapper;
+    private final PurchaseRequisitionMapper purchaseRequisitionMapper;
     private final ZeroPaddedCodeGenerator codeGenerator;
 
     // CRUD Operations
@@ -155,7 +155,7 @@ public class PurchaseRequisitionService {
     }
 
     @Transactional
-    public PurchaseRequisitionDTO updatePurchaseRequisition(String id, PurchaseRequisitionDTO prDTO) {
+    public PurchaseRequisitionDTO updatePurchaseRequisition(String id, PurchaseRequisitionDTO prDTO, String userId) {
         try {
             PurchaseRequisition pr = prRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Purchase Requisition not found with id: " + id));
@@ -187,6 +187,58 @@ public class PurchaseRequisitionService {
                 pr.setReviewedAt(null);
             }
             
+            // Update parts if provided
+            if (prDTO.getParts() != null && !prDTO.getParts().isEmpty()) {
+                // Create a map of existing parts by ID for quick lookup
+                java.util.Map<String, PurchaseRequisitionPart> existingPartsMap = new java.util.HashMap<>();
+                for (PurchaseRequisitionPart prp : pr.getRequisitionParts()) {
+                    existingPartsMap.put(prp.getId(), prp);
+                }
+                
+                // Track which parts to keep
+                java.util.Set<String> partsToKeep = new java.util.HashSet<>();
+                
+                // Update existing parts or create new ones
+                for (PurchaseRequisitionPartDTO partDTO : prDTO.getParts()) {
+                    if (partDTO.getId() != null && existingPartsMap.containsKey(partDTO.getId())) {
+                        // Update existing part
+                        PurchaseRequisitionPart existingPart = existingPartsMap.get(partDTO.getId());
+                        existingPart.setQuantityRequested(partDTO.getQuantityRequested());
+                        existingPart.setCriticalityLevel(partDTO.getCriticalityLevel());
+                        existingPart.setJustification(partDTO.getJustification());
+                        existingPart.setNotes(partDTO.getNotes());
+                        
+                        // Update part if part ID changed
+                        if (!existingPart.getPart().getId().equals(partDTO.getPartId())) {
+                            Part newPart = partRepository.findById(partDTO.getPartId())
+                                    .orElseThrow(() -> new RuntimeException("Part not found with id: " + partDTO.getPartId()));
+                            existingPart.setPart(newPart);
+                        }
+                        
+                        partsToKeep.add(partDTO.getId());
+                    } else {
+                        // Create new part
+                        PurchaseRequisitionPart newPrPart = createPRPart(pr, partDTO);
+                        pr.addPart(newPrPart);
+                    }
+                }
+                
+                // Remove parts that are no longer in the DTO (deleted parts)
+                java.util.List<PurchaseRequisitionPart> partsToRemove = pr.getRequisitionParts().stream()
+                        .filter(prp -> !partsToKeep.contains(prp.getId()))
+                        .collect(java.util.stream.Collectors.toList());
+                
+                for (PurchaseRequisitionPart prp : partsToRemove) {
+                    pr.removePart(prp);
+                }
+            }
+            
+            // Set updatedBy user
+            if (userId != null) {
+                User updatedByUser = userRepository.findById(userId).orElse(null);
+                pr.setUpdatedBy(updatedByUser);
+            }
+            
             pr.setUpdatedAt(LocalDateTime.now());
 
             pr = prRepository.save(pr);
@@ -202,10 +254,6 @@ public class PurchaseRequisitionService {
         try {
             PurchaseRequisition pr = prRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Purchase Requisition not found with id: " + id));
-
-            if (pr.getStatus() != PRStatus.SUBMITTED) {
-                throw new RuntimeException("Cannot delete purchase requisition that is not in SUBMITTED status");
-            }
 
             prRepository.delete(pr);
 
@@ -406,7 +454,7 @@ public class PurchaseRequisitionService {
     }
 
     private PurchaseRequisitionDTO mapToDTO(PurchaseRequisition pr) {
-        PurchaseRequisitionDTO dto = dtoMapper.mapToPurchaseRequisitionDTO(pr);
+        PurchaseRequisitionDTO dto = purchaseRequisitionMapper.toDTO(pr);
         
         // Set computed fields
         dto.setTotalParts(pr.getTotalParts());

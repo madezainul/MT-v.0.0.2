@@ -3,12 +3,11 @@ package ahqpck.maintenance.report.service;
 import ahqpck.maintenance.report.dto.PartDTO;
 import ahqpck.maintenance.report.entity.Part;
 import ahqpck.maintenance.report.exception.NotFoundException;
+import ahqpck.maintenance.report.mapper.PartMapper;
 import ahqpck.maintenance.report.repository.PartRepository;
-import ahqpck.maintenance.report.repository.EquipmentPartBOMRepository;
+import ahqpck.maintenance.report.repository.PurchaseRequisitionPartRepository;
 import ahqpck.maintenance.report.specification.PartSpecification;
 import ahqpck.maintenance.report.util.FileUploadUtil;
-import ahqpck.maintenance.report.util.ImportUtil;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -30,11 +29,10 @@ public class PartService {
     private String uploadDir;
 
     private final PartRepository partRepository;
-    private final EquipmentPartBOMRepository equipmentPartBOMRepository;
+    private final PartMapper partMapper;
 
     private final FileUploadUtil fileUploadUtil;
-    private final Validator validator;
-    private final ImportUtil importUtil;
+    private final PurchaseRequisitionPartRepository prPartRepository;
 
     public Page<PartDTO> getAllParts(String keyword, int page, int size, String sortBy, boolean asc) {
         Sort sort = asc ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -43,13 +41,39 @@ public class PartService {
         Specification<Part> spec = PartSpecification.search(keyword);
         Page<Part> partPage = partRepository.findAll(spec, pageable);
 
-        return partPage.map(this::toDTO);
+        return partPage.map(part -> {
+            PartDTO dto = toDTO(part);
+            
+            // Get approved PR quantity
+            Integer prQty = prPartRepository.getSumQuantityByPartId(part.getId());
+            dto.setPrQuantity(prQty != null ? prQty : 0);
+            
+            // Get completed PR quantity and add to stock
+            Integer completedQty = prPartRepository.getSumCompletedQuantityByPartId(part.getId());
+            if (completedQty != null && completedQty > 0) {
+                dto.setStockQuantity(dto.getStockQuantity() + completedQty);
+            }
+            
+            return dto;
+        });
     }
 
     public PartDTO getPartById(String id) {
         Part part = partRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Part not found with ID: " + id));
-        return toDTO(part);
+        PartDTO dto = toDTO(part);
+        
+        // Get approved PR quantity
+        Integer prQty = prPartRepository.getSumQuantityByPartId(id);
+        dto.setPrQuantity(prQty != null ? prQty : 0);
+        
+        // Get completed PR quantity and add to stock
+        Integer completedQty = prPartRepository.getSumCompletedQuantityByPartId(id);
+        if (completedQty != null && completedQty > 0) {
+            dto.setStockQuantity(dto.getStockQuantity() + completedQty);
+        }
+        
+        return dto;
     }
 
     public void createPart(PartDTO dto, MultipartFile imageFile) {
@@ -59,6 +83,7 @@ public class PartService {
         }
 
         Part part = new Part();
+
         mapToEntity(part, dto);
 
         if (imageFile != null && !imageFile.isEmpty()) {
@@ -115,30 +140,18 @@ public class PartService {
         part.setCode(dto.getCode().trim());
         part.setName(dto.getName().trim());
         part.setModel(dto.getModel() != null ? dto.getModel().trim() : null);
+        part.setManufacturer(dto.getManufacturer() != null ? dto.getManufacturer().trim() : null);
         part.setSpecification(dto.getSpecification());
         part.setCategoryName(dto.getCategoryName());
         part.setSupplierName(dto.getSupplierName());
         part.setSectionCode(dto.getSectionCode());
         part.setStockQuantity(dto.getStockQuantity() != null ? dto.getStockQuantity() : 0);
+        part.setSafetyMinQty(dto.getSafetyMinQty() != null ? dto.getSafetyMinQty() : 0);
     }
 
+
+    //Mapper Part
     private PartDTO toDTO(Part part) {
-        PartDTO dto = new PartDTO();
-        dto.setId(part.getId());
-        dto.setCode(part.getCode());
-        dto.setName(part.getName());
-        dto.setModel(part.getModel());
-        dto.setSpecification(part.getSpecification());
-        dto.setCategoryName(part.getCategoryName());
-        dto.setSupplierName(part.getSupplierName());
-        dto.setSectionCode(part.getSectionCode());
-        dto.setImage(part.getImage());
-        dto.setStockQuantity(part.getStockQuantity());
-        
-        // Set BOM equipment count
-        long equipmentCount = equipmentPartBOMRepository.countEquipmentByPartId(part.getId());
-        dto.setEquipmentCount((int) equipmentCount);
-        
-        return dto;
+        return partMapper.toDTO(part);
     }
 }

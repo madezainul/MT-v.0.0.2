@@ -14,6 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +27,10 @@ public class QuotationRequestDTO {
 
     @NotBlank(message = "Quotation Number is required")
     private String quotationNumber;
+
+    private String purchaseRequisitionId;
+    private String purchaseRequisitionCode;
+    private String purchaseRequisitionTitle;
 
     @NotBlank(message = "Supplier name is required")
     private String supplierName;
@@ -42,6 +48,7 @@ public class QuotationRequestDTO {
     private LocalDate actualDeliveryDate;
 
     @Builder.Default
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private QRStatus status = QRStatus.CREATED;
 
     private String notes;
@@ -51,6 +58,11 @@ public class QuotationRequestDTO {
     private String createdByEmail;
 
     private LocalDateTime createdAt;
+
+    private String updatedById;
+    private String updatedByName;
+    private String updatedByEmail;
+
     private LocalDateTime updatedAt;
 
     @Builder.Default
@@ -107,6 +119,52 @@ public class QuotationRequestDTO {
             return 0.0;
         }
         return ((double) (totalReceivedQuantity == null ? 0 : totalReceivedQuantity) / totalQuantity) * 100;
+    }
+
+    public String getFormattedNotes() {
+        if (notes == null || notes.isEmpty()) {
+            return notes;
+        }
+        
+        StringBuilder formatted = new StringBuilder();
+        String[] lines = notes.split("\n");
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_DATE_TIME;
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm");
+        
+        for (String line : lines) {
+            if (line.isEmpty()) continue;
+            
+            // Check if line starts with ISO datetime format (e.g., 2025-10-21T14:03:54)
+            if (line.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")) {
+                try {
+                    // Find the actual content separator (after milliseconds/nanoseconds)
+                    int contentStart = line.indexOf(": ");
+                    
+                    if (contentStart > 0) {
+                        String datetimeStr = line.substring(0, contentStart);
+                        String content = line.substring(contentStart + 2);
+                        
+                        try {
+                            java.time.LocalDateTime dateTime = java.time.LocalDateTime.parse(datetimeStr, inputFormatter);
+                            String formattedDateTime = dateTime.format(outputFormatter);
+                            formatted.append(formattedDateTime).append(": ").append(content);
+                        } catch (Exception e) {
+                            // If parsing fails, use original line
+                            formatted.append(line);
+                        }
+                    } else {
+                        formatted.append(line);
+                    }
+                } catch (Exception e) {
+                    formatted.append(line);
+                }
+            } else {
+                formatted.append(line);
+            }
+            formatted.append("\n");
+        }
+        
+        return formatted.toString().trim();
     }
 
     // Add part helper

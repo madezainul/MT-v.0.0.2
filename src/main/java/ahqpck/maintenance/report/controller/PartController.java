@@ -1,6 +1,6 @@
 package ahqpck.maintenance.report.controller;
 
-import ahqpck.maintenance.report.dto.DTOMapper;
+import ahqpck.maintenance.report.mapper.EquipmentMapper;
 import ahqpck.maintenance.report.dto.PartDTO;
 import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.service.CategoryService;
@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,14 +29,29 @@ import java.util.stream.Collectors;
 @RequestMapping("/parts")
 @RequiredArgsConstructor
 public class PartController {
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
+    @GetMapping("/{id}")
+    public String partDetail(@PathVariable String id, Model model) {
+        PartDTO partDTO = partService.getPartById(id);
+        model.addAttribute("part", partDTO);
+        model.addAttribute("partDTO", partDTO); // for modal editing
+        model.addAttribute("categories", categoryService.getAll().stream()
+                .map(equipmentMapper::toCategoryDTO).collect(Collectors.toList()));
+        model.addAttribute("suppliers", supplierService.getAll().stream()
+                .map(equipmentMapper::toSupplierDTO).collect(Collectors.toList()));
+        model.addAttribute("sections", sectionService.getAll().stream()
+                .map(equipmentMapper::toSectionDTO).collect(Collectors.toList()));
+        return "part/detail";
+    }
 
     private final PartService partService;
     private final CategoryService categoryService;
     private final SupplierService supplierService;
     private final SectionService sectionService;
-    private final DTOMapper dtoMapper;
+    private final EquipmentMapper equipmentMapper;
     private final UserService userService;
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping
     public String listParts(
             @RequestParam(required = false) String keyword,
@@ -72,22 +88,22 @@ public class PartController {
             model.addAttribute("partDTO", new PartDTO());
             
             model.addAttribute("categories", categoryService.getAll().stream()
-                    .map(dtoMapper::mapToCategoryDTO).collect(Collectors.toList()));
+                    .map(equipmentMapper::toCategoryDTO).collect(Collectors.toList()));
 
             model.addAttribute("suppliers", supplierService.getAll().stream()
-                    .map(dtoMapper::mapToSupplierDTO).collect(Collectors.toList()));
+                    .map(equipmentMapper::toSupplierDTO).collect(Collectors.toList()));
 
             model.addAttribute("sections", sectionService.getAll().stream()
-                .map(dtoMapper::mapToSectionDTO).collect(Collectors.toList()));
+                .map(equipmentMapper::toSectionDTO).collect(Collectors.toList()));
 
             model.addAttribute("editCategories", categoryService.getAll().stream()
-                    .map(dtoMapper::mapToCategoryDTO).collect(Collectors.toList()));
+                    .map(equipmentMapper::toCategoryDTO).collect(Collectors.toList()));
 
             model.addAttribute("editSuppliers", supplierService.getAll().stream()
-                    .map(dtoMapper::mapToSupplierDTO).collect(Collectors.toList()));
+                    .map(equipmentMapper::toSupplierDTO).collect(Collectors.toList()));
             
             model.addAttribute("editSections", sectionService.getAll().stream()
-                .map(dtoMapper::mapToSectionDTO).collect(Collectors.toList()));
+                .map(equipmentMapper::toSectionDTO).collect(Collectors.toList()));
 
         } catch (Exception e) {
             model.addAttribute("error", "Failed to load parts: " + e.getMessage());
@@ -96,11 +112,12 @@ public class PartController {
         return "part/index";
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping
     public String createPart(
             @Valid @ModelAttribute PartDTO partDTO,
             BindingResult bindingResult,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile, Authentication authentication,
             RedirectAttributes ra) {
 
         if (bindingResult.hasErrors()) {
@@ -116,6 +133,9 @@ public class PartController {
             return "redirect:/parts";
         }
 
+        // Guaranteed non-null due to @PreAuthorize
+        String currentUserId = getCurrentUser(authentication).getId();
+
         try {
             partService.createPart(partDTO, imageFile);
             ra.addFlashAttribute("success", "Part created successfully.");
@@ -128,6 +148,7 @@ public class PartController {
     }
 
     // === UPDATE ===
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")
     @PostMapping("/update")
     public String updatePart(
             @Valid @ModelAttribute PartDTO partDTO,
@@ -159,6 +180,7 @@ public class PartController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @GetMapping("/delete/{id}")
     public String deletePart(@PathVariable String id, RedirectAttributes ra) {
         try {
@@ -168,5 +190,10 @@ public class PartController {
             ra.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/parts";
+    }
+
+    private UserDTO getCurrentUser(Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return userService.getUserById(userDetails.getId());
     }
 }

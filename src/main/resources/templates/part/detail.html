@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/dashboard}">
+<head>
+    <title>Part Detail</title>
+    <!-- WebJar Bootstrap CSS -->
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" />
+    <style>
+        .clickable-img {
+            cursor: pointer;
+            max-width: 200px;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        .clickable-img:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div th:replace="~{part/modal :: modal}"></div>
+        <div class="page-inner">
+            <div class="page-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="page-title" th:text="${part.code}"></h4>
+                    <ul class="breadcrumbs">
+                        <li class="nav-home"><i class="fas fa-cogs"></i></li>
+                        <li class="separator"><i class="flaticon-right-arrow"></i></li>
+                        <li class="nav-item"><a th:href="@{/parts}">Parts</a></li>
+                        <li class="separator"><i class="flaticon-right-arrow"></i></li>
+                        <li class="nav-item"><a th:text="${part.code}"></a></li>
+                    </ul>
+                </div>
+                <div>
+                    <a th:href="@{/parts}" class="btn btn-primary btn-lg text-white"><i class="fa fa-list mr-1"></i> Part List</a>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="card card-profile">
+                        <!-- Solid Blue Header -->
+                        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-center" style="height: 80px;">
+                            <h4 class="mb-0 font-weight-bold text-center" th:text="${part.code} + ' - ' + ${part.name}"></h4>
+                        </div>
+                        <!-- Inline Edit Form (profile.html style) -->
+                        <div class="card-footer bg-transparent border-0 d-flex justify-content-end">
+                            <form th:action="@{/parts/update}" th:object="${partDTO}" method="post" enctype="multipart/form-data" class="w-100">
+                                <input type="hidden" name="id" th:value="${part.id}" />
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Code</label>
+                                            <input type="text" class="form-control" name="code" th:value="${part.code}" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input type="text" class="form-control" name="name" th:value="${part.name}" required />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Model</label>
+                                            <input type="text" class="form-control" name="model" th:value="${part.model}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Manufacturer</label>
+                                            <input type="text" class="form-control" name="manufacturer" th:value="${part.manufacturer}" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Category</label>
+                                            <input type="text" class="form-control" name="categoryName" th:value="${part.categoryName}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Supplier</label>
+                                            <input type="text" class="form-control" name="supplierName" th:value="${part.supplierName}" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Section</label>
+                                            <input type="text" class="form-control" name="sectionCode" th:value="${part.sectionCode}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Specification</label>
+                                            <input type="text" class="form-control" name="specification" th:value="${part.specification}" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Stock Quantity</label>
+                                            <input type="number" class="form-control" name="stockQuantity" th:value="${part.stockQuantity}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>PR Quantity</label>
+                                            <input type="number" class="form-control" name="prQuantity" th:value="${part.prQuantity}" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Safety Quantity (Min)</label>
+                                            <input type="number" class="form-control" name="safetyMinQty" th:value="${part.safetyMinQty}" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Equipment Count</label>
+                                            <input type="number" class="form-control" name="equipmentCount" th:value="${part.equipmentCount}" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Image Upload -->
+                                <div class="form-row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label>Image</label>
+                                            <div class="row align-items-center no-gutters">
+                                                <div class="col-12 mb-2">
+                                                    <!-- Always render the preview image element. If there's no saved image, show a placeholder. -->
+                                                    <!-- Use a button-like element (not a real link) and mark it to avoid global canonicalizers -->
+                                                    <span id="previewImageLinkWrapper" data-no-canonicalize="true">
+                                                        <button type="button" id="previewImageLink" class="btn btn-link p-0" style="text-decoration: none;"
+                                                                onclick="(function(e){ if(e && e.preventDefault) e.preventDefault(); if(e && e.stopPropagation) e.stopPropagation(); if(typeof showImageModal === 'function') showImageModal(e); })(event)">
+                                                            <img id="editImagePreview"
+                                                                 th:src="${part.image != null} ? @{/upload/part/image/__${part.image}__} : @{/assets/img/no-image.png}"
+                                                                 alt="Part Image" class="img-thumbnail"
+                                                                 style="max-height: 150px; display: block; margin-bottom: 8px;"
+                                                                 onclick="(function(e){ if(e && e.preventDefault) e.preventDefault(); if(e && e.stopPropagation) e.stopPropagation(); if(typeof showImageModal === 'function') showImageModal(e); })(event)">
+                                                        </button>
+                                                    </span>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <div class="custom-file" style="max-width: 220px;">
+                                                        <input type="file" class="custom-file-input" id="editImageInput" name="imageFile" accept="image/*">
+                                                        <label class="custom-file-label" for="editImageInput">Change image...</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="custom-control custom-checkbox mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="deleteImage" name="deleteImage" value="true">
+                                                <label class="custom-control-label" for="deleteImage">
+                                                    <small>Remove current image</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-4 mb-3 d-flex justify-content-center align-items-center gap-2">
+                                    <button type="submit" class="btn btn-primary px-4 mr-2">
+                                        <i class="fas fa-save mr-1"></i> Save Changes
+                                    </button>
+                                    <form th:action="@{'/parts/' + ${part.id} + '/delete'}" method="post" style="display:inline; margin:0;">
+                                        <button type="submit" class="btn btn-danger px-4">
+                                            <i class="fa fa-trash mr-1"></i> Delete Part
+                                        </button>
+                                    </form>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // File input preview (move preview above input)
+                const fileInput = document.getElementById('editImageInput');
+                const preview = document.getElementById('editImagePreview');
+                const fileLabel = document.querySelector('label[for="editImageInput"]');
+                if (fileInput) {
+                    fileInput.addEventListener('change', function (evt) {
+                        const file = evt.target.files && evt.target.files[0];
+                        // Update the custom-file label text (Bootstrap 4 style)
+                        if (fileLabel) {
+                            fileLabel.textContent = file ? file.name : 'Change image...';
+                        }
+                        if (file && file.type && file.type.match('image.*')) {
+                            const reader = new FileReader();
+                            reader.onload = function () {
+                                if (preview) {
+                                    preview.src = reader.result;
+                                    preview.style.display = 'block';
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+        });
+    </script>
+    <!-- Using shared part modal for image zoom (partImageZoomModal in part/modal.html) -->
+
+    <script>
+        
+    </script>
+        <!-- Bootstrap 5 modal markup specific to this page (used by the showImageModal function) -->
+        <div class="modal fade" id="partImageModal" tabindex="-1" aria-labelledby="partImageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-white" id="partImageModalLabel">Image Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center p-3">
+                        <img id="partModalImage" class="img-fluid" src="" alt="Full-size image" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- WebJar Bootstrap bundle (includes Popper) -->
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

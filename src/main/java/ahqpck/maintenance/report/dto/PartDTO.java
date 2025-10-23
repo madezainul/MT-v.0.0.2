@@ -10,6 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PartDTO {
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime updatedAt;
+    // PR quantity (total quantity requested in PRs)
+    private Integer prQuantity = 0;
+
+    // Safety quantity minimum
+    private Integer safetyMinQty = 0;
     private String id;
 
     @NotBlank(message = "Code is mandatory")
@@ -35,7 +42,23 @@ public class PartDTO {
 
     @NotNull(message = "Stock quantity is required")
     private Integer stockQuantity = 0;
-    
+
     // BOM related fields
     private Integer equipmentCount = 0; // Number of equipment using this part
+
+    // Helper method: Check if stock is below safety minimum
+    public boolean isBelowSafetyMinimum() {
+        if (safetyMinQty == null || stockQuantity == null) {
+            return false;
+        }
+        return stockQuantity < safetyMinQty;
+    }
+
+    // Helper method: Check if total (stock + PR quantity) meets safety minimum
+    public boolean isStockWithPRBelowSafetyMinimum() {
+        if (safetyMinQty == null || stockQuantity == null || prQuantity == null) {
+            return false;
+        }
+        return (stockQuantity + prQuantity) < safetyMinQty;
+    }
 }

@@ -3,6 +3,7 @@ package ahqpck.maintenance.report.controller;
 import java.util.Arrays;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,7 @@ public class QuotationRequestController {
     private final UserService userService;
 
     // Dashboard - Entry point
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'INSPECTOR', 'VIEWER')")
     @GetMapping
     public String showDashboard(Model model) {
         model.addAttribute("title", "Quotation Request Dashboard");
@@ -52,6 +54,7 @@ public class QuotationRequestController {
     }
 
     // List all QRs with search, filtering and pagination
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'INSPECTOR', 'VIEWER')")
     @GetMapping("/list")
     public String listQuotationRequests(
             @RequestParam(value = "search", required = false) String searchTerm,
@@ -100,6 +103,7 @@ public class QuotationRequestController {
     }
 
     // Show QR details
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'INSPECTOR', 'VIEWER')")
     @GetMapping("/{id}")
     public String showQuotationRequest(@PathVariable String id, Model model) {
         try {
@@ -123,6 +127,14 @@ public class QuotationRequestController {
             
             model.addAttribute("usersList", reviewerUsers);
 
+            // Load inspector users for receiving workflow
+            var inspectorUsers = allUsers.getContent().stream()
+                    .filter(user -> user.getStatus() == ahqpck.maintenance.report.entity.User.Status.ACTIVE)
+                    .filter(user -> user.getRoleNames() != null && user.getRoleNames().contains("INSPECTOR"))
+                    .collect(java.util.stream.Collectors.toList());
+            
+            model.addAttribute("inspectorUsersList", inspectorUsers);
+
             return "quotation-request/detail";
 
         } catch (Exception e) {
@@ -132,6 +144,7 @@ public class QuotationRequestController {
     }
 
     // Create QR from approved PR parts
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @GetMapping("/create-from-pr")
     public String showCreateFromPRForm(
             @RequestParam String supplier,
@@ -157,6 +170,7 @@ public class QuotationRequestController {
     }
 
     // Create PO from multiple approved PRs (new multi-selection page)
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @GetMapping("/create-multi")
     public String showCreateMultiPOForm(Model model) {
         try {
@@ -178,6 +192,7 @@ public class QuotationRequestController {
     }
 
     // Create PO - handle form submission
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/create")
     public String createPurchaseOrder(
             @RequestParam(required = false) String supplier,
@@ -210,6 +225,7 @@ public class QuotationRequestController {
     }
 
     // Update QR status
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/{id}/status")
     public String updateQRStatus(
             @PathVariable String id,
@@ -229,34 +245,75 @@ public class QuotationRequestController {
     }
 
     // Receive parts
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'INSPECTOR')")
     @PostMapping("/{id}/receive")
     public String receiveParts(
             @PathVariable String id,
             @RequestParam(required = false) String[] partIds,
             @RequestParam(required = false) Integer[] receivedQuantities,
+            @RequestParam(required = false) String[] inspectorIds,
+            @RequestParam(required = false) String[] models,
+            @RequestParam(required = false) String[] newSuppliers,
             @RequestParam(required = false) String receivingNotes,
+            @RequestParam(required = false) String formSubmitted,
             RedirectAttributes ra) {
 
         try {
-            if (partIds != null && receivedQuantities != null) {
+            // Debug logging
+            System.out.println("\n=== RECEIVE PARTS DEBUG ===");
+            System.out.println("Form Submitted: " + formSubmitted);
+            System.out.println("partIds: " + (partIds != null ? "Length=" + partIds.length + " Values=" + java.util.Arrays.toString(partIds) : "null"));
+            System.out.println("receivedQuantities: " + (receivedQuantities != null ? "Length=" + receivedQuantities.length + " Values=" + java.util.Arrays.toString(receivedQuantities) : "null"));
+            System.out.println("inspectorIds: " + (inspectorIds != null ? java.util.Arrays.toString(inspectorIds) : "null"));
+            System.out.println("models: " + (models != null ? java.util.Arrays.toString(models) : "null"));
+            System.out.println("newSuppliers: " + (newSuppliers != null ? java.util.Arrays.toString(newSuppliers) : "null"));
+            
+            if (partIds == null || partIds.length == 0) {
+                System.out.println("ERROR: No part IDs received!");
+                ra.addFlashAttribute("error", "Error: No part IDs received. Please select at least one part to receive.");
+            } else if (receivedQuantities == null || receivedQuantities.length == 0) {
+                System.out.println("ERROR: No quantities received!");
+                ra.addFlashAttribute("error", "Error: No quantities received. Please enter a quantity for at least one part.");
+            } else {
+                int processedCount = 0;
+                System.out.println("Processing " + partIds.length + " parts...");
+                
                 for (int i = 0; i < partIds.length; i++) {
+                    System.out.println("  Part " + i + ": ID=" + partIds[i] + ", Quantity=" + (i < receivedQuantities.length ? receivedQuantities[i] : "N/A"));
+                    
                     if (receivedQuantities[i] != null && receivedQuantities[i] > 0) {
-                        qrService.receivePart(id, partIds[i], receivedQuantities[i], receivingNotes);
+                        String inspectorId = (inspectorIds != null && i < inspectorIds.length) ? inspectorIds[i] : null;
+                        String model = (models != null && i < models.length) ? models[i] : null;
+                        String newSupplier = (newSuppliers != null && i < newSuppliers.length) ? newSuppliers[i] : null;
+                        
+                        System.out.println("    -> Processing with Inspector: " + inspectorId + ", Model: " + model + ", NewSupplier: " + newSupplier);
+                        
+                        qrService.receivePart(id, partIds[i], receivedQuantities[i], inspectorId, model, newSupplier);
+                        processedCount++;
                     }
                 }
-                ra.addFlashAttribute("success", "Parts received successfully");
-            } else {
-                ra.addFlashAttribute("error", "No parts specified for receiving");
+                
+                if (processedCount > 0) {
+                    System.out.println("SUCCESS: " + processedCount + " part(s) processed");
+                    ra.addFlashAttribute("success", "Parts received successfully (" + processedCount + " part(s) processed)");
+                } else {
+                    System.out.println("ERROR: No parts with valid quantities!");
+                    ra.addFlashAttribute("error", "No valid quantities entered. Please enter a quantity greater than 0 for at least one part.");
+                }
             }
 
         } catch (Exception e) {
+            System.out.println("EXCEPTION: " + e.getMessage());
+            e.printStackTrace();
             ra.addFlashAttribute("error", "Failed to receive parts: " + e.getMessage());
         }
 
+        System.out.println("=== END DEBUG ===\n");
         return "redirect:/quotation-request/" + id;
     }
 
     // Complete QR
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/{id}/complete")
     public String completeQuotationRequest(
             @PathVariable String id,
@@ -275,6 +332,7 @@ public class QuotationRequestController {
     }
 
     // Cancel QR
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/{id}/cancel")
     public String cancelQuotationRequest(
             @PathVariable String id,
@@ -293,6 +351,7 @@ public class QuotationRequestController {
     }
 
     // Edit QR form
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable String id, Model model) {
         try {
@@ -319,6 +378,7 @@ public class QuotationRequestController {
     }
 
     // Update QR
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER')")
     @PostMapping("/{id}/edit")
     public String updateQuotationRequest(
             @PathVariable String id,
@@ -345,6 +405,7 @@ public class QuotationRequestController {
     }
 
     // Delete QR
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
     @PostMapping("/{id}/delete")
     public String deleteQuotationRequest(@PathVariable String id, RedirectAttributes ra) {
         try {

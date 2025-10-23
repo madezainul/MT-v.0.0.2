@@ -26,6 +26,7 @@ public class QuotationRequestPartDTO {
     private PartDTO part;
     private String partCode;
     private String partName;
+    private String partModel;
     private String partSupplier;
     private String partCategory;
 
@@ -41,6 +42,15 @@ public class QuotationRequestPartDTO {
 
     private String notes;
     private LocalDateTime createdAt;
+
+    // Changed model/supplier tracking
+    private String newModel;
+    private String newSupplier;
+
+    // Inspector information
+    private String inspectedById;
+    private String inspectedByName;
+    private LocalDateTime inspectedAt;
 
     // Display helper methods
     public String getFormattedUnitPrice() {
@@ -88,5 +98,14 @@ public class QuotationRequestPartDTO {
             return 0.0;
         }
         return ((double) (quantityReceived == null ? 0 : quantityReceived) / quantityRequested) * 100;
+    }
+
+    // Check if part has been changed during receiving
+    public boolean isPartChanged() {
+        boolean modelChanged = newModel != null && !newModel.trim().isEmpty() && 
+                             !newModel.equals(partModel);
+        boolean supplierChanged = newSupplier != null && !newSupplier.trim().isEmpty() && 
+                                !newSupplier.equals(partSupplier);
+        return modelChanged || supplierChanged;
     }
 }

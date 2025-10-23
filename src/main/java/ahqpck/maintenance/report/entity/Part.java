@@ -1,15 +1,24 @@
 package ahqpck.maintenance.report.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import ahqpck.maintenance.report.util.Base62;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
@@ -24,6 +33,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Part {
+    // PR quantity (total quantity requested in PRs)
+    @Column(name = "pr_quantity")
+    @Builder.Default
+    private Integer prQuantity = 0;
+
+    // Safety quantity minimum
+    @Column(name = "safety_min_qty")
+    @Builder.Default
+    private Integer safetyMinQty = 0;
+
 
     @Id
     @Column(length = 22, updatable = false, nullable = false)
@@ -56,6 +75,24 @@ public class Part {
     @Builder.Default
     private Integer stockQuantity = 0;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = true)
+    @CreatedBy
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = true)
+    @LastModifiedBy
+    private User updatedBy;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @OneToMany(mappedBy = "part", fetch = FetchType.LAZY)
     @Builder.Default
     private Set<EquipmentPartBOM> equipmentBOMs = new HashSet<>();
@@ -65,6 +102,15 @@ public class Part {
         if (this.id == null) {
             this.id = Base62.encode(UUID.randomUUID());
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void useParts(Integer quantity) {

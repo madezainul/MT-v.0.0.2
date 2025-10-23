@@ -35,6 +35,10 @@ public class QuotationRequestPart {
     private QuotationRequest quotationRequest;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "purchase_requisition_part_id")
+    private PurchaseRequisitionPart purchaseRequisitionPart;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "part_id", nullable = false)
     private Part part;
 
@@ -51,11 +55,24 @@ public class QuotationRequestPart {
     @Builder.Default
     private Integer quantityReceived = 0;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inspected_by")
+    private User inspectedBy;
+
+    @Column(name = "inspected_at")
+    private LocalDateTime inspectedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "notes", length = 1000)
+    private String notes;
+
+    @Column(name = "new_model", length = 255)
+    private String newModel;
+
+    @Column(name = "new_supplier", length = 255)
+    private String newSupplier;
 
     @PrePersist
     public void prePersist() {
@@ -105,6 +122,10 @@ public class QuotationRequestPart {
         return part != null ? part.getCategoryName() : null;
     }
 
+    public String getPartModel() {
+        return part != null ? part.getModel() : null;
+    }
+
     public String getReceiveStatus() {
         if (quantityReceived == null || quantityReceived == 0) {
             return "Not Received";
@@ -113,5 +134,14 @@ public class QuotationRequestPart {
         } else {
             return "Partially Received";
         }
+    }
+
+    // Check if part has been changed during receiving
+    public boolean isPartChanged() {
+        boolean modelChanged = newModel != null && !newModel.trim().isEmpty() && 
+                             !newModel.equals(getPartModel());
+        boolean supplierChanged = newSupplier != null && !newSupplier.trim().isEmpty() && 
+                                !newSupplier.equals(quotationRequest != null ? quotationRequest.getSupplierName() : "");
+        return modelChanged || supplierChanged;
     }
 }

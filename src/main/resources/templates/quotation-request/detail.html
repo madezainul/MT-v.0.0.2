@@ -110,6 +110,13 @@
             border-radius: 6px;
         }
 
+        .badge-pill-custom {
+            border-radius: 50rem;
+            /* or 999px */
+            padding-left: 0.8em;
+            padding-right: 0.8em;
+        }
+
         /* Layout Fixes */
         .page-inner {
             padding: 15px;
@@ -136,27 +143,28 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+
             .header-action-group {
                 justify-content: stretch;
                 margin-left: 0 !important;
                 margin-top: 15px !important;
             }
-            
+
             .header-action-group .btn {
                 flex: 1;
                 margin: 0 !important;
             }
-            
+
             .section-card .card-body {
                 padding: 1rem;
             }
-            
+
             .table-responsive {
                 font-size: 0.85rem;
             }
-            
-            .col-md-8, .col-md-4 {
+
+            .col-md-8,
+            .col-md-4 {
                 margin-bottom: 20px;
             }
         }
@@ -219,6 +227,33 @@
             max-width: 80px;
             text-align: center;
         }
+
+        /* Changed indicator styling */
+        .badge-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+            font-weight: 500;
+        }
+
+        .badge-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: 500;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        /* Model input field styling */
+        .model-input-field {
+            border: 1px solid #dee2e6;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .model-input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
     </style>
 </head>
 
@@ -245,9 +280,8 @@
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <a th:if="${qr.status.name() == 'CREATED'}" 
-                       th:href="@{'/quotation-request/' + ${qr.id} + '/edit'}" 
-                       class="btn btn-info ml-auto mt-2">
+                    <a th:if="${qr.status.name() == 'CREATED'}" th:href="@{'/quotation-request/' + ${qr.id} + '/edit'}"
+                        class="btn btn-info ml-auto mt-2">
                         <i class="fa fa-edit mr-1"></i> Edit
                     </a>
                     <a th:href="@{/quotation-request/list}" class="btn btn-secondary ml-2 mt-2">
@@ -263,9 +297,9 @@
                         <div class="section-header">
                             <div class="d-flex align-items-center">
                                 <h5 class="mb-0 mr-3" th:text="${qr.quotationNumber}"></h5>
-                                <span class="badge mr-2" 
-                                      th:class="${qr.statusBadgeClass}"
-                                      th:text="${qr.statusDisplay}"></span>
+                                <span class="badge badge-pill badge-primary mr-2"
+                                    style="border-radius: 50px; padding: 0.5rem 1rem;" th:class="${qr.statusBadgeClass}"
+                                    th:text="${qr.statusDisplay}"></span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -283,10 +317,6 @@
                                                 <span th:text="${qr.supplierName}"></span>
                                             </td>
                                         </tr>
-                                        <tr th:if="${qr.supplierContact}">
-                                            <td class="font-weight-bold">Contact:</td>
-                                            <td th:text="${qr.supplierContact}"></td>
-                                        </tr>
                                         <tr>
                                             <td class="font-weight-bold">Request Date:</td>
                                             <td th:text="${qr.formattedRequestDate}"></td>
@@ -303,6 +333,14 @@
                                             <td class="font-weight-bold">Created:</td>
                                             <td th:text="${qr.formattedCreatedAt}"></td>
                                         </tr>
+                                        <tr th:if="${qr.updatedByName}">
+                                            <td class="font-weight-bold">Updated By:</td>
+                                            <td th:text="${qr.updatedByName}"></td>
+                                        </tr>
+                                        <tr th:if="${qr.updatedAt}">
+                                            <td class="font-weight-bold">Updated:</td>
+                                            <td th:text="${qr.updatedAt != qr.createdAt ? #temporals.format(qr.updatedAt, 'dd MMM yyyy HH:mm') : 'Not updated'}"></td>
+                                        </tr>
                                         <tr th:if="${qr.expectedDeliveryDate}">
                                             <td class="font-weight-bold">Expected Delivery:</td>
                                             <td th:text="${qr.formattedExpectedDeliveryDate}"></td>
@@ -318,19 +356,18 @@
                             <div th:if="${qr.notes}" class="row mt-3">
                                 <div class="col-md-12">
                                     <strong>Notes:</strong>
-                                    <p th:text="${qr.notes}" class="text-muted mt-2"></p>
-                                </div>
-                            </div>
-
-                            <!-- Total Amount -->
-                            <div th:if="${qr.totalAmount}" class="row mt-3">
-                                <div class="col-md-12">
-                                    <div class="alert alert-info">
-                                        <h6 class="mb-2"><i class="fas fa-dollar-sign mr-2"></i>Total Amount</h6>
-                                        <h4 class="mb-0 text-primary" th:text="${qr.formattedTotalAmount}"></h4>
+                                    <div class="text-muted mt-2" style="white-space: pre-wrap; word-wrap: break-word;">
+                                        <div th:each="line : ${#strings.arraySplit(qr.formattedNotes, '\n')}" th:if="${!#strings.isEmpty(line)}">
+                                            <small th:if="${#strings.contains(line, ':')}" class="text-secondary">
+                                                <span th:text="${line}"></span>
+                                            </small>
+                                            <div th:unless="${#strings.contains(line, ':')}" th:text="${line}"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+
                         </div>
                     </div>
 
@@ -338,84 +375,258 @@
                     <div class="card section-card mt-3">
                         <div class="section-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-boxes mr-2"></i>QR Parts (<span th:text="${qr.totalParts ?: 0}"></span> parts)
+                                <i class="fas fa-boxes mr-2"></i>QR Parts (<span th:text="${qr.totalParts ?: 0}"></span>
+                                parts)
                             </h5>
                         </div>
                         <div class="card-body">
                             <div th:if="${qr.parts != null && !qr.parts.empty}">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Part Details</th>
-                                                <th class="text-center">Quantity</th>
-                                                <th class="text-center">Unit Price</th>
-                                                <th class="text-center">Total Price</th>
-                                                <th class="text-center">Received</th>
-                                                <th class="text-center">Status</th>
-                                                <th th:if="${qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED'}" class="text-center">Receive</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr th:each="part : ${qr.parts}">
-                                                <td class="part-details">
-                                                    <div class="part-code" th:text="${part.partCode ?: part.partName}">Part Code</div>
-                                                    <div th:if="${part.partName != null && part.partCode != null}" 
-                                                         class="part-name" th:text="${part.partName}"></div>
-                                                    <div class="part-meta">
-                                                        <span th:text="${part.partCategory ?: 'N/A'}"></span> | 
-                                                        <span th:text="${part.partSupplier ?: 'N/A'}"></span>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="font-weight-bold" th:text="${part.quantityRequested ?: 0}"></span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span th:text="${part.formattedUnitPrice}"></span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="font-weight-bold" th:text="${part.formattedTotalPrice}"></span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span th:text="${part.quantityReceived ?: 0}"></span>
-                                                    <div class="status-progress">
-                                                        <div class="progress-bar bg-success" 
-                                                             th:style="'width: ' + ${part.receivePercentage} + '%'"></div>
-                                                    </div>
-                                                    <small class="text-muted" th:text="${#numbers.formatDecimal(part.receivePercentage, 1, 0)} + '%'"></small>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge" 
-                                                          th:class="${part.receiveStatusBadgeClass}"
-                                                          th:text="${part.receiveStatus}"></span>
-                                                </td>
-                                                <td th:if="${qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED'}" class="text-center">
-                                                    <form th:if="${part.canBeReceived()}" 
-                                                          th:action="@{'/quotation-request/' + ${qr.id} + '/receive'}" 
-                                                          method="post" class="d-inline">
-                                                        <input type="hidden" name="partIds" th:value="${part.id}">
-                                                        <div class="input-group input-group-sm">
-                                                            <input type="number" 
-                                                                   name="receivedQuantities" 
-                                                                   class="form-control quantity-input" 
-                                                                   th:max="${part.remainingQuantity}"
-                                                                   min="1" 
-                                                                   placeholder="Qty">
-                                                            <div class="input-group-append">
-                                                                <button type="submit" class="btn btn-success btn-sm">
-                                                                    <i class="fas fa-check"></i>
-                                                                </button>
+                                <!-- Wrap table in form for receiving in CONFIRMED status -->
+                                <form th:if="${qr.status.name() == 'CONFIRMED'}"
+                                      id="receivePartsForm" th:action="@{'/quotation-request/' + ${qr.id} + '/receive'}" method="post">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th style="width: 50px; text-align: center;">
+                                                        <input type="checkbox" id="selectAllParts" title="Select all parts">
+                                                    </th>
+                                                    <th>Part Details</th>
+                                                    <th class="text-center">Model</th>
+                                                    <th class="text-center">New Model</th>
+                                                    <th class="text-center">Quantity</th>
+                                                    <th class="text-center">Received</th>
+                                                    <th class="text-center">Status</th>
+                                                    <th class="text-center">Inspected By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="part, iterStat : ${qr.parts}" th:if="${part.canBeReceived()}">
+                                                    <td style="text-align: center;">
+                                                        <input type="checkbox" class="part-checkbox" 
+                                                               th:name="'selectedParts[' + ${iterStat.index} + ']'"
+                                                               th:value="${part.id}"
+                                                               checked>
+                                                    </td>
+                                                    <td class="part-details">
+                                                        <div class="part-code" th:text="${part.partCode ?: part.partName}">
+                                                            Part Code</div>
+                                                        <div th:if="${part.partName != null && part.partCode != null}"
+                                                            class="part-name" th:text="${part.partName}"></div>
+                                                        <div class="part-meta">
+                                                            <span th:text="${part.partCategory ?: 'N/A'}"></span> |
+                                                            <span th:text="${part.partSupplier ?: 'N/A'}"></span>
+                                                        </div>
+                                                        <!-- Hidden fields for form submission - MUST use array notation -->
+                                                        <input type="hidden" th:name="'partIds[' + ${iterStat.index} + ']'" th:value="${part.id}">
+                                                        <input type="hidden" th:name="'originalModels[' + ${iterStat.index} + ']'" th:value="${part.part?.model ?: ''}">
+                                                        <input type="hidden" th:name="'originalSuppliers[' + ${iterStat.index} + ']'" th:value="${qr.supplierName}">
+                                                        <input type="hidden" class="newSupplierField" th:name="'newSuppliers[' + ${iterStat.index} + ']'" th:value="${part.newSupplier ?: ''}">
+                                                    </td>
+                                                    
+                                                    <!-- Model Column -->
+                                                    <td class="text-center">
+                                                        <span th:text="${part.part?.model ?: 'N/A'}"></span>
+                                                    </td>
+                                                    
+                                                    <!-- New Model Column - Editable Input -->
+                                                    <td class="text-center">
+                                                        <input type="text" class="form-control form-control-sm model-input-field"
+                                                               th:name="'models[' + ${iterStat.index} + ']'"
+                                                               th:value="${part.newModel ?: ''}"
+                                                               placeholder="Add model">
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span class="font-weight-bold"
+                                                            th:text="${part.quantityRequested ?: 0}"></span>
+                                                    </td>
+                                                    
+                                                    <!-- Received Quantity - Input Field -->
+                                                    <td class="text-center">
+                                                        <input type="number" class="form-control form-control-sm text-center"
+                                                               th:name="'receivedQuantities[' + ${iterStat.index} + ']'"
+                                                               min="0" th:max="${part.remainingQuantity}"
+                                                               th:value="${part.quantityReceived ?: 0}"
+                                                               placeholder="0" 
+                                                               style="width: 70px; margin: 0 auto;">
+                                                        <small class="text-muted d-block">
+                                                            <span th:text="${(part.quantityReceived ?: 0) + ' / ' + (part.quantityRequested ?: 0)}"></span>
+                                                        </small>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <!-- Show changed badge if model or supplier differs -->
+                                                        <div th:if="${(part.newModel != null and part.newModel != '') or (part.newSupplier != null and part.newSupplier != '')}">
+                                                            <span class="badge badge-danger mb-2">
+                                                                <i class="fas fa-exclamation-triangle mr-1"></i>Changed
+                                                            </span>
+                                                        </div>
+                                                        <span class="badge badge-pill-custom"
+                                                            th:classappend="${part.receiveStatusBadgeClass}"
+                                                            th:text="${part.receiveStatus}"></span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <!-- Inspector Dropdown for receiving -->
+                                                        <select th:name="'inspectorIds[' + ${iterStat.index} + ']'" class="form-control form-control-sm">
+                                                            <option value="">-- Select Inspector --</option>
+                                                            <option th:each="inspector : ${inspectorUsersList}" 
+                                                                    th:value="${inspector.id}"
+                                                                    th:text="${inspector.name}"
+                                                                    th:selected="${part.inspectedById == inspector.id}">
+                                                                Inspector Name
+                                                            </option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <!-- Show fully received parts separately -->
+                                                <tr th:each="part : ${qr.parts}" th:unless="${part.canBeReceived()}">
+                                                    <td class="part-details">
+                                                        <div class="part-code" th:text="${part.partCode ?: part.partName}">
+                                                            Part Code</div>
+                                                        <div th:if="${part.partName != null && part.partCode != null}"
+                                                            class="part-name" th:text="${part.partName}"></div>
+                                                        <div class="part-meta">
+                                                            <span th:text="${part.partCategory ?: 'N/A'}"></span> |
+                                                            <span th:text="${part.partSupplier ?: 'N/A'}"></span>
+                                                        </div>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span th:text="${part.part?.model ?: 'N/A'}"></span>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span th:if="${part.newModel != null and part.newModel != ''}" 
+                                                              th:text="${part.newModel}"
+                                                              class="badge badge-warning">
+                                                            <i class="fas fa-exchange-alt mr-1"></i>
+                                                        </span>
+                                                        <span th:unless="${part.newModel != null and part.newModel != ''}" 
+                                                              class="text-muted">-</span>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span class="font-weight-bold"
+                                                            th:text="${part.quantityRequested ?: 0}"></span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span th:text="${part.quantityReceived ?: 0}"></span>
+                                                        <div class="status-progress">
+                                                            <div class="progress-bar bg-success"
+                                                                th:style="'width: ' + ${part.receivePercentage} + '%'">
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted">Max: <span th:text="${part.remainingQuantity}"></span></small>
-                                                    </form>
-                                                    <span th:unless="${part.canBeReceived()}" class="text-success">
-                                                        <i class="fas fa-check-circle"></i> Complete
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                                        <small class="text-muted"
+                                                            th:text="${#numbers.formatDecimal(part.receivePercentage, 1, 0)} + '%'"></small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <!-- Show changed badge if model or supplier differs -->
+                                                        <div th:if="${(part.newModel != null and part.newModel != '') or (part.newSupplier != null and part.newSupplier != '')}">
+                                                            <span class="badge badge-danger mb-2">
+                                                                <i class="fas fa-exclamation-triangle mr-1"></i>Changed
+                                                            </span>
+                                                        </div>
+                                                        <span class="badge badge-pill-custom"
+                                                            th:classappend="${part.receiveStatusBadgeClass}"
+                                                            th:text="${part.receiveStatus}"></span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span th:if="${part.inspectedByName}"
+                                                            th:text="${part.inspectedByName}"></span>
+                                                        <small th:if="${part.inspectedAt}" class="text-muted d-block"
+                                                            th:text="${#temporals.format(part.inspectedAt, 'MM/dd/yyyy HH:mm')}"></small>
+                                                        <span th:unless="${part.inspectedByName}"
+                                                            class="text-muted">-</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <!-- Show message if all parts are fully received -->
+                                        <div th:if="${#lists.isEmpty(qr.parts.?[canBeReceived()])}" class="alert alert-success mt-2 mb-0">
+                                            <i class="fas fa-check-circle mr-2"></i>
+                                            All parts have been fully received.
+                                        </div>
+                                    </div>
+
+                                </form>
+                                
+                                <!-- Show message when form is not available (not CONFIRMED) or no receivable parts -->
+                                <div th:if="${qr.status.name() != 'CONFIRMED' || qr.parts.empty}" 
+                                     class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <span th:if="${qr.parts.empty}">No parts available for this quotation.</span>
+                                    <span th:unless="${qr.parts.empty}">No receiving form available for this status.</span>
+                                </div>
+                                
+                                <!-- Show table without form when not in CONFIRMED status -->
+                                <div th:unless="${qr.status.name() == 'CONFIRMED'}">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Part Details</th>
+                                                    <th class="text-center">Model</th>
+                                                    <th class="text-center">Quantity</th>
+                                                    <th class="text-center">Received</th>
+                                                    <th class="text-center">Status</th>
+                                                    <th class="text-center">Inspected By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="part : ${qr.parts}">
+                                                    <td class="part-details">
+                                                        <div class="part-code" th:text="${part.partCode ?: part.partName}">
+                                                            Part Code</div>
+                                                        <div th:if="${part.partName != null && part.partCode != null}"
+                                                            class="part-name" th:text="${part.partName}"></div>
+                                                        <div class="part-meta">
+                                                            <span th:text="${part.partCategory ?: 'N/A'}"></span> |
+                                                            <span th:text="${part.partSupplier ?: 'N/A'}"></span>
+                                                        </div>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span th:text="${part.part?.model ?: 'N/A'}"></span>
+                                                    </td>
+                                                    
+                                                    <td class="text-center">
+                                                        <span class="font-weight-bold"
+                                                            th:text="${part.quantityRequested ?: 0}"></span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span th:text="${part.quantityReceived ?: 0}"></span>
+                                                        <div class="status-progress">
+                                                            <div class="progress-bar bg-success"
+                                                                th:style="'width: ' + ${part.receivePercentage} + '%'">
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted"
+                                                            th:text="${#numbers.formatDecimal(part.receivePercentage, 1, 0)} + '%'"></small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <!-- Show changed badge if model or supplier differs -->
+                                                        <div th:if="${(part.newModel != null and part.newModel != '') or (part.newSupplier != null and part.newSupplier != '')}">
+                                                            <span class="badge badge-danger mb-2">
+                                                                <i class="fas fa-exclamation-triangle mr-1"></i>Changed
+                                                            </span>
+                                                        </div>
+                                                        <span class="badge badge-pill-custom"
+                                                            th:classappend="${part.receiveStatusBadgeClass}"
+                                                            th:text="${part.receiveStatus}"></span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span th:if="${part.inspectedByName}"
+                                                            th:text="${part.inspectedByName}"></span>
+                                                        <small th:if="${part.inspectedAt}" class="text-muted d-block"
+                                                            th:text="${#temporals.format(part.inspectedAt, 'MM/dd/yyyy HH:mm')}"></small>
+                                                        <span th:unless="${part.inspectedByName}"
+                                                            class="text-muted">-</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                             <div th:if="${qr.parts == null || qr.parts.empty}" class="text-center text-muted py-4">
@@ -445,8 +656,8 @@
                                     <input type="hidden" name="status" value="SENT" />
                                     <div class="form-group">
                                         <label for="sendNotes">Notes</label>
-                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
-                                                  placeholder="Optional notes for supplier"></textarea>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2"
+                                            placeholder="Optional notes for supplier"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-sm btn-block">
                                         <i class="fas fa-paper-plane mr-1"></i> Send QR
@@ -463,9 +674,9 @@
                                 <form th:action="@{'/quotation-request/' + ${qr.id} + '/status'}" method="post">
                                     <input type="hidden" name="status" value="CONFIRMED" />
                                     <div class="form-group">
-                                        <label for="confirmNotes">Confirmation Notes</label>
-                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
-                                                  placeholder="Optional confirmation notes"></textarea>
+                                        <label for="confirmNotes">Add PO Number</label>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2"
+                                            placeholder="Enter PO number from Purchase Department"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-sm btn-block">
                                         <i class="fas fa-check mr-1"></i> Confirm QR
@@ -473,27 +684,29 @@
                                 </form>
                             </div>
 
-                            <!-- Receive All Parts -->
-                            <div th:if="${(qr.status.name() == 'SENT' || qr.status.name() == 'CONFIRMED') && (qr.isFullyReceived == null || !qr.isFullyReceived)}" class="action-section">
+                            <!-- Receive All Parts - Form Controls -->
+                            <div th:if="${qr.status.name() == 'CONFIRMED' && (qr.isFullyReceived == null || !qr.isFullyReceived)}"
+                                class="action-section">
                                 <h6 class="text-info">
-                                    <i class="fas fa-truck mr-2"></i>Receive All Parts
+                                    <i class="fas fa-truck mr-2"></i>Receive Parts
                                 </h6>
-                                <p class="text-muted small mb-3">Mark all parts as received with full quantities.</p>
-                                <form th:action="@{'/quotation-request/' + ${qr.id} + '/receive'}" method="post">
-                                    <!-- Include all parts that can be received -->
-                                    <div th:each="part : ${qr.parts}" th:if="${part.canBeReceived()}">
-                                        <input type="hidden" name="partIds" th:value="${part.id}">
-                                        <input type="hidden" name="receivedQuantities" th:value="${part.remainingQuantity}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="receiveNotes">Receiving Notes</label>
-                                        <textarea class="form-control form-control-sm" name="receivingNotes" rows="2" 
-                                                  placeholder="Optional receiving notes"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-info btn-sm btn-block">
-                                        <i class="fas fa-truck mr-1"></i> Receive All
-                                    </button>
-                                </form>
+                                <p class="text-muted small mb-3">
+                                    <strong>Note:</strong> Use the table above to select parts, enter quantities, and choose inspectors. 
+                                    Specify new supplier if parts differ from original, then click Receive to save all changes.
+                                </p>
+                                
+                                <!-- New Supplier Field -->
+                                <div class="form-group">
+                                    <label for="newSupplierInput">New Supplier (Optional)</label>
+                                    <input type="text" class="form-control form-control-sm" id="newSupplierInput"
+                                           placeholder="Specify if supplier differs from original">
+                                    <small class="text-muted d-block mt-1">Apply to all selected parts that need a different supplier</small>
+                                </div>
+                                
+                                <!-- Receive Button - Submits the form -->
+                                <button type="button" class="btn btn-success btn-sm btn-block" onclick="submitReceiveForm()">
+                                    <i class="fas fa-check mr-2"></i>Receive
+                                </button>
                             </div>
 
                             <!-- Complete QR -->
@@ -505,8 +718,8 @@
                                 <form th:action="@{'/quotation-request/' + ${qr.id} + '/complete'}" method="post">
                                     <div class="form-group">
                                         <label for="completionNotes">Completion Notes</label>
-                                        <textarea class="form-control form-control-sm" name="notes" rows="2" 
-                                                  placeholder="Optional completion notes"></textarea>
+                                        <textarea class="form-control form-control-sm" name="notes" rows="2"
+                                            placeholder="Optional completion notes"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success btn-sm btn-block">
                                         <i class="fas fa-flag-checkered mr-1"></i> Complete PO
@@ -521,7 +734,8 @@
                                 </h6>
                                 <div class="mb-2">
                                     <small class="text-muted">
-                                        Completed: <span th:text="${qr.formattedActualDeliveryDate ?: 'Recently'}"></span>
+                                        Completed: <span
+                                            th:text="${qr.formattedActualDeliveryDate ?: 'Recently'}"></span>
                                     </small>
                                 </div>
                                 <div class="alert alert-success">
@@ -531,19 +745,20 @@
                             </div>
 
                             <!-- Cancel QR -->
-                            <div th:if="${qr.status.name() == 'CREATED' || qr.status.name() == 'SENT'}" class="action-section">
+                            <div th:if="${qr.status.name() == 'CREATED' || qr.status.name() == 'SENT'}"
+                                class="action-section">
                                 <h6 class="text-danger">Cancel Quotation Request</h6>
-                                <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
-                                        data-toggle="modal" data-target="#cancelModal">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-block"
+                                    data-toggle="modal" data-target="#cancelModal">
                                     <i class="fas fa-ban mr-1"></i> Cancel QR
                                 </button>
                             </div>
 
                             <!-- Delete Action -->
-                            <div th:if="${qr.status.name() == 'CREATED'}" class="action-section">
+                            <div th:if="${#authorization.expression('hasRole(''SUPERADMIN'')')}" class="action-section">
                                 <h6 class="text-danger">Danger Zone</h6>
-                                <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
-                                        data-toggle="modal" data-target="#deleteModal">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-block"
+                                    data-toggle="modal" data-target="#deleteModal">
                                     <i class="fas fa-trash mr-1"></i> Delete PO
                                 </button>
                             </div>
@@ -570,19 +785,15 @@
                                 <span>Received:</span>
                                 <strong class="text-success" th:text="${qr.totalReceivedQuantity ?: 0}"></strong>
                             </div>
-                            <div class="d-flex justify-content-between mb-2">
+                            <div class="d-flex justify-content-between">
                                 <span>Completion:</span>
                                 <strong th:text="${#numbers.formatDecimal(qr.receivePercentage, 1, 0)} + '%'"></strong>
-                            </div>
-                            <div th:if="${qr.totalAmount}" class="d-flex justify-content-between">
-                                <span>Total Amount:</span>
-                                <strong class="text-primary" th:text="${qr.formattedTotalAmount}"></strong>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Success/Error Messages -->
             <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
                 <span th:text="${success}"></span>
@@ -598,7 +809,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Cancel Confirmation Modal -->
         <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -613,9 +824,10 @@
                         <p>Are you sure you want to cancel this quotation request?</p>
                         <form th:action="@{'/quotation-request/' + ${qr.id} + '/cancel'}" method="post">
                             <div class="form-group">
-                                <label for="cancellationReason">Cancellation Reason <span class="text-danger">*</span></label>
-                                <textarea class="form-control" name="cancellationReason" rows="3" 
-                                          placeholder="Please provide reason for cancellation" required></textarea>
+                                <label for="cancellationReason">Cancellation Reason <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" name="cancellationReason" rows="3"
+                                    placeholder="Please provide reason for cancellation" required></textarea>
                             </div>
                             <div class="modal-footer">
                                 <button type="submit" class="btn btn-danger">Cancel QR</button>
@@ -651,5 +863,171 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Handle Select All checkbox for parts
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('selectAllParts');
+            const partCheckboxes = document.querySelectorAll('.part-checkbox');
+            const summaryDiv = document.getElementById('selectedPartsSummary');
+
+            // Function to update row highlight
+            function updateRowHighlight(checkbox) {
+                const row = checkbox.closest('tr');
+                if (row) {
+                    if (checkbox.checked) {
+                        row.style.backgroundColor = '#f0f8ff'; // Light blue for selected
+                    } else {
+                        row.style.backgroundColor = '#fff5f5'; // Light red for deselected
+                    }
+                }
+            }
+
+            // Function to update summary
+            function updateSummary() {
+                const selectedCheckboxes = document.querySelectorAll('.part-checkbox:checked');
+                let summary = '';
+                
+                if (selectedCheckboxes.length === 0) {
+                    summary = '<span class="text-danger"><strong>No parts selected!</strong> Please select at least one part.</span>';
+                } else {
+                    summary = '<strong>' + selectedCheckboxes.length + ' part(s) selected for receiving:</strong><br><ul class="mb-0 mt-2">';
+                    selectedCheckboxes.forEach((checkbox, index) => {
+                        const row = checkbox.closest('tr');
+                        const partCode = row.querySelector('.part-code')?.textContent || 'Unknown';
+                        const quantityInput = row.querySelector('input[name*="receivedQuantities"]');
+                        const quantity = quantityInput ? quantityInput.value : '0';
+                        summary += '<li>' + partCode + ' - Qty: ' + quantity + '</li>';
+                    });
+                    summary += '</ul>';
+                }
+                
+                if (summaryDiv) {
+                    summaryDiv.innerHTML = summary;
+                }
+            }
+
+            if (selectAllCheckbox) {
+                // When "Select All" is clicked
+                selectAllCheckbox.addEventListener('change', function() {
+                    partCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                        updateRowHighlight(checkbox);
+                    });
+                    updateSummary();
+                });
+
+                // Update "Select All" state when individual checkboxes change
+                partCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        updateRowHighlight(this);
+                        
+                        const allChecked = Array.from(partCheckboxes).every(cb => cb.checked);
+                        const someChecked = Array.from(partCheckboxes).some(cb => cb.checked);
+                        
+                        selectAllCheckbox.checked = allChecked;
+                        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                        
+                        updateSummary();
+                    });
+                });
+
+                // Initialize visual state
+                partCheckboxes.forEach(checkbox => {
+                    updateRowHighlight(checkbox);
+                });
+                
+                // Initial summary
+                updateSummary();
+            }
+
+            // Monitor quantity changes to update summary
+            document.querySelectorAll('input[name*="receivedQuantities"]').forEach(input => {
+                input.addEventListener('change', updateSummary);
+                input.addEventListener('keyup', updateSummary);
+            });
+
+            // Handle form submission - validate at least one part is selected
+            const receiveForm = document.getElementById('receivePartsForm');
+            if (receiveForm) {
+                receiveForm.addEventListener('submit', function(e) {
+                    const selectedCheckboxes = document.querySelectorAll('.part-checkbox:checked');
+                    
+                    console.log('Form Submit Debug:');
+                    console.log('Total checkboxes found:', partCheckboxes.length);
+                    console.log('Selected parts:', selectedCheckboxes.length);
+                    
+                    if (selectedCheckboxes.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one part to receive.');
+                        return false;
+                    }
+
+                    // Check if any selected part has valid quantity
+                    let hasValidReceivedQuantities = false;
+                    let selectedRows = [];
+                    
+                    selectedCheckboxes.forEach(checkbox => {
+                        const row = checkbox.closest('tr');
+                        const quantityInput = row.querySelector('input[name*="receivedQuantities"]');
+                        const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+                        
+                        console.log('Part quantity:', quantity);
+                        
+                        if (quantity > 0) {
+                            hasValidReceivedQuantities = true;
+                        }
+                        selectedRows.push(row);
+                    });
+                    
+                    console.log('Has valid quantities:', hasValidReceivedQuantities);
+                    
+                    if (!hasValidReceivedQuantities) {
+                        e.preventDefault();
+                        alert('Please enter a received quantity greater than 0 for at least one selected part.');
+                        return false;
+                    }
+
+                    // Remove unselected rows from DOM temporarily to prevent their data from being sent
+                    const unselectedRows = Array.from(partCheckboxes)
+                        .filter(cb => !cb.checked)
+                        .map(cb => cb.closest('tr'));
+                    
+                    unselectedRows.forEach(row => {
+                        row.style.display = 'none';
+                    });
+                    
+                    // Add hidden field to mark form as submitted with selected parts
+                    const hiddenField = document.createElement('input');
+                    hiddenField.type = 'hidden';
+                    hiddenField.name = 'formSubmitted';
+                    hiddenField.value = 'true';
+                    receiveForm.appendChild(hiddenField);
+                    
+                    console.log('Form will be submitted with', selectedRows.length, 'selected parts');
+                });
+            }
+            
+            // Function to submit receive form from the actions card button
+            window.submitReceiveForm = function() {
+                const receiveForm = document.getElementById('receivePartsForm');
+                const newSupplierInput = document.getElementById('newSupplierInput');
+                
+                if (receiveForm && newSupplierInput) {
+                    // Populate all newSupplier hidden fields with the value from actions card
+                    const newSupplierValue = newSupplierInput.value;
+                    const newSupplierFields = document.querySelectorAll('.newSupplierField');
+                    newSupplierFields.forEach(field => {
+                        field.value = newSupplierValue;
+                    });
+                }
+                
+                if (receiveForm) {
+                    receiveForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+    </script>
 </body>
+
 </html>

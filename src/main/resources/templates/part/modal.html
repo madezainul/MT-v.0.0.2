@@ -1,4 +1,17 @@
 <div th:fragment="modal">
+    <!-- Image Zoom Modal (shared for preview/zoom) -->
+    <div class="modal fade" id="partImageZoomModal" tabindex="-1" role="dialog" aria-labelledby="partImageZoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body p-0 text-center">
+                    <button type="button" class="close text-white position-absolute" data-dismiss="modal" aria-label="Close" style="right: 12px; top: 8px; z-index: 1051;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <img id="partImageZoomImg" src="" alt="Full Image" class="img-fluid rounded" style="max-height: 80vh; margin: 0 auto; display: block;">
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Modal Add -->
     <div class="modal fade" id="addRowModal" tabindex="-1" role="dialog" aria-labelledby="addRowModalLabel"
         aria-hidden="true">
@@ -35,6 +48,8 @@
                                 </div>
                             </div>
 
+                        </div>
+                        <div class="form-row">
                             <!-- Model -->
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -43,6 +58,16 @@
                                            placeholder="Enter part model...">
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('model')}"
                                         th:errors="*{model}">Error</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Manufacturer</label>
+                                    <input type="text" class="form-control" th:field="*{manufacturer}" 
+                                           placeholder="Enter part manufacturer...">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('manufacturer')}"
+                                        th:errors="*{manufacturer}">Error</div>
                                 </div>
                             </div>
                         </div>
@@ -146,6 +171,13 @@
                                     <input type="number" class="form-control" th:field="*{stockQuantity}">
                                 </div>
                             </div>
+                                <!-- Safety Quantity (Min) -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Safety Quantity (Min)</label>
+                                        <input type="number" class="form-control" th:field="*{safetyMinQty}" min="0">
+                                    </div>
+                                </div>
                         </div>
                     </form>
                 </div>
@@ -195,6 +227,28 @@
                                     <input type="text" class="form-control" id="editName" name="name">
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"
                                         th:errors="*{name}">Please enter a name.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Model & Manufacturer -->
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Model</label>
+                                    <input type="text" class="form-control" id="editModel" name="model" 
+                                           placeholder="Enter part model...">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('model')}"
+                                        th:errors="*{model}">Error</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Manufacturer</label>
+                                    <input type="text" class="form-control" id="editManufacturer" name="manufacturer" 
+                                           placeholder="Enter part manufacturer...">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('manufacturer')}"
+                                        th:errors="*{manufacturer}">Error</div>
                                 </div>
                             </div>
                         </div>
@@ -317,6 +371,14 @@
                                         name="stockQuantity">
                                 </div>
                             </div>
+                                <!-- Safety Quantity (Min) -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Safety Quantity (Min)</label>
+                                        <input type="number" class="form-control" id="editSafetyMinQty" name="safetyMinQty" min="0">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('safetyMinQty')}" th:errors="*{safetyMinQty}">Please enter a valid safety min quantity.</div>
+                                    </div>
+                                </div>
                         </div>
                     </form>
                 </div>

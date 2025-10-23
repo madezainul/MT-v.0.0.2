@@ -65,6 +65,38 @@
             text-align: center;
             /* Hover animation removed for performance */
         }
+
+        /* Quotation Status Pill Badges */
+        .badge-pill-custom {
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            display: inline-block;
+        }
+
+        .badge-created {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-sent {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .badge-confirmed {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .badge-delivered {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .badge-completed {
+            background-color: #28a745;
+            color: white;
+        }
     </style>
 </head>
 
@@ -301,9 +333,9 @@
                             </a>
                         </div>
                         <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                            <!-- Recent Quotations -->
+                            <!-- Recent Uncompleted Quotations -->
                             <div th:if="${recentQRs != null and !recentQRs.empty}">
-                                <div th:each="qr : ${recentQRs}" class="card mb-2 qr-item">
+                                <div th:each="qr : ${recentQRs}" th:if="${qr.status.name() != 'COMPLETED'}" class="card mb-2 qr-item">
                                     <div class="card-body p-3">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
@@ -315,13 +347,17 @@
                                                 <p class="card-text small text-muted mb-2" th:text="${qr.supplierName}">
                                                 </p>
                                                 <div class="d-flex flex-wrap">
-                                                    <span class="badge badge-success badge-sm mr-2"
-                                                        th:text="${qr.status.displayName}"></span>
+                                                    <span class="badge badge-pill-custom mr-2"
+                                                        th:classappend="${
+                                                            qr.status.name() == 'CREATED' ? 'badge-created' :
+                                                            qr.status.name() == 'SENT' ? 'badge-sent' :
+                                                            qr.status.name() == 'CONFIRMED' ? 'badge-confirmed' :
+                                                            qr.status.name() == 'DELIVERED' ? 'badge-delivered' :
+                                                            'badge-light'
+                                                        }"
+                                                        th:text="${qr.status.name()}"></span>
                                                     <span class="badge badge-light badge-sm mr-2"
                                                         th:text="${qr.totalParts + ' parts'}"></span>
-                                                    <span th:if="${qr.totalAmount}"
-                                                        class="badge badge-secondary badge-sm mr-2"
-                                                        th:text="${qr.currency + ' ' + #numbers.formatDecimal(qr.totalAmount, 1, 2)}"></span>
                                                 </div>
                                             </div>
                                             <small class="text-muted"
@@ -330,9 +366,10 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- If no uncompleted QRs found -->
                             <div th:if="${recentQRs == null or recentQRs.empty}" class="empty-state">
                                 <i class="fas fa-file-invoice fa-3x mb-3 text-muted"></i>
-                                <p class="mb-3">No quotation requests created yet.</p>
+                                <p class="mb-3">All quotation requests are completed!</p>
                                 <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-plus mr-2"></i>Create Quotation Request
                                 </a>

@@ -395,6 +395,97 @@
 
                     <!-- Action Panel -->
                     <div class="col-md-4">
+                        <!-- Information Panel -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h5><i class="fas fa-info-circle mr-2"></i>Information</h5>
+                            </div>
+                            <div class="section-body">
+                                <!-- Status -->
+                                <div class="mb-3">
+                                    <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Current Status</label>
+                                    <div>
+                                        <span class="badge" 
+                                              th:class="${'badge-' + (#strings.isEmpty(qr.status) ? 'secondary' : 
+                                                qr.status.name() == 'CREATED' ? 'secondary' : 
+                                                qr.status.name() == 'SENT' ? 'primary' : 
+                                                qr.status.name() == 'CONFIRMED' ? 'success' : 
+                                                qr.status.name() == 'DELIVERED' ? 'info' : 'warning')}"
+                                              th:text="${qr.status ?: 'N/A'}" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Created Information -->
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="mb-3">
+                                        <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Created By</label>
+                                        <p class="mb-1">
+                                            <strong th:text="${qr.createdByName ?: 'System'}"></strong>
+                                            <small th:if="${qr.createdByEmail}" class="d-block text-muted" th:text="${qr.createdByEmail}"></small>
+                                        </p>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Created On</label>
+                                        <p class="mb-0">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                <span th:text="${#temporals.format(qr.createdAt, 'MMM dd, yyyy')}"></span>
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                <span th:text="${#temporals.format(qr.createdAt, 'HH:mm:ss')}"></span>
+                                            </small>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Updated Information (if exists) -->
+                                <div class="border-top pt-3 mt-3" th:if="${qr.updatedByName != null || qr.updatedAt != null}">
+                                    <div class="mb-3">
+                                        <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Updated By</label>
+                                        <p class="mb-1">
+                                            <strong th:text="${qr.updatedByName ?: 'N/A'}"></strong>
+                                            <small th:if="${qr.updatedByEmail}" class="d-block text-muted" th:text="${qr.updatedByEmail}"></small>
+                                        </p>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Updated On</label>
+                                        <p class="mb-0">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                <span th:text="${#temporals.format(qr.updatedAt, 'MMM dd, yyyy')}"></span>
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                <span th:text="${#temporals.format(qr.updatedAt, 'HH:mm:ss')}"></span>
+                                            </small>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Summary Stats -->
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Total Parts</label>
+                                            <p class="mb-0">
+                                                <strong style="font-size: 1.5rem; color: #667eea;" th:text="${qr.totalParts ?: 0}"></strong>
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #868e96;">Total Qty</label>
+                                            <p class="mb-0">
+                                                <strong style="font-size: 1.5rem; color: #667eea;" th:text="${qr.totalQuantity ?: 0}"></strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions Panel -->
                         <div class="form-section">
                             <div class="section-header">
                                 <h5><i class="fas fa-cogs mr-2"></i>Actions</h5>

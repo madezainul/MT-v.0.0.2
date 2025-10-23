@@ -63,6 +63,7 @@ public class PurchaseRequisitionDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime receivedAt;
 
     @Builder.Default
     private List<PurchaseRequisitionPartDTO> parts = new ArrayList<>();
@@ -121,5 +122,21 @@ public class PurchaseRequisitionDTO {
 
     public String getStatusDisplay() {
         return status != null ? status.getDisplayName() : "Unknown";
+    }
+
+    private String inspectorName;
+
+    public String getInspectorName() {
+        return inspectorName;
+    }
+
+    public LocalDateTime getReceivedAt() {
+        return receivedAt;
+    }
+
+    private String completionNotes;
+
+    public String getCompletionNotes() {
+        return completionNotes;
     }
 }

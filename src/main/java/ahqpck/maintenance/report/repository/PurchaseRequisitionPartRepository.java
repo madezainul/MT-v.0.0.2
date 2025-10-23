@@ -68,4 +68,16 @@ public interface PurchaseRequisitionPartRepository extends JpaRepository<Purchas
            "JOIN prp.purchaseRequisition pr " +
            "WHERE pr.status = 'APPROVED' AND pr.isApproved = true AND prp.status = 'PENDING'")
     long countPartsReadyForPO();
+
+    // Get sum of quantity requested by part for APPROVED PRs only
+    @Query("SELECT SUM(prp.quantityRequested) FROM PurchaseRequisitionPart prp " +
+           "JOIN prp.purchaseRequisition pr " +
+           "WHERE prp.part.id = :partId AND pr.status = 'APPROVED' AND pr.isApproved = true")
+    Integer getSumQuantityByPartId(@Param("partId") String partId);
+
+    // Get sum of quantity requested by part for COMPLETED PRs (to add to stock)
+    @Query("SELECT SUM(prp.quantityRequested) FROM PurchaseRequisitionPart prp " +
+           "JOIN prp.purchaseRequisition pr " +
+           "WHERE prp.part.id = :partId AND pr.status = 'COMPLETED'")
+    Integer getSumCompletedQuantityByPartId(@Param("partId") String partId);
 }

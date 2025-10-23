@@ -272,13 +272,8 @@
                             <div class="d-flex align-items-center">
                                 <h5 class="mb-0 mr-3" th:text="${pr.code}"></h5>
                                 <div class="d-flex align-items-center">
-                                    <span class="badge badge-pill mr-2" 
-                                          th:class="${pr.statusBadgeClass} + ' badge-pill mr-2'"
-                                          th:text="${pr.statusDisplay}"></span>
-                                    <span th:if="${pr.isApproved != null}" 
-                                          class="badge badge-pill"
-                                          th:class="'badge-' + (${pr.isApproved} ? 'success' : 'danger') + ' badge-pill'"
-                                          th:text="${pr.approvalStatusDisplay}"></span>
+                                    <span class="badge badge-pill mr-2" th:class="${pr.statusBadgeClass} + ' badge-pill mr-2'" th:text="${pr.statusDisplay}"></span>
+                                    <span th:if="${pr.isApproved != null}" class="badge badge-pill" th:class="'badge-' + (${pr.isApproved} ? 'success' : 'danger') + ' badge-pill'" th:text="${pr.approvalStatusDisplay}"></span>
                                 </div>
                             </div>
                         </div>
@@ -294,14 +289,12 @@
                                             <td class="font-weight-bold">Requestor:</td>
                                             <td>
                                                 <span th:text="${pr.requestorName}"></span>
-                                                <span th:if="${pr.requestorEmail}" class="text-muted">
-                                                    (<span th:text="${pr.requestorEmail}"></span>)
-                                                </span>
+                                                <span th:if="${pr.requestorEmail}" class="text-muted">(<span th:text="${pr.requestorEmail}"></span>)</span>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="font-weight-bold">Date Needed:</td>
-                                            <td th:text="${#temporals.format(pr.dateNeeded, 'MMMM dd, yyyy')}"></td>
+                                            <td th:text="${pr.formattedDateNeeded}"></td>
                                         </tr>
                                         <tr th:if="${pr.targetEquipmentName}">
                                             <td class="font-weight-bold">Target Equipment:</td>
@@ -313,11 +306,11 @@
                                     <table class="table table-borderless">
                                         <tr>
                                             <td class="font-weight-bold">Created:</td>
-                                            <td th:text="${#temporals.format(pr.createdAt, 'MMMM dd, yyyy HH:mm')}"></td>
+                                            <td th:text="${pr.formattedCreatedAt}"></td>
                                         </tr>
                                         <tr th:if="${pr.reviewedAt}">
                                             <td class="font-weight-bold">Reviewed:</td>
-                                            <td th:text="${#temporals.format(pr.reviewedAt, 'MMMM dd, yyyy HH:mm')}"></td>
+                                            <td th:text="${#temporals.format(pr.reviewedAt, 'dd MMM yyyy HH:mm')}"></td>
                                         </tr>
                                         <tr th:if="${pr.reviewerName}">
                                             <td class="font-weight-bold">Reviewer:</td>
@@ -371,25 +364,20 @@
                                             <tr th:each="part : ${pr.requisitionParts}">
                                                 <td class="part-details">
                                                     <div class="part-code" th:text="${part.partCode ?: part.partName}">Part Code</div>
-                                                    <div th:if="${part.partName != null && part.partCode != null}" 
-                                                         class="part-name" th:text="${part.partName}"></div>
+                                                    <div th:if="${part.partName != null && part.partCode != null}" class="part-name" th:text="${part.partName}"></div>
                                                     <div class="part-meta">
-                                                        <span th:text="${part.partCategory ?: 'N/A'}"></span> | 
+                                                        <span th:text="${part.partCategory ?: 'N/A'}"></span> |
                                                         <span th:text="${part.partSupplier ?: 'N/A'}"></span>
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
                                                     <span th:text="${part.quantityRequested ?: 0}"></span>
                                                     <div th:if="${part.quantityReceived != null && part.quantityReceived > 0}" class="mt-1">
-                                                        <small class="text-success">
-                                                            Received: <span th:text="${part.quantityReceived}"></span>
-                                                        </small>
+                                                        <small class="text-success">Received: <span th:text="${part.quantityReceived}"></span></small>
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge badge-pill" 
-                                                          th:class="${part.criticalityBadgeClass} + ' badge-pill'"
-                                                          th:text="${part.criticalityDisplay ?: 'Medium'}"></span>
+                                                    <span class="badge badge-pill" th:class="${part.criticalityBadgeClass} + ' badge-pill'" th:text="${part.criticalityDisplay ?: 'Medium'}"></span>
                                                 </td>
                                                 <td>
                                                     <span th:text="${part.justification ?: '-'}"></span>
@@ -398,9 +386,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge badge-pill" 
-                                                          th:class="${part.statusBadgeClass} + ' badge-pill'"
-                                                          th:text="${part.statusDisplay}">Status</span>
+                                                    <span class="badge badge-pill" th:class="${part.statusBadgeClass} + ' badge-pill'" th:text="${part.statusDisplay}">Status</span>
                                                     <div th:if="${part.receivedAt}" class="mt-1">
                                                         <small class="text-muted" th:text="${part.formattedReceivedAt}"></small>
                                                     </div>
@@ -449,8 +435,10 @@
                                         <select class="form-control form-control-sm" name="reviewerId" required>
                                             <option value="">Select Reviewer</option>
                                             <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null && user.roleNames != null && #strings.contains(user.roleNames, 'REVIEWER')}"
                                                     th:value="${user.id}" 
                                                     th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No reviewers available</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -469,8 +457,10 @@
                                         <select class="form-control form-control-sm" name="reviewerId" required>
                                             <option value="">Select Reviewer</option>
                                             <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null && user.roleNames != null && #strings.contains(user.roleNames, 'REVIEWER')}"
                                                     th:value="${user.id}" 
                                                     th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No reviewers available</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -514,8 +504,10 @@
                                         <select class="form-control form-control-sm" id="inspectorId" name="inspectorId" required>
                                             <option value="">Select Inspector</option>
                                             <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null}"
                                                     th:value="${user.id}" 
                                                     th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No inspectors available</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -565,7 +557,7 @@
                             </div>
 
                             <!-- Delete Action -->
-                            <div th:if="${pr.status.name() == 'SUBMITTED'}" class="action-section" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
+                            <div th:if="${#authorization.expression('hasRole(''SUPERADMIN'')') || pr.status.name() == 'SUBMITTED'}" class="action-section" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
                                 <h6 class="text-danger">Danger Zone</h6>
                                 <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
                                         data-toggle="modal" data-target="#deleteModal">

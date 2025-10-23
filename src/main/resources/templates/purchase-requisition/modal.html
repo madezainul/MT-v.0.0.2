@@ -473,23 +473,23 @@
             document.getElementById('addPartBtn').disabled = false;
             
             // Check stock warning
-            checkStockWarning();
+            // checkStockWarning();
         }
         
-        function checkStockWarning() {
-            const quantity = parseInt(document.getElementById('modalQuantity').value) || 0;
-            const stockWarning = document.getElementById('stockWarning');
+        // function checkStockWarning() {
+        //     const quantity = parseInt(document.getElementById('modalQuantity').value) || 0;
+        //     const stockWarning = document.getElementById('stockWarning');
             
-            if (selectedPart && quantity > selectedPart.stock) {
-                stockWarning.style.display = 'block';
-                stockWarning.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    Requested quantity (${quantity}) exceeds available stock (${selectedPart.stock})
-                `;
-            } else {
-                stockWarning.style.display = 'none';
-            }
-        }
+        //     if (selectedPart && quantity > selectedPart.stock) {
+        //         stockWarning.style.display = 'block';
+        //         stockWarning.innerHTML = `
+        //             <i class="fas fa-exclamation-triangle"></i> 
+        //             Requested quantity (${quantity}) exceeds available stock (${selectedPart.stock})
+        //         `;
+        //     } else {
+        //         stockWarning.style.display = 'none';
+        //     }
+        // }
         
         function addPartToTable() {
             if (!selectedPart) {
@@ -516,7 +516,7 @@
             
             // Add to table
             addPartRow(selectedPart, quantity, criticality, justification, notes);
-            
+
             // Close modal using Bootstrap's data API (compatible with Bootstrap 4 & 5)
             const modal = document.getElementById('addPartModal');
             if (modal) {
@@ -545,13 +545,21 @@
                         <div>
                             <strong>${part.code} - ${part.name}</strong>
                             <br><small class="text-muted">
-                                <i class="fas fa-tags mr-1"></i>${part.categoryName} | 
-                                <i class="fas fa-truck mr-1"></i>${part.supplierName}
+                                <i class="fas fa-tags mr-1"></i>${part.category} | 
+                                <i class="fas fa-truck mr-1"></i>${part.supplier}
                             </small>
                             ${part.stock < quantity ? '<br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Insufficient stock</small>' : ''}
                         </div>
                     </div>
                     <input type="hidden" name="parts[${partIndex}].partId" value="${part.id}">
+                </td>
+                <td class="text-center">
+                    <span>${part.code}</span>
+                    <input type="hidden" name="parts[${partIndex}].partCode" value="${part.code}">
+                </td>
+                <td class="text-center">
+                    <span>${part.supplier}</span>
+                    <input type="hidden" name="parts[${partIndex}].partSupplier" value="${part.supplier}">
                 </td>
                 <td class="text-center">
                     <span class="badge badge-primary badge-lg">${quantity}</span>
@@ -635,10 +643,10 @@
             document.getElementById('modalCriticality').value = 'MEDIUM';
             
             // Hide stock warning
-            const stockWarning = document.getElementById('stockWarning');
-            if (stockWarning) {
-                stockWarning.style.display = 'none';
-            }
+            // const stockWarning = document.getElementById('stockWarning');
+            // if (stockWarning) {
+            //     stockWarning.style.display = 'none';
+            // }
             
             // Disable add button
             const addBtn = document.getElementById('addPartBtn');

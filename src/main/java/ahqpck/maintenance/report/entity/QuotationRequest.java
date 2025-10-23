@@ -40,6 +40,10 @@ public class QuotationRequest {
     @Column(name = "quotation_number", nullable = false, unique = true, length = 100)
     private String quotationNumber;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "purchase_requisition_id")
+    private PurchaseRequisition purchaseRequisition;
+
     @Column(name = "supplier_name", nullable = false, length = 100)
     private String supplierName;
 
@@ -76,6 +80,10 @@ public class QuotationRequest {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -159,6 +167,15 @@ public class QuotationRequest {
 
     public String getCreatedByEmail() {
         return createdBy != null ? createdBy.getEmail() : null;
+    }
+
+    // Updated by helper methods
+    public String getUpdatedByName() {
+        return updatedBy != null ? updatedBy.getName() : null;
+    }
+
+    public String getUpdatedByEmail() {
+        return updatedBy != null ? updatedBy.getEmail() : null;
     }
 
     public enum QRStatus {

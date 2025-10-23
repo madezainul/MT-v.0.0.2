@@ -97,40 +97,9 @@ public class BOMController {
 
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER', 'VIEWER')")
     @GetMapping("/part-usage")
-    public String partUsage(@RequestParam(required = false) String partId, Authentication authentication, Model model) {
-        try {
-            String currentUserId = null;
-            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
-                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-                currentUserId = userDetails.getId();
-            }
-
-            // Only fetch current user if needed
-            if (currentUserId != null) {
-                var currentUser = userService.getUserById(currentUserId);
-                model.addAttribute("currentUser", currentUser);
-            }
-
-            // Get all parts for dropdown
-            var parts = bomService.getAllPartsForBOM();
-            model.addAttribute("parts", parts);
-            model.addAttribute("title", "Part Usage Analysis");
-            
-            if (partId != null && !partId.trim().isEmpty()) {
-                var selectedPart = bomService.getPartWithEquipments(partId);
-                var usageEntries = bomService.getPartUsage(partId);
-                
-                model.addAttribute("selectedPart", selectedPart);
-                model.addAttribute("usageEntries", usageEntries);
-                model.addAttribute("selectedPartId", partId);
-            }
-            
-            return "bom/part-usage";
-
-        } catch (Exception e) {
-            model.addAttribute("error", "Failed to load part usage: " + e.getMessage());
-            return "error/500";
-        }
+    public String partUsage(Authentication authentication, Model model) {
+        // Part Usage Analysis feature is under development
+        return "error/under-development";
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'ENGINEER')")

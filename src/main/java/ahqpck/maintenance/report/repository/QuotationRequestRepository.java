@@ -39,6 +39,9 @@ public interface QuotationRequestRepository
 
        Page<QuotationRequest> findBySupplierName(String supplierName, Pageable pageable);
 
+       // Find latest quotation by prefix (useful for generating next sequence)
+       Optional<QuotationRequest> findTopByQuotationNumberStartingWithOrderByQuotationNumberDesc(String prefix);
+
        // Find by supplier and status
        List<QuotationRequest> findBySupplierNameAndStatus(String supplierName, QRStatus status);
 

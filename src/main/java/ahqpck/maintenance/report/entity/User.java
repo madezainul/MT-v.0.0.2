@@ -2,15 +2,11 @@ package ahqpck.maintenance.report.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 import ahqpck.maintenance.report.util.Base62;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,10 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(name = "users")
@@ -38,7 +31,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"areas", "reportedComplaints", "assignedComplaints", "roles"})
 @Data
 public class User {
 
@@ -128,16 +120,3 @@ public class User {
                 '}';
     }
 }
-
-// @Override
-// public boolean equals(Object o) {
-//     if (this == o) return true;
-//     if (!(o instanceof User user)) return false;
-//     return Objects.equals(id, user.id) &&
-//            Objects.equals(employeeId, user.employeeId);
-// }
-
-// @Override
-// public int hashCode() {
-//     return Objects.hash(id, employeeId);
-// }

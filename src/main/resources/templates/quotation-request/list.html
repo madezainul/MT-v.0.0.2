@@ -26,6 +26,12 @@
             padding: 0.5em 0.75em;
             border-radius: 6px;
         }
+        .badge-pill-custom {
+            border-radius: 50rem;
+            /* or 999px */
+            padding-left: 0.8em;
+            padding-right: 0.8em;
+        }
         .section-header .card-title {
             color: white;
         }
@@ -96,28 +102,28 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th data-sort="quotationNumber">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='quotationNumber', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='quotationNumber', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     QR Number
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="supplierName">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='supplierName', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='supplierName', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     Supplier
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="createdByName">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdByName', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdByName', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     Created By
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="status">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='status', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='status', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     Status
                                                     <i class="fas fa-sort ml-1"></i>
@@ -126,14 +132,14 @@
                                             <th>Parts</th>
                                             <th>Total Amount</th>
                                             <th data-sort="requestDate">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='requestDate', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='requestDate', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     Request Date
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
                                             <th data-sort="createdAt">
-                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdAt', ascending=${!ascending})}" 
+                                                <a th:href="@{/quotation-request/list(search=${searchTerm}, sortBy='createdAt', ascending=${not ascending})}" 
                                                    class="text-decoration-none">
                                                     Created
                                                     <i class="fas fa-sort ml-1"></i>
@@ -156,8 +162,8 @@
                                             </td>
                                             <td th:text="${qr.createdByName}"></td>
                                             <td>
-                                                <span class="badge status-badge" 
-                                                      th:class="${qr.status.name() == 'CREATED'} ? 'badge-warning' : 
+                                                <span class="badge badge-pill-custom status-badge" 
+                                                      th:classappend="${qr.status.name() == 'CREATED'} ? 'badge-warning' : 
                                                                  (${qr.status.name() == 'SENT'} ? 'badge-info' : 
                                                                  (${qr.status.name() == 'CONFIRMED'} ? 'badge-primary' : 
                                                                  (${qr.status.name() == 'DELIVERED'} ? 'badge-success' : 

@@ -1,4 +1,4 @@
-package ahqpck.maintenance.report.dto;
+package ahqpck.maintenance.report.mapper;
 
 import java.util.stream.Collectors;
 
@@ -12,6 +12,18 @@ import ahqpck.maintenance.report.entity.QuotationRequestPart;
 import ahqpck.maintenance.report.entity.PurchaseRequisition;
 import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.Section;
+import ahqpck.maintenance.report.dto.CapacityDTO;
+import ahqpck.maintenance.report.dto.CategoryDTO;
+import ahqpck.maintenance.report.dto.MachineTypeDTO;
+import ahqpck.maintenance.report.dto.PartDTO;
+import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
+import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
+import ahqpck.maintenance.report.dto.QuotationRequestDTO;
+import ahqpck.maintenance.report.dto.QuotationRequestPartDTO;
+import ahqpck.maintenance.report.dto.SectionDTO;
+import ahqpck.maintenance.report.dto.SubcategoryDTO;
+import ahqpck.maintenance.report.dto.SupplierDTO;
+import ahqpck.maintenance.report.dto.UserDTO;
 import ahqpck.maintenance.report.entity.Capacity;
 import ahqpck.maintenance.report.entity.Subcategory;
 import ahqpck.maintenance.report.entity.Supplier;
@@ -19,6 +31,24 @@ import ahqpck.maintenance.report.entity.User;
 
 @Component
 public class DTOMapper {
+
+    private final PartMapper partMapper;
+
+    public DTOMapper(PartMapper partMapper) {
+        this.partMapper = partMapper;
+    }
+
+    public UserDTO mapToUserDTO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setEmployeeId(user.getEmployeeId());
+        return dto;
+    }
 
     public MachineTypeDTO mapToMachineTypeDTO(MachineType mt) {
         MachineTypeDTO dto = new MachineTypeDTO();
@@ -156,6 +186,9 @@ public class DTOMapper {
         QuotationRequestDTO dto = QuotationRequestDTO.builder()
                 .id(qr.getId())
                 .quotationNumber(qr.getQuotationNumber())
+                .purchaseRequisitionId(qr.getPurchaseRequisition() != null ? qr.getPurchaseRequisition().getId() : null)
+                .purchaseRequisitionCode(qr.getPurchaseRequisition() != null ? qr.getPurchaseRequisition().getCode() : null)
+                .purchaseRequisitionTitle(qr.getPurchaseRequisition() != null ? qr.getPurchaseRequisition().getTitle() : null)
                 .supplierName(qr.getSupplierName())
                 .supplierContact(qr.getSupplierContact())
                 .totalAmount(qr.getTotalAmount())
@@ -169,6 +202,9 @@ public class DTOMapper {
                 .createdByName(qr.getCreatedByName())
                 .createdByEmail(qr.getCreatedByEmail())
                 .createdAt(qr.getCreatedAt())
+                .updatedById(qr.getUpdatedBy() != null ? qr.getUpdatedBy().getId() : null)
+                .updatedByName(qr.getUpdatedByName())
+                .updatedByEmail(qr.getUpdatedByEmail())
                 .updatedAt(qr.getUpdatedAt())
                 .build();
 
@@ -196,6 +232,8 @@ public class DTOMapper {
                 .totalPrice(qrPart.getTotalPrice())
                 .quantityReceived(qrPart.getQuantityReceived())
                 .notes(qrPart.getNotes())
+                .newModel(qrPart.getNewModel())
+                .newSupplier(qrPart.getNewSupplier())
                 .createdAt(qrPart.getCreatedAt())
                 .build();
 
@@ -208,19 +246,7 @@ public class DTOMapper {
     }
 
     public PartDTO mapToPartDTO(Part part) {
-        PartDTO dto = new PartDTO();
-        dto.setId(part.getId());
-        dto.setCode(part.getCode());
-        dto.setName(part.getName());
-        dto.setCategoryName(part.getCategoryName());
-        dto.setSupplierName(part.getSupplierName());
-        dto.setSectionCode(part.getSectionCode());
-        dto.setSpecification(part.getSpecification());
-        dto.setModel(part.getModel());
-        dto.setImage(part.getImage());
-        dto.setStockQuantity(part.getStockQuantity());
-
-        return dto;
+        return partMapper.toDTO(part);
     }
 
     // Helper methods for safe User entity access
