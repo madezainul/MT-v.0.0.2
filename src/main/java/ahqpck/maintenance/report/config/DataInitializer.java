@@ -77,24 +77,24 @@ public class DataInitializer {
     }
 
     private void initDefaultUser() {
-        String email = "ggomugo@gmail.com";
-        log.info("Checking if default user with email '{}' exists...", email);
+        log.info("Checking if default user with email '{}' exists...", defaultUserEmail);
 
-        if (userRepository.findByEmail(email).isPresent()) {
-            log.info("Default user with email '{}' already exists. Skipping creation.", email);
+        if (!defaultUserEnabled) {
+            log.info("Default user creation is disabled.");
             return;
         }
-
-        log.info("Creating default user with email '{}'", email);
-
-        // In your init method
-        if (!defaultUserEnabled)
-            return;
 
         if (userRepository.findByEmail(defaultUserEmail).isPresent()) {
-            log.info("Default user already exists. Skipping.");
+            log.info("Default user with email '{}' already exists. Skipping creation.", defaultUserEmail);
             return;
         }
+
+        if (userRepository.findByEmployeeId(defaultUserEmployeeId).isPresent()) {
+            log.info("Default user with employee ID '{}' already exists. Skipping creation.", defaultUserEmployeeId);
+            return;
+        }
+
+        log.info("Creating default user with email '{}'", defaultUserEmail);
 
         UserDTO userDTO = new UserDTO();
         userDTO.setName(defaultUserName);
@@ -116,9 +116,9 @@ public class DataInitializer {
 
         try {
             userService.createUser(userDTO, null);
-            log.info("Default user with email '{}' created successfully.", email);
+            log.info("Default user with email '{}' created successfully.", defaultUserEmail);
         } catch (Exception e) {
-            log.error("Failed to create default user with email '{}'", email, e);
+            log.error("Failed to create default user with email '{}'", defaultUserEmail, e);
         }
     }
 }

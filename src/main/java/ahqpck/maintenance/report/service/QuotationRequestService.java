@@ -281,6 +281,7 @@ public class QuotationRequestService {
             User inspector = userRepo.findById(inspectorId)
                     .orElseThrow(() -> new RuntimeException("Inspector not found: " + inspectorId));
             qrPart.setInspectedBy(inspector);
+            qrPart.setQuantityReceived(receivedQuantity);
             qrPart.setInspectedAt(LocalDateTime.now());
         }
 

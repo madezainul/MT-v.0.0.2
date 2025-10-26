@@ -75,6 +75,13 @@ public class PurchaseRequisitionPart {
     @Builder.Default
     private PRPartStatus status = PRPartStatus.PENDING;
 
+    @Column(name = "is_part_approved")
+    @Builder.Default
+    private Boolean isPartApproved = null;
+
+    @Column(name = "part_approval_notes", columnDefinition = "TEXT")
+    private String partApprovalNotes;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

@@ -389,6 +389,52 @@ public class PurchaseRequisitionService {
         }
     }
 
+    @Transactional
+    public void approvePartInRequisition(String prId, String partId, Boolean isApproved, String partApprovalNotes, String reviewerId, String reviewNotes) {
+        try {
+            PurchaseRequisition pr = prRepository.findById(prId)
+                    .orElseThrow(() -> new RuntimeException("Purchase Requisition not found with id: " + prId));
+
+            PurchaseRequisitionPart part = pr.getRequisitionParts().stream()
+                    .filter(p -> p.getId().equals(partId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Part not found in Purchase Requisition"));
+
+            // Set part approval status
+            part.setIsPartApproved(isApproved);
+            part.setPartApprovalNotes(partApprovalNotes);
+            part.setUpdatedAt(LocalDateTime.now());
+
+            // Update overall PR status if all parts are reviewed
+            long reviewedPartsCount = pr.getRequisitionParts().stream()
+                    .filter(p -> p.getIsPartApproved() != null)
+                    .count();
+
+            if (reviewedPartsCount == pr.getRequisitionParts().size()) {
+                // All parts have been reviewed
+                boolean allApproved = pr.getRequisitionParts().stream()
+                        .allMatch(p -> Boolean.TRUE.equals(p.getIsPartApproved()));
+
+                if (allApproved) {
+                    pr.setStatus(PRStatus.APPROVED);
+                    pr.setIsApproved(true);
+                } else {
+                    pr.setIsApproved(false);
+                }
+
+                pr.setReviewerName(reviewerId);
+                pr.setReviewNotes(reviewNotes);
+                pr.setReviewedAt(LocalDateTime.now());
+            }
+
+            pr.setUpdatedAt(LocalDateTime.now());
+            prRepository.save(pr);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to approve part in requisition: " + e.getMessage(), e);
+        }
+    }
+
     // Statistics and Dashboard
     public long getTotalPRsCount() {
         return prRepository.count();

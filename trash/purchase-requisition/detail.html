@@ -258,12 +258,6 @@
                        class="btn btn-info ml-auto mt-2">
                         <i class="fa fa-edit mr-1"></i> Edit
                     </a>
-                    <button type="button" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')"
-                            th:if="${#authorization.expression('hasRole(''SUPERADMIN'')') || pr.status.name() == 'SUBMITTED'}"
-                            class="btn btn-outline-danger ml-2 mt-2" 
-                            data-toggle="modal" data-target="#deleteModal">
-                        <i class="fa fa-trash mr-1"></i> Delete
-                    </button>
                     <a th:href="@{/purchase-requisition/list}" class="btn btn-secondary ml-2 mt-2">
                         <i class="fa fa-list mr-1"></i> Back to List
                     </a>
@@ -405,6 +399,197 @@
                             <div th:if="${pr.requisitionParts == null || pr.requisitionParts.empty}" class="text-center text-muted py-4">
                                 <i class="fas fa-box-open fa-3x mb-3"></i>
                                 <p>No parts in this purchase requisition</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Panel -->
+                <div class="col-md-4">
+                    <div class="card section-card" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
+                        <div class="section-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs mr-2"></i>Actions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Create QR Action -->
+                            <div th:if="${pr.status.name() == 'APPROVED'}" class="action-section">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-file-invoice mr-2"></i>Quotation Request
+                                </h6>
+                                <p class="text-muted small mb-3">Create quotation requests from approved parts.</p>
+                                <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary btn-sm btn-block">
+                                    <i class="fas fa-plus mr-1"></i> Create New QR
+                                </a>
+                            </div>
+
+                            <!-- Approval Actions -->
+                            <div th:if="${pr.status.name() == 'SUBMITTED' && pr.isApproved == null}" class="action-section">
+                                <h6 class="text-warning">
+                                    <i class="fas fa-clock mr-2"></i>Pending Approval
+                                </h6>
+                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/approve'}" method="post" class="mb-3">
+                                    <div class="form-group">
+                                        <label for="reviewerId">Reviewer <span class="text-danger">*</span></label>
+                                        <select class="form-control form-control-sm" name="reviewerId" required>
+                                            <option value="">Select Reviewer</option>
+                                            <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null && user.roleNames != null && #strings.contains(user.roleNames, 'REVIEWER')}"
+                                                    th:value="${user.id}" 
+                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No reviewers available</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="reviewNotes">Review Notes</label>
+                                        <textarea class="form-control form-control-sm" name="reviewNotes" rows="2" 
+                                                  placeholder="Optional approval notes"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm btn-block">
+                                        <i class="fas fa-check mr-1"></i> Approve
+                                    </button>
+                                </form>
+                                
+                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/reject'}" method="post">
+                                    <div class="form-group">
+                                        <label for="rejectReviewerId">Reviewer <span class="text-danger">*</span></label>
+                                        <select class="form-control form-control-sm" name="reviewerId" required>
+                                            <option value="">Select Reviewer</option>
+                                            <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null && user.roleNames != null && #strings.contains(user.roleNames, 'REVIEWER')}"
+                                                    th:value="${user.id}" 
+                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No reviewers available</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rejectReviewNotes">Rejection Reason <span class="text-danger">*</span></label>
+                                        <textarea class="form-control form-control-sm" name="reviewNotes" rows="2" 
+                                                  placeholder="Please specify rejection reason" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger btn-sm btn-block">
+                                        <i class="fas fa-times mr-1"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Add QR Number -->
+                            <div th:if="${pr.status.name() == 'APPROVED' && (pr.quotationNumber == null || pr.quotationNumber == '')}" class="action-section">
+                                <h6 class="text-info">
+                                    <i class="fas fa-shipping-fast mr-2"></i>Awaiting QR Number
+                                </h6>
+                                <p class="text-muted small mb-3">Enter the QR number when parts arrive.</p>
+                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/add-po'}" method="post">
+                                    <div class="form-group">
+                                        <label for="quotationNumber">QR Number <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm" name="quotationNumber" 
+                                               placeholder="Enter PO number" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-info btn-sm btn-block">
+                                        <i class="fas fa-save mr-1"></i> Add PO Number
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Complete PR -->
+                            <div th:if="${pr.canBeCompleted}" class="action-section">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-check-circle mr-2"></i>Ready for Completion
+                                </h6>
+                                <p class="text-muted small mb-3">All items have been received and can be completed.</p>
+                                <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/complete'}" method="post">
+                                    <div class="form-group">
+                                        <label for="inspectorId">Inspector <span class="text-danger">*</span></label>
+                                        <select class="form-control form-control-sm" id="inspectorId" name="inspectorId" required>
+                                            <option value="">Select Inspector</option>
+                                            <option th:each="user : ${usersList}" 
+                                                    th:if="${usersList != null && user != null}"
+                                                    th:value="${user.id}" 
+                                                    th:text="${user.name + ' (' + user.employeeId + ')'}"></option>
+                                            <option th:if="${usersList == null || usersList.isEmpty()}" disabled>No inspectors available</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="completionNotes">Completion Notes</label>
+                                        <textarea class="form-control form-control-sm" name="completionNotes" rows="2" 
+                                                  placeholder="Optional completion notes"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm btn-block">
+                                        <i class="fas fa-flag-checkered mr-1"></i> Complete PR
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Completed Status -->
+                            <div th:if="${pr.status.name() == 'COMPLETED'}" class="action-section">
+                                <h6 class="text-success">
+                                    <i class="fas fa-check-circle mr-2"></i>Completed
+                                </h6>
+                                <div th:if="${pr.inspectorName}" class="mb-2">
+                                    <small class="text-muted">
+                                        Inspector: <span th:text="${pr.inspectorName}"></span>
+                                    </small>
+                                </div>
+                                <div th:if="${pr.receivedAt}" class="mb-2">
+                                    <small class="text-muted">
+                                        Completed: <span th:text="${#temporals.format(pr.receivedAt, 'MMM dd, yyyy')}"></span>
+                                    </small>
+                                </div>
+                                <div th:if="${pr.completionNotes}" class="mt-2">
+                                    <small class="text-muted" th:text="${pr.completionNotes}"></small>
+                                </div>
+                            </div>
+
+                            <!-- Rejected Status -->
+                            <div th:if="${pr.isApproved != null && !pr.isApproved}" class="action-section">
+                                <h6 class="text-danger">
+                                    <i class="fas fa-times-circle mr-2"></i>Rejected
+                                </h6>
+                                <div th:if="${pr.reviewerName}" class="mb-2">
+                                    <small class="text-muted">
+                                        Reviewer: <span th:text="${pr.reviewerName}"></span>
+                                    </small>
+                                </div>
+                                <div th:if="${pr.reviewNotes}" class="mt-2">
+                                    <small class="text-muted" th:text="${pr.reviewNotes}"></small>
+                                </div>
+                            </div>
+
+                            <!-- Delete Action -->
+                            <div th:if="${#authorization.expression('hasRole(''SUPERADMIN'')') || pr.status.name() == 'SUBMITTED'}" class="action-section" sec:authorize="hasAnyRole('SUPERADMIN', 'REVIEWER')">
+                                <h6 class="text-danger">Danger Zone</h6>
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-block" 
+                                        data-toggle="modal" data-target="#deleteModal">
+                                    <i class="fas fa-trash mr-1"></i> Delete PR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="card section-card">
+                        <div class="section-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie mr-2"></i>Summary
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Items:</span>
+                                <strong th:text="${pr.totalParts}"></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Quantity:</span>
+                                <strong th:text="${pr.totalQuantity}"></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>New Parts:</span>
+                                <strong th:text="${pr.requisitionParts != null ? #aggregates.sum(pr.requisitionParts.![partId == null ? 1 : 0]) : 0}"></strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Critical Items:</span>
+                                <strong class="text-danger" th:text="${pr.requisitionParts != null ? #aggregates.sum(pr.requisitionParts.![criticalityLevel != null and criticalityLevel.name() == 'CRITICAL' ? 1 : 0]) : 0}"></strong>
                             </div>
                         </div>
                     </div>

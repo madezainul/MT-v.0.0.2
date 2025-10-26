@@ -144,4 +144,38 @@ public class QuotationRequestPart {
                                 !newSupplier.equals(quotationRequest != null ? quotationRequest.getSupplierName() : "");
         return modelChanged || supplierChanged;
     }
+
+    // Calculate receiving percentage for progress display
+    public Double getReceivePercentage() {
+        if (quantityRequested == null || quantityRequested == 0) {
+            return 0.0;
+        }
+        Integer received = quantityReceived != null ? quantityReceived : 0;
+        return (received.doubleValue() / quantityRequested.doubleValue()) * 100;
+    }
+
+    // Get badge CSS class for receive status
+    public String getReceiveStatusBadgeClass() {
+        if (quantityReceived == null || quantityReceived == 0) {
+            return "badge-secondary";  // Not received
+        } else if (quantityReceived >= quantityRequested) {
+            return "badge-success";    // Fully received
+        } else {
+            return "badge-warning";    // Partially received
+        }
+    }
+
+    // Get badge CSS class for part details
+    public String getPartDetailsBadgeClass() {
+        if (isPartChanged()) {
+            return "badge-danger";     // Part changed
+        } else {
+            return "badge-info";       // Part unchanged
+        }
+    }
+
+    // Get inspected by user ID (for dropdown selection)
+    public String getInspectedById() {
+        return inspectedBy != null ? inspectedBy.getId() : null;
+    }
 }

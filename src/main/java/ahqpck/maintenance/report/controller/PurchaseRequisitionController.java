@@ -1,8 +1,12 @@
 package ahqpck.maintenance.report.controller;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -12,8 +16,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -351,7 +357,68 @@ public class PurchaseRequisitionController {
         return "redirect:" + (redirectUrl != null ? redirectUrl : "/purchase-requisition/" + id);
     }
 
-    // Approve PR
+    // API endpoint to get PR details for approval modal (JSON)
+    @GetMapping("/{id}/api")
+    public ResponseEntity<PurchaseRequisitionDTO> getPRDetailsForApproval(@PathVariable String id) {
+        try {
+            PurchaseRequisitionDTO pr = prService.getPurchaseRequisitionById(id);
+            return ResponseEntity.ok(pr);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Approve selected PR parts
+    @PostMapping("/{id}/approve-parts")
+    public ResponseEntity<Map<String, Object>> approveSelectedParts(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> payload) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> partsData = (List<Map<String, Object>>) payload.get("parts");
+            String reviewerId = (String) payload.get("reviewerId");
+            String reviewNotes = (String) payload.get("reviewNotes");
+
+            if (partsData == null || partsData.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "No parts selected for approval");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            int approvedCount = 0;
+            for (Map<String, Object> partData : partsData) {
+                String partId = (String) partData.get("partId");
+                Boolean isApproved = (Boolean) partData.get("isApproved");
+                String approvalNotes = (String) partData.get("approvalNotes");
+
+                if (partId != null) {
+                    prService.approvePartInRequisition(id, partId, isApproved, approvalNotes, reviewerId, reviewNotes);
+                    approvedCount++;
+                }
+            }
+
+            if (approvedCount > 0) {
+                response.put("success", true);
+                response.put("message", approvedCount + " part(s) approval status updated successfully!");
+                response.put("redirectUrl", "/purchase-requisition/" + id);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to update approval status for any parts");
+                return ResponseEntity.internalServerError().body(response);
+            }
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to process approval: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    // Legacy approve PR (full PR approval)
     @PostMapping("/{id}/approve")
     public String approvePurchaseRequisition(
             @PathVariable String id,

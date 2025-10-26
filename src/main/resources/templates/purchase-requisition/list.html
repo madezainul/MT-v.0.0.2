@@ -152,6 +152,16 @@
                                                        data-original-title="Edit">
                                                         <i class="fa fa-edit"></i>
                                                     </a>
+                                                    <button th:if="${pr.status.name() == 'SUBMITTED' && pr.isApproved == null}"
+                                                            type="button" 
+                                                            class="btn btn-link btn-success btn-lg approve-pr-btn"
+                                                            th:data-pr-id="${pr.id}"
+                                                            th:data-pr-code="${pr.code}"
+                                                            data-toggle="modal" 
+                                                            data-target="#approvePRModal"
+                                                            data-original-title="Approve PR">
+                                                        <i class="fa fa-check"></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -233,5 +243,293 @@
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
+
+    <!-- Approve PR Modal -->
+    <div class="modal fade" id="approvePRModal" tabindex="-1" role="dialog" aria-labelledby="approvePRModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approvePRModalLabel">
+                        <i class="fas fa-check-circle mr-2"></i>Approve Purchase Requisition
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- PR Info -->
+                    <div class="alert alert-info" id="prInfoAlert">
+                        <strong>PR:</strong> <span id="prCodeDisplay"></span>
+                    </div>
+
+                    <!-- Approval Form -->
+                    <form id="approvePRPartsForm">
+                        <!-- Reviewer Selection -->
+                        <div class="form-group">
+                            <label for="modalReviewerId">Reviewer <span class="text-danger">*</span></label>
+                            <select class="form-control" id="modalReviewerId" required>
+                                <option value="">Select Reviewer</option>
+                            </select>
+                        </div>
+
+                        <!-- Review Notes -->
+                        <div class="form-group">
+                            <label for="modalReviewNotes">Review Notes</label>
+                            <textarea class="form-control" id="modalReviewNotes" rows="2" 
+                                      placeholder="Optional overall review notes"></textarea>
+                        </div>
+
+                        <!-- Parts Selection Table -->
+                        <div class="form-group">
+                            <label><i class="fas fa-check-square mr-1"></i>Select Parts & Approval Status</label>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="sticky-top" style="background: #f8f9fa; top: 0; z-index: 10;">
+                                        <tr>
+                                            <th style="width: 50px;" class="text-center">
+                                                <input type="checkbox" id="selectAllPartsModal" title="Select all parts">
+                                            </th>
+                                            <th>Part</th>
+                                            <th style="width: 100px;" class="text-center">Qty</th>
+                                            <th style="width: 120px;" class="text-center">Decision</th>
+                                            <th style="width: 150px;">Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="prPartsTableBody">
+                                        <!-- Populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="submitApprovalBtn" class="btn btn-success">
+                        <i class="fas fa-check mr-1"></i> Submit Approvals
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts for Approval Modal -->
+    <th:block layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const approveBtns = document.querySelectorAll('.approve-pr-btn');
+                const modal = document.getElementById('approvePRModal');
+                const submitBtn = document.getElementById('submitApprovalBtn');
+                const selectAllCheckbox = document.getElementById('selectAllPartsModal');
+
+                // Handle approve button click
+                approveBtns.forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        const prId = this.getAttribute('data-pr-id');
+                        const prCode = this.getAttribute('data-pr-code');
+                        
+                        // Update modal header with PR code
+                        document.getElementById('prCodeDisplay').textContent = prCode;
+                        
+                        // Fetch PR details with parts
+                        try {
+                            const response = await fetch(`/purchase-requisition/${prId}/api`, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                alert('Failed to load PR details');
+                                return;
+                            }
+                            
+                            const prData = await response.json();
+                            populateApprovalModal(prId, prData);
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Failed to load PR details: ' + error.message);
+                        }
+                    });
+                });
+
+                function populateApprovalModal(prId, prData) {
+                    const partsBody = document.getElementById('prPartsTableBody');
+                    const reviewerSelect = document.getElementById('modalReviewerId');
+                    
+                    // Clear previous content
+                    partsBody.innerHTML = '';
+                    reviewerSelect.innerHTML = '<option value="">Select Reviewer</option>';
+                    
+                    // Populate reviewer dropdown (would need users data from server)
+                    // For now, you might want to pass this from the controller
+                    populateReviewers(reviewerSelect);
+                    
+                    // Populate parts table
+                    if (prData.requisitionParts && prData.requisitionParts.length > 0) {
+                        prData.requisitionParts.forEach((part, index) => {
+                            // Only show unapproved parts
+                            if (part.isPartApproved === null) {
+                                const row = document.createElement('tr');
+                                row.className = 'unapproved-row';
+                                row.innerHTML = `
+                                    <td class="text-center align-middle">
+                                        <input type="checkbox" class="part-checkbox" data-part-id="${part.id}">
+                                    </td>
+                                    <td>
+                                        <div class="font-weight-500">${part.partCode || part.partName}</div>
+                                        ${part.partCode ? `<small class="text-muted">${part.partName}</small>` : ''}
+                                    </td>
+                                    <td class="text-center align-middle">${part.quantityRequested}</td>
+                                    <td class="text-center align-middle">
+                                        <select class="form-control form-control-sm approval-decision" data-part-id="${part.id}" style="width: 100%;">
+                                            <option value="">--</option>
+                                            <option value="true">✓ Approve</option>
+                                            <option value="false">✗ Reject</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm approval-notes" data-part-id="${part.id}" placeholder="Approval notes">
+                                    </td>
+                                `;
+                                partsBody.appendChild(row);
+                            }
+                        });
+                    }
+                    
+                    // Update form action
+                    document.getElementById('approvePRPartsForm').dataset.prId = prId;
+                    
+                    // Re-attach checkbox listeners
+                    setupCheckboxListeners();
+                }
+
+                function populateReviewers(selectElement) {
+                    // This would typically be populated from the server with actual reviewers
+                    // For now, we'll fetch them from the page or pass them via data attribute
+                    // You can modify the controller to pass reviewers list
+                    const reviewerOptions = [
+                        { id: 'reviewer1', name: 'John Reviewer' },
+                        { id: 'reviewer2', name: 'Jane Approver' }
+                    ];
+                    
+                    reviewerOptions.forEach(reviewer => {
+                        const option = document.createElement('option');
+                        option.value = reviewer.id;
+                        option.textContent = reviewer.name;
+                        selectElement.appendChild(option);
+                    });
+                }
+
+                function setupCheckboxListeners() {
+                    const partCheckboxes = document.querySelectorAll('.part-checkbox');
+                    
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.addEventListener('change', function() {
+                            partCheckboxes.forEach(checkbox => {
+                                checkbox.checked = this.checked;
+                                updateRowHighlight(checkbox);
+                            });
+                        });
+
+                        partCheckboxes.forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                updateRowHighlight(this);
+                                selectAllCheckbox.checked = Array.from(partCheckboxes).every(cb => cb.checked);
+                            });
+                        });
+                    }
+                }
+
+                function updateRowHighlight(checkbox) {
+                    const row = checkbox.closest('tr');
+                    if (row) {
+                        if (checkbox.checked) {
+                            row.style.backgroundColor = '#e8f5e9';
+                        } else {
+                            row.style.backgroundColor = '';
+                        }
+                    }
+                }
+
+                // Handle submit button click
+                submitBtn.addEventListener('click', function() {
+                    const prId = document.getElementById('approvePRPartsForm').dataset.prId;
+                    const reviewerId = document.getElementById('modalReviewerId').value;
+                    
+                    if (!reviewerId) {
+                        alert('Please select a reviewer.');
+                        return;
+                    }
+
+                    const selectedCheckboxes = document.querySelectorAll('.part-checkbox:checked');
+                    
+                    if (selectedCheckboxes.length === 0) {
+                        alert('Please select at least one part to approve/reject.');
+                        return;
+                    }
+
+                    const partsData = [];
+                    selectedCheckboxes.forEach(checkbox => {
+                        const partId = checkbox.getAttribute('data-part-id');
+                        const decisionSelect = document.querySelector(`.approval-decision[data-part-id="${partId}"]`);
+                        const notesInput = document.querySelector(`.approval-notes[data-part-id="${partId}"]`);
+
+                        if (decisionSelect && decisionSelect.value !== '') {
+                            const isApproved = decisionSelect.value === 'true';
+                            const notes = notesInput ? notesInput.value.trim() : '';
+
+                            partsData.push({
+                                partId: partId,
+                                isApproved: isApproved,
+                                approvalNotes: notes && notes.length > 0 ? notes : null
+                            });
+                        }
+                    });
+
+                    if (partsData.length === 0) {
+                        alert('Please select approval decision for at least one part.');
+                        return;
+                    }
+
+                    // Build request payload
+                    const payload = {
+                        parts: partsData,
+                        reviewerId: reviewerId,
+                        reviewNotes: document.getElementById('modalReviewNotes').value.trim() || null
+                    };
+
+                    // Submit using fetch with JSON
+                    fetch(`/purchase-requisition/${prId}/approve-parts`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            return { status: response.status, ok: response.ok, data: data };
+                        });
+                    })
+                    .then(result => {
+                        if (result.ok && result.data.success) {
+                            alert(result.data.message);
+                            // Close modal and refresh list
+                            $('#approvePRModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to submit approvals: ' + error.message);
+                    });
+                });
+            });
+        </script>
+    </th:block>
 </body>
 </html>

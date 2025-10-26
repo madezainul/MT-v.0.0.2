@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Edit Purchase Requisition</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title">Edit Purchase Requisition</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{'/purchase-requisition/' + ${pr.id}}" th:text="${pr.code}"></a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Edit</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">
+                                    <h3>Edit Purchase Requisition</h3>
+                                    <p class="text-muted">PR Code: <span th:text="${pr.code}"></span></p>
+                                </div>
+                                <div class="card-tools">
+                                    <a th:href="@{'/purchase-requisition/' + ${pr.id}}" class="btn btn-secondary">
+                                        <i class="fa fa-arrow-left mr-1"></i> Back to Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/edit'}" method="post" id="editPRForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="title">Title <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="title" id="title" 
+                                                   th:value="${pr.title}" required maxlength="255">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="dateNeeded">Date Needed <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" name="dateNeeded" id="dateNeeded"
+                                                   th:value="${#temporals.format(pr.dateNeeded, 'yyyy-MM-dd')}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="requestorId">Requestor (Engineer) <span class="text-danger">*</span></label>
+                                            <select class="form-control" name="requestorId" id="requestorId" required>
+                                                <option value="">Select Requestor</option>
+                                                <option th:each="user : ${usersList}" 
+                                                        th:value="${user.id}" 
+                                                        th:text="${user.name + ' (' + user.employeeId + ')'}"
+                                                        th:selected="${user.id == pr.requestorId}"></option>
+                                            </select>
+                                            <small class="form-text text-muted">Only engineers can be selected as requestors</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="requestorEmail">Requestor Email</label>
+                                            <input type="email" class="form-control" name="requestorEmail" id="requestorEmail"
+                                                   th:value="${pr.requestorEmail}" maxlength="100" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="targetEquipmentId">Target Equipment</label>
+                                            <select class="form-control" name="targetEquipmentId" id="targetEquipmentId">
+                                                <option value="">Select Equipment (Optional)</option>
+                                                <option th:each="equipment : ${equipmentList}" 
+                                                        th:value="${equipment.id}" 
+                                                        th:text="${equipment.name}"
+                                                        th:selected="${equipment.id == pr.targetEquipmentId}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" name="description" id="description" rows="3"
+                                              placeholder="Provide additional details about this purchase requisition"
+                                              th:text="${pr.description}"></textarea>
+                                </div>
+
+                                <!-- Parts Section -->
+                                <div class="form-group">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5>Purchase Requisition Parts</h5>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="addPRPart()">
+                                            <i class="fas fa-plus mr-1"></i> Add Part
+                                        </button>
+                                    </div>
+
+                                    <div id="prPartsContainer">
+                                        <div th:if="${pr.requisitionParts == null or pr.requisitionParts.empty}" class="alert alert-info">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            Click "Add Part" to select parts for this purchase requisition.
+                                            You can specify quantity and criticality for each part.
+                                        </div>
+
+                                        <div th:if="${pr.requisitionParts != null and !pr.requisitionParts.empty}">
+                                            <div th:each="prPart, iterStat : ${pr.requisitionParts}" class="part-row border rounded p-3 mb-3">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Part <span class="text-danger">*</span></label>
+                                                            <select class="form-control" th:name="'parts[' + ${iterStat.index} + '].partId'" required>
+                                                                <option value="">Select Part</option>
+                                                                <option th:each="part : ${partsList}" 
+                                                                        th:value="${part.id}" 
+                                                                        th:text="${part.code + ' - ' + part.name + ' (' + part.supplierName + ')'}"
+                                                                        th:selected="${part.id == prPart.part.id}"></option>
+                                                            </select>
+                                                            <input type="hidden" th:name="'parts[' + ${iterStat.index} + '].id'" th:value="${prPart.id}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Quantity <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control" 
+                                                                   th:name="'parts[' + ${iterStat.index} + '].quantityRequested'" 
+                                                                   th:value="${prPart.quantityRequested}"
+                                                                   min="1" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Criticality</label>
+                                                            <select class="form-control" th:name="'parts[' + ${iterStat.index} + '].criticalityLevel'">
+                                                                <option value="LOW" th:selected="${prPart.criticalityLevel == 'LOW'}">Low</option>
+                                                                <option value="MEDIUM" th:selected="${prPart.criticalityLevel == 'MEDIUM'}">Medium</option>
+                                                                <option value="HIGH" th:selected="${prPart.criticalityLevel == 'HIGH'}">High</option>
+                                                                <option value="CRITICAL" th:selected="${prPart.criticalityLevel == 'CRITICAL'}">Critical</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Justification</label>
+                                                            <input type="text" class="form-control" 
+                                                                   th:name="'parts[' + ${iterStat.index} + '].justification'"
+                                                                   th:value="${prPart.justification}"
+                                                                   placeholder="Why is this part needed?">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <div class="form-group">
+                                                            <label>&nbsp;</label>
+                                                            <button type="button" class="btn btn-danger btn-sm d-block" onclick="removePart(this)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group text-right">
+                                    <a th:href="@{'/purchase-requisition/' + ${pr.id}}" class="btn btn-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary ml-2">
+                                        <i class="fas fa-save mr-1"></i> Update Purchase Requisition
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            let partIndex = parseInt('[[${pr.requisitionParts != null ? pr.requisitionParts.size() : 0}]]');
+            
+            function addPRPart() {
+                const container = document.getElementById('prPartsContainer');
+                const partRow = createPartRow(partIndex++);
+                container.appendChild(partRow);
+                
+                // Remove info alert if this is the first part
+                const infoAlert = container.querySelector('.alert-info');
+                if (infoAlert && container.children.length > 2) {
+                    infoAlert.remove();
+                }
+            }
+            
+        function createPartRow(index) {
+            const row = document.createElement('div');
+            row.className = 'part-row border rounded p-3 mb-3';
+            row.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Part <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control part-search" 
+                                       placeholder="Type to search parts..." 
+                                       autocomplete="off"
+                                       data-index="${index}">
+                                <input type="hidden" name="parts[${index}].partId" class="part-id-input">
+                                <div class="search-results position-absolute w-100" style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; background: white; border-radius: 4px; margin-top: 2px;">
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                <span class="selected-part-info" style="display: none;">
+                                    <strong>Selected:</strong> <span class="part-details"></span>
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="parts[${index}].quantityRequested" 
+                                   min="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Criticality</label>
+                            <select class="form-control" name="parts[${index}].criticalityLevel">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Justification</label>
+                            <input type="text" class="form-control" name="parts[${index}].justification" 
+                                   placeholder="Why is this part needed?">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-danger btn-sm d-block" onclick="removePart(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners for the new row
+            setTimeout(() => {
+                initializePartSearch(row, index);
+            }, 100);
+            
+            return row;
+        }
+        
+        function removePart(button) {
+            const partRow = button.closest('.part-row');
+            partRow.remove();
+            
+            // Show info alert if no parts remain
+            const container = document.getElementById('prPartsContainer');
+            const partRows = container.querySelectorAll('.part-row');
+            if (partRows.length === 0) {
+                const infoAlert = document.createElement('div');
+                infoAlert.className = 'alert alert-info';
+                infoAlert.innerHTML = `
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Click "Add Part" to select parts for this purchase requisition.
+                    You can specify quantity and criticality for each part.
+                `;
+                container.appendChild(infoAlert);
+            }
+        }
+        
+        // Enhanced Live Search functionality - Based on code-generator pattern
+        let searchTimeout = null;
+        let searchCache = new Map();
+        
+        function initializePartSearch(row, index) {
+            const searchInput = row.querySelector('.part-search');
+            const hiddenInput = row.querySelector('.part-id-input');
+            const resultsDiv = row.querySelector('.search-results');
+            const partInfo = row.querySelector('.selected-part-info');
+            const partDetails = row.querySelector('.part-details');
+            
+            if (!searchInput || !hiddenInput || !resultsDiv) {
+                console.warn(`Missing elements for part search ${index}`);
+                return;
+            }
+            
+            searchInput.addEventListener('input', function() {
+                const term = this.value.trim();
+                
+                if (term.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    hiddenInput.value = '';
+                    if (partInfo) partInfo.style.display = 'none';
+                    return;
+                }
+                
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // Debounce search
+                searchTimeout = setTimeout(() => {
+                    searchParts(term, resultsDiv, searchInput, hiddenInput, partInfo, partDetails);
+                }, 300);
+            });
+            
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                const items = resultsDiv.querySelectorAll('.search-result-item');
+                if (items.length === 0) return;
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = (current + 1) % items.length;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let current = Array.from(items).findIndex(item => item.classList.contains('active'));
+                    current = current <= 0 ? items.length - 1 : current - 1;
+                    items.forEach(item => item.classList.remove('active'));
+                    items[current].classList.add('active');
+                    items[current].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const active = resultsDiv.querySelector('.search-result-item.active');
+                    if (active) {
+                        active.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!row.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+        
+        async function searchParts(query, resultsDiv, searchInput, hiddenInput, partInfo, partDetails) {
+            try {
+                // Check cache first
+                const cacheKey = query.toLowerCase();
+                if (searchCache.has(cacheKey)) {
+                    displaySearchResults(searchCache.get(cacheKey), resultsDiv, searchInput, hiddenInput, partInfo, partDetails, query);
+                    return;
+                }
+                
+                // Show loading
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+                
+                // Make API call
+                const response = await fetch(`/api/parts?keyword=${encodeURIComponent(query)}&size=10`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // Cache results
+                searchCache.set(cacheKey, data.content);
+                
+                displaySearchResults(data.content, resultsDiv, searchInput, hiddenInput, partInfo, partDetails, query);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-danger"><i class="fas fa-exclamation-triangle"></i> Search failed: ' + error.message + '</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+            }
+        }
+        
+        function displaySearchResults(parts, resultsDiv, searchInput, hiddenInput, partInfo, partDetails, searchTerm) {
+            if (parts.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-result-item p-2 text-muted"><i class="fas fa-search"></i> No parts found</div>';
+                resultsDiv.style.display = 'block';
+                updateDropdownPosition(searchInput, resultsDiv);
+                return;
+            }
+            
+            // Create highlighted search results
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            
+            const resultsHtml = parts.map(part => {
+                const partCode = (part.code || '').replace(regex, '<strong>$1</strong>');
+                const partName = (part.name || '').replace(regex, '<strong>$1</strong>');
+                const category = (part.categoryName || 'No Category').replace(regex, '<strong>$1</strong>');
+                const supplier = (part.supplierName || 'No Supplier').replace(regex, '<strong>$1</strong>');
+                
+                return `
+                    <div class="search-result-item p-2 border-bottom" style="cursor: pointer;" 
+                         data-part-id="${part.id}"
+                         data-part-code="${part.code || ''}"
+                         data-part-name="${part.name || ''}"
+                         data-supplier="${part.supplierName || ''}"
+                         data-category="${part.categoryName || ''}"
+                         data-stock="${part.stockQuantity || 0}">
+                        <div class="d-flex justify-content-between">
+                            <div style="flex: 1;">
+                                <div>${partCode} - ${partName}</div>
+                                <small class="text-muted">${category} | ${supplier}</small>
+                            </div>
+                            <div class="text-right">
+                                <small class="text-info">Stock: ${part.stockQuantity || 0}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            resultsDiv.innerHTML = resultsHtml;
+            resultsDiv.style.display = 'block';
+            updateDropdownPosition(searchInput, resultsDiv);
+            
+            // Add click handlers
+            resultsDiv.querySelectorAll('.search-result-item').forEach((item, index) => {
+                item.addEventListener('click', function() {
+                    selectPart(this, searchInput, hiddenInput, partInfo, partDetails, resultsDiv);
+                });
+                
+                // Hover effect and active management
+                item.addEventListener('mouseenter', function() {
+                    resultsDiv.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.classList.remove('active');
+                });
+            });
+        }
+        
+        function selectPart(item, searchInput, hiddenInput, partInfo, partDetails, resultsDiv) {
+            const partId = item.dataset.partId;
+            const partCode = item.dataset.partCode;
+            const partName = item.dataset.partName;
+            const supplier = item.dataset.supplier;
+            const category = item.dataset.category;
+            const stock = item.dataset.stock;
+            
+            // Set values
+            searchInput.value = `${partCode} - ${partName}`;
+            hiddenInput.value = partId;
+            
+            // Show selected part info
+            if (partDetails && partInfo) {
+                partDetails.innerHTML = `${partCode} - ${partName} (${category}, ${supplier}, Stock: ${stock})`;
+                partInfo.style.display = 'block';
+            }
+            
+            // Hide results
+            resultsDiv.style.display = 'none';
+            
+            // Focus back to input for better UX
+            searchInput.focus();
+        }
+        
+        function updateDropdownPosition(input, dropdown) {
+            // Dynamically set dropdown width and position
+            dropdown.style.width = input.offsetWidth + 'px';
+            
+            // Position relative to input
+            const inputRect = input.getBoundingClientRect();
+            const parentRect = input.offsetParent ? input.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+            
+            dropdown.style.left = (inputRect.left - parentRect.left) + 'px';
+            dropdown.style.top = (input.offsetTop + input.offsetHeight) + 'px';
+        }
+        </script>
+    </div>
+</body>
+</html>

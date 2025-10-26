@@ -53,6 +53,9 @@ public class PurchaseRequisitionPartDTO {
     @Builder.Default
     private PRPartStatus status = PRPartStatus.PENDING;
 
+    private Boolean isPartApproved;
+    private String partApprovalNotes;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

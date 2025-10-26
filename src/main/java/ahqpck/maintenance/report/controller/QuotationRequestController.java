@@ -1,14 +1,19 @@
 package ahqpck.maintenance.report.controller;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -247,69 +252,63 @@ public class QuotationRequestController {
     // Receive parts
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'INSPECTOR')")
     @PostMapping("/{id}/receive")
-    public String receiveParts(
+    public ResponseEntity<Map<String, Object>> receiveParts(
             @PathVariable String id,
-            @RequestParam(required = false) String[] partIds,
-            @RequestParam(required = false) Integer[] receivedQuantities,
-            @RequestParam(required = false) String[] inspectorIds,
-            @RequestParam(required = false) String[] models,
-            @RequestParam(required = false) String[] newSuppliers,
-            @RequestParam(required = false) String receivingNotes,
-            @RequestParam(required = false) String formSubmitted,
-            RedirectAttributes ra) {
+            @RequestBody Map<String, Object> payload) {
 
+        System.out.println("Receiving parts for QR ID: " + id);
+        System.out.println("Payload received: " + payload);
+        
+        Map<String, Object> response = new HashMap<>();
+        
         try {
-            // Debug logging
-            System.out.println("\n=== RECEIVE PARTS DEBUG ===");
-            System.out.println("Form Submitted: " + formSubmitted);
-            System.out.println("partIds: " + (partIds != null ? "Length=" + partIds.length + " Values=" + java.util.Arrays.toString(partIds) : "null"));
-            System.out.println("receivedQuantities: " + (receivedQuantities != null ? "Length=" + receivedQuantities.length + " Values=" + java.util.Arrays.toString(receivedQuantities) : "null"));
-            System.out.println("inspectorIds: " + (inspectorIds != null ? java.util.Arrays.toString(inspectorIds) : "null"));
-            System.out.println("models: " + (models != null ? java.util.Arrays.toString(models) : "null"));
-            System.out.println("newSuppliers: " + (newSuppliers != null ? java.util.Arrays.toString(newSuppliers) : "null"));
-            
-            if (partIds == null || partIds.length == 0) {
-                System.out.println("ERROR: No part IDs received!");
-                ra.addFlashAttribute("error", "Error: No part IDs received. Please select at least one part to receive.");
-            } else if (receivedQuantities == null || receivedQuantities.length == 0) {
-                System.out.println("ERROR: No quantities received!");
-                ra.addFlashAttribute("error", "Error: No quantities received. Please enter a quantity for at least one part.");
-            } else {
-                int processedCount = 0;
-                System.out.println("Processing " + partIds.length + " parts...");
-                
-                for (int i = 0; i < partIds.length; i++) {
-                    System.out.println("  Part " + i + ": ID=" + partIds[i] + ", Quantity=" + (i < receivedQuantities.length ? receivedQuantities[i] : "N/A"));
-                    
-                    if (receivedQuantities[i] != null && receivedQuantities[i] > 0) {
-                        String inspectorId = (inspectorIds != null && i < inspectorIds.length) ? inspectorIds[i] : null;
-                        String model = (models != null && i < models.length) ? models[i] : null;
-                        String newSupplier = (newSuppliers != null && i < newSuppliers.length) ? newSuppliers[i] : null;
-                        
-                        System.out.println("    -> Processing with Inspector: " + inspectorId + ", Model: " + model + ", NewSupplier: " + newSupplier);
-                        
-                        qrService.receivePart(id, partIds[i], receivedQuantities[i], inspectorId, model, newSupplier);
-                        processedCount++;
-                    }
-                }
-                
-                if (processedCount > 0) {
-                    System.out.println("SUCCESS: " + processedCount + " part(s) processed");
-                    ra.addFlashAttribute("success", "Parts received successfully (" + processedCount + " part(s) processed)");
+            // Parse the JSON payload
+            List<Map<String, Object>> partsData = (List<Map<String, Object>>) payload.get("parts");
+            String newSupplier = (String) payload.get("newSupplier");
+
+            // Validation
+            if (partsData == null || partsData.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "No parts selected. Please select at least one part to receive.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Process each part
+            int processedCount = 0;
+            for (Map<String, Object> partData : partsData) {
+                String partId = (String) partData.get("partId");
+                Object qtyObj = partData.get("receivedQuantity");
+                Integer quantity = qtyObj instanceof Integer ? (Integer) qtyObj : Integer.parseInt(qtyObj.toString());
+                String inspectorId = (String) partData.get("inspectorId");
+                String model = (String) partData.get("model");
+
+                System.out.println("Processing: partId=" + partId + ", qty=" + quantity + ", model=" + model + ", inspector=" + inspectorId);
+
+                if (quantity != null && quantity > 0) {
+                    qrService.receivePart(id, partId, quantity, inspectorId, model, newSupplier);
+                    processedCount++;
                 } else {
-                    System.out.println("ERROR: No parts with valid quantities!");
-                    ra.addFlashAttribute("error", "No valid quantities entered. Please enter a quantity greater than 0 for at least one part.");
+                    System.out.println("Skipped: quantity=" + quantity);
                 }
             }
 
-        } catch (Exception e) {
-            System.out.println("EXCEPTION: " + e.getMessage());
-            e.printStackTrace();
-            ra.addFlashAttribute("error", "Failed to receive parts: " + e.getMessage());
-        }
+            if (processedCount > 0) {
+                response.put("success", true);
+                response.put("message", processedCount + " part(s) received successfully!");
+                response.put("redirectUrl", "/quotation-request/" + id);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "No valid quantities found. Please enter quantity > 0 for at least one part.");
+                return ResponseEntity.badRequest().body(response);
+            }
 
-        System.out.println("=== END DEBUG ===\n");
-        return "redirect:/quotation-request/" + id;
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Failed to receive parts: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 
     // Complete QR
