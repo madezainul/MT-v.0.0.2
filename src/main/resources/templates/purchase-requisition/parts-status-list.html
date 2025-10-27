@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/dashboard}">
+
+<head>
+    <title>Parts Status List</title>
+    <style>
+        .section-card {
+            border: 1px solid #e0e4e7;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            background: #2196F3;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section-header h5 {
+            color: white;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #495057;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f3f4;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.5em 0.75em;
+            border-radius: 6px;
+        }
+
+        .badge-pill {
+            border-radius: 50rem;
+            font-size: 0.75rem;
+            padding: 0.4em 0.8em;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* Solid color pill badges */
+        .badge-primary {
+            background-color: #2196F3 !important;
+            color: white !important;
+        }
+
+        .badge-success {
+            background-color: #28a745 !important;
+            color: white !important;
+        }
+
+        .badge-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .badge-warning {
+            background-color: #ffc107 !important;
+            color: #333 !important;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d !important;
+            color: white !important;
+        }
+
+        .badge-info {
+            background-color: #17a2b8 !important;
+            color: white !important;
+        }
+
+        .badge-light {
+            background-color: #f8f9fa !important;
+            color: #333 !important;
+        }
+
+        .badge-dark {
+            background-color: #343a40 !important;
+            color: white !important;
+        }
+
+        /* Criticality level colors */
+        .criticality-critical {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .criticality-high {
+            background-color: #ff9800 !important;
+            color: white !important;
+        }
+
+        .criticality-medium {
+            background-color: #ffc107 !important;
+            color: #333 !important;
+        }
+
+        .criticality-low {
+            background-color: #2196F3 !important;
+            color: white !important;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+        }
+
+        #selectAllParts {
+            accent-color: #2196F3;
+        }
+
+        .part-checkbox {
+            accent-color: #2196F3;
+        }
+
+        /* Indeterminate state styling */
+        input[type="checkbox"]:indeterminate {
+            background-color: #2196F3;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title">Parts Status List</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <i class="fas fa-shopping-cart"></i>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a th:href="@{/purchase-requisition}">Purchase Requisition</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a>Parts Status List</a>
+                    </li>
+                </ul>
+                <div class="header-action-group d-flex align-items-center ml-auto">
+                    <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
+                        <i class="fa fa-arrow-left mr-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-head-row">
+                                <div class="card-title">Parts by Status</div>
+                                <div class="card-tools d-flex align-items-center">
+                                    <!-- Search Form -->
+                                    <form th:action="@{/purchase-requisition/parts-status-list}" method="get" class="form-inline">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="search" 
+                                                   th:value="${searchTerm}" placeholder="Search parts or PRs..." />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="submit">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                                        <input type="hidden" name="ascending" th:value="${ascending}" />
+                                    </form>
+                                    <!-- Update Status Button -->
+                                    <button id="updateStatusBtn" class="btn btn-primary btn-sm ml-2" 
+                                            onclick="openUpdatePartsStatusModal()" disabled 
+                                            title="Update status and supplier for selected parts">
+                                        <i class="fa fa-edit mr-1"></i> Update Status
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-head-bg-primary">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px; text-align: center;">
+                                                <input type="checkbox" id="selectAllParts" name="selectAll" title="Select all parts on this page" 
+                                                       aria-label="Select all parts">
+                                            </th>
+                                            <th data-sort="partCode">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='partCode', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Part Code
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="partName">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='partName', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Part Name
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="quantityRequested">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='quantityRequested', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Quantity
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="prCode">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='prCode', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    PR Code
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="requestorName">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='requestorName', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Requestor
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="prStatus">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='prStatus', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    PR Status
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="status">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='status', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    PO Status
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th data-sort="criticalityLevel">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='criticalityLevel', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    Criticality
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="prPart : ${prParts}">
+                                            <td class="text-center align-middle">
+                                                <input type="checkbox" name="partCheckbox" class="part-checkbox" th:data-part-id="${prPart['partId']}" th:data-pr-id="${prPart['prId']}">
+                                            </td>
+                                            <td>
+                                                <a th:href="@{'/parts/' + ${prPart['partId']}}" 
+                                                   th:text="${prPart['partCode']}" class="text-decoration-none font-weight-bold"></a>
+                                            </td>
+                                            <td th:text="${prPart['partName']}"></td>
+                                            <td th:text="${prPart['quantityRequested']}"></td>
+                                            <td>
+                                                <a th:href="@{'/purchase-requisition/' + ${prPart['prId']}}" 
+                                                   th:text="${prPart['prCode']}" class="text-decoration-none font-weight-bold"></a>
+                                            </td>
+                                            <td th:text="${prPart['requestorName']}"></td>
+                                            <td>
+                                                <span class="badge badge-pill" 
+                                                      th:class="'badge badge-pill ' + (${prPart['prStatus'] == 'SUBMITTED'} ? 
+                                                                 (${prPart['isApproved'] == null} ? 'badge-warning' : 
+                                                                  (${prPart['isApproved']} ? 'badge-success' : 'badge-danger')) : 
+                                                                 (${prPart['prStatus'] == 'APPROVED'} ? 'badge-success' : 
+                                                                 (${prPart['prStatus'] == 'SENT_TO_PURCHASE'} ? 'badge-secondary' : 
+                                                                 (${prPart['prStatus'] == 'COMPLETED'} ? 'badge-primary' : 'badge-info'))))"
+                                                      th:text="${prPart['prStatusDisplay']}"></span>
+                                            </td>
+                                            <td>
+                                                <span th:if="${prPart['status'] == 'PENDING'}" class="badge badge-pill badge-warning">Pending</span>
+                                                <span th:if="${prPart['status'] == 'ORDERED'}" class="badge badge-pill badge-info">Ordered</span>
+                                                <span th:if="${prPart['status'] == 'PARTIALLY_RECEIVED'}" class="badge badge-pill badge-primary">Partially Received</span>
+                                                <span th:if="${prPart['status'] == 'RECEIVED'}" class="badge badge-pill badge-success">Received</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-pill badge-info" 
+                                                      th:class="'badge badge-pill ' + ${prPart['criticalityClass']}"
+                                                      th:text="${prPart['criticalityLevel']}"></span>
+                                            </td>
+                                            <td>
+                                                <div class="form-button-action">
+                                                    <a th:href="@{'/purchase-requisition/' + ${prPart['prId']}}" 
+                                                       class="btn btn-link btn-primary btn-lg" 
+                                                       title="View PR Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <small class="text-muted">
+                                        Showing <span th:text="${currentPage * 100 + 1}"></span> to 
+                                        <span th:text="${currentPage * 100 + prParts.size()}"></span> of 
+                                        <span th:text="${totalElements}"></span> entries
+                                    </small>
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <!-- Previous -->
+                                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, page=${currentPage - 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Previous
+                                            </a>
+                                        </li>
+
+                                        <!-- Page Numbers -->
+                                        <li class="page-item" 
+                                            th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                            th:classappend="${i == currentPage} ? 'active'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, page=${i}, sortBy=${sortBy}, ascending=${ascending})}"
+                                               th:text="${i + 1}"></a>
+                                        </li>
+
+                                        <!-- Next -->
+                                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                            <a class="page-link" 
+                                               th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, page=${currentPage + 1}, sortBy=${sortBy}, ascending=${ascending})}">
+                                                Next
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
+                            <!-- No Results -->
+                            <div th:if="${prParts == null or prParts.empty}" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <h5>No Parts Found</h5>
+                                <p th:if="${searchTerm}">
+                                    No results found for "<span th:text="${searchTerm}"></span>".
+                                    <a th:href="@{/purchase-requisition/parts-status-list}">Clear search</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkbox Script - Inside Thymeleaf Fragment -->
+            <th:block th:inline="javascript">
+                <script>
+                    // Function to open the Update Parts Status Modal
+                    function openUpdatePartsStatusModal() {
+                        const modalElement = document.getElementById('updatePartsStatusModal');
+                        if (modalElement) {
+                            const modal = new bootstrap.Modal(modalElement);
+                            modal.show();
+                        } else {
+                            console.error('Modal updatePartsStatusModal not found');
+                        }
+                    }
+
+                    function initCheckboxes() {
+                        try {
+                            const selectAllCheckbox = document.querySelector('input[name="selectAll"]');
+                            const rowCheckboxes = document.querySelectorAll('input[name="partCheckbox"]');
+                            const updateStatusBtn = document.getElementById('updateStatusBtn');
+
+                            if (!selectAllCheckbox || rowCheckboxes.length === 0) {
+                                return;
+                            }
+
+                            // Handle select all checkbox click
+                            selectAllCheckbox.addEventListener('change', function() {
+                                try {
+                                    rowCheckboxes.forEach((checkbox) => {
+                                        checkbox.checked = this.checked;
+                                        updateRowHighlight(checkbox);
+                                    });
+                                    updateButtonState();
+                                } catch (e) {
+                                    console.error('Checkbox error:', e);
+                                }
+                            });
+
+                            // Handle individual checkbox changes
+                            rowCheckboxes.forEach((checkbox) => {
+                                checkbox.addEventListener('change', function() {
+                                    try {
+                                        updateRowHighlight(this);
+                                        updateSelectAllState();
+                                        updateButtonState();
+                                    } catch (e) {
+                                        console.error('Checkbox error:', e);
+                                    }
+                                });
+                            });
+
+                            // Update select all checkbox state
+                            function updateSelectAllState() {
+                                try {
+                                    const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+                                    const totalCount = rowCheckboxes.length;
+                                    
+                                    if (checkedCount === 0) {
+                                        selectAllCheckbox.checked = false;
+                                        selectAllCheckbox.indeterminate = false;
+                                    } else if (checkedCount === totalCount) {
+                                        selectAllCheckbox.checked = true;
+                                        selectAllCheckbox.indeterminate = false;
+                                    } else {
+                                        selectAllCheckbox.checked = false;
+                                        selectAllCheckbox.indeterminate = true;
+                                    }
+                                } catch (e) {
+                                    console.error('Checkbox error:', e);
+                                }
+                            }
+
+                            // Update row highlight
+                            function updateRowHighlight(checkbox) {
+                                try {
+                                    const row = checkbox.closest('tr');
+                                    if (row) {
+                                        if (checkbox.checked) {
+                                            row.style.backgroundColor = '#e8f5e9';
+                                        } else {
+                                            row.style.backgroundColor = '';
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Checkbox error:', e);
+                                }
+                            }
+
+                            // Update action button state
+                            function updateButtonState() {
+                                try {
+                                    const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+                                    if (updateStatusBtn) {
+                                        updateStatusBtn.disabled = checkedCount === 0;
+                                    }
+                                } catch (e) {
+                                    console.error('Checkbox error:', e);
+                                }
+                            }
+
+                            // Get selected parts for bulk actions
+                            window.getSelectedParts = function() {
+                                try {
+                                    const selected = [];
+                                    document.querySelectorAll('input[name="partCheckbox"]:checked').forEach(checkbox => {
+                                        selected.push({
+                                            partId: checkbox.getAttribute('data-part-id'),
+                                            prId: checkbox.getAttribute('data-pr-id')
+                                        });
+                                    });
+                                    return selected;
+                                } catch (e) {
+                                    console.error('Checkbox error:', e);
+                                    return [];
+                                }
+                            };
+
+                            // Initialize
+                            updateSelectAllState();
+                            updateButtonState();
+
+                        } catch (e) {
+                            console.error('Checkbox error:', e);
+                        }
+                    }
+
+                    // For dynamically loaded content
+                    document.addEventListener('DOMContentLoaded', initCheckboxes);
+                    document.addEventListener('contentLoaded', initCheckboxes);
+
+                    // Also try immediate initialization in case DOM is already loaded
+                    if (document.readyState !== 'loading') {
+                        initCheckboxes();
+                    }
+                </script>
+            </th:block>
+        </div>
+    </div>
+</body>
+
+</html>

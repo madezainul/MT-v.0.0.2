@@ -1,7 +1,10 @@
 package ahqpck.maintenance.report.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -482,6 +485,199 @@ public class PurchaseRequisitionService {
     public Page<PurchaseRequisitionDTO> getReadyForPO(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return prRepository.findReadyForPO(pageable).map(this::mapToDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public long countApprovedPRs() {
+        return prRepository.countByStatus(PRStatus.APPROVED);
+    }
+
+    @Transactional(readOnly = true)
+    public long countRejectedPRs() {
+        // Count PRs where status is SUBMITTED and isApproved is false
+        return prRepository.findByIsApproved(false).size();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PurchaseRequisitionDTO> getRejectedPRs(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return prRepository.findByIsApproved(false, pageable).map(this::mapToDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Map<String, Object>> getPartsWithPRApprovalStatus(String searchTerm, String approvalFilter, int page, int size, String sortBy, boolean ascending) {
+        // Get ALL PRs (not paginated) to collect all parts first
+        List<PurchaseRequisition> allPrs = prRepository.findAll();
+        
+        List<Map<String, Object>> prParts = new ArrayList<>();
+        
+        for (PurchaseRequisition pr : allPrs) {
+            if (pr.getRequisitionParts() != null) {
+                for (PurchaseRequisitionPart prPart : pr.getRequisitionParts()) {
+                    // Filter by approval status
+                    if ("pending".equals(approvalFilter) && prPart.getIsPartApproved() != null) continue;
+                    if ("approved".equals(approvalFilter) && !Boolean.TRUE.equals(prPart.getIsPartApproved())) continue;
+                    if ("rejected".equals(approvalFilter) && !Boolean.FALSE.equals(prPart.getIsPartApproved())) continue;
+                    
+                    // Filter by search term
+                    if (searchTerm != null && !searchTerm.isEmpty()) {
+                        String search = searchTerm.toLowerCase();
+                        if (!pr.getCode().toLowerCase().contains(search) && 
+                            !prPart.getPart().getCode().toLowerCase().contains(search) &&
+                            !prPart.getPart().getName().toLowerCase().contains(search)) {
+                            continue;
+                        }
+                    }
+                    
+                    Map<String, Object> partMap = new HashMap<>();
+                    partMap.put("partId", prPart.getPart().getId());
+                    partMap.put("partCode", prPart.getPart().getCode());
+                    partMap.put("partName", prPart.getPart().getName());
+                    partMap.put("quantityRequested", prPart.getQuantityRequested());
+                    partMap.put("prId", pr.getId());
+                    partMap.put("prCode", pr.getCode());
+                    partMap.put("requestorName", pr.getRequestor() != null ? pr.getRequestor().getName() : "Unknown");
+                    partMap.put("prStatus", pr.getStatus().name());
+                    partMap.put("prStatusDisplay", pr.getStatus().getDisplayName());
+                    partMap.put("statusPriority", getStatusPriority(pr.getStatus())); // Add for sorting
+                    partMap.put("isApproved", prPart.getIsPartApproved());
+                    partMap.put("status", prPart.getStatus().name()); // Add PRPartStatus
+                    partMap.put("statusDisplay", prPart.getStatus().getDisplayName()); // Add status display
+                    partMap.put("criticalityLevel", prPart.getCriticalityLevel() != null ? 
+                                prPart.getCriticalityLevel().getDisplayName() : "Medium");
+                    partMap.put("criticalityDisplay", prPart.getCriticalityLevel() != null ? 
+                                "badge-" + prPart.getCriticalityLevel().name().toLowerCase() : "badge-warning");
+                    
+                    // Add criticality CSS class for color coding
+                    String criticalityClass = "criticality-medium";
+                    if (prPart.getCriticalityLevel() != null) {
+                        switch (prPart.getCriticalityLevel().name()) {
+                            case "CRITICAL":
+                                criticalityClass = "criticality-critical";
+                                break;
+                            case "HIGH":
+                                criticalityClass = "criticality-high";
+                                break;
+                            case "MEDIUM":
+                                criticalityClass = "criticality-medium";
+                                break;
+                            case "LOW":
+                                criticalityClass = "criticality-low";
+                                break;
+                        }
+                    }
+                    partMap.put("criticalityClass", criticalityClass);
+                    
+                    prParts.add(partMap);
+                }
+            }
+        }
+        
+        // Sort by PR status priority (SUBMITTED first, then APPROVED, then COMPLETED)
+        prParts.sort((a, b) -> {
+            Integer priorityA = (Integer) a.get("statusPriority");
+            Integer priorityB = (Integer) b.get("statusPriority");
+            return priorityB.compareTo(priorityA); // Descending order (highest priority first)
+        });
+        
+        // Apply sorting
+        if (sortBy != null && !sortBy.isEmpty()) {
+            prParts.sort((a, b) -> {
+                Object valueA = a.get(sortBy);
+                Object valueB = b.get(sortBy);
+                int comparison = 0;
+                
+                // Special handling for prStatus to maintain custom order
+                if ("prStatus".equals(sortBy)) {
+                    int priorityA = getPRStatusSortPriority((String) valueA);
+                    int priorityB = getPRStatusSortPriority((String) valueB);
+                    comparison = Integer.compare(priorityA, priorityB);
+                } else if (valueA instanceof Comparable && valueB instanceof Comparable) {
+                    comparison = ((Comparable) valueA).compareTo(valueB);
+                } else if (valueA != null && valueB != null) {
+                    comparison = valueA.toString().compareTo(valueB.toString());
+                }
+                
+                return ascending ? comparison : -comparison;
+            });
+        }
+        
+        // Convert to Page
+        int fromIndex = Math.min(page * size, prParts.size());
+        int toIndex = Math.min(fromIndex + size, prParts.size());
+        List<Map<String, Object>> pageContent = prParts.isEmpty() ? new ArrayList<>() : prParts.subList(fromIndex, toIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, prParts.size());
+    }
+    
+    /**
+     * Get priority value for PR status sorting
+     * Higher priority = shown first
+     * SUBMITTED = 3 (highest)
+     * APPROVED = 2
+     * COMPLETED = 1 (lowest)
+     */
+    private int getStatusPriority(PurchaseRequisition.PRStatus status) {
+        if (status == null) return 0;
+        switch (status) {
+            case SUBMITTED:
+                return 3;
+            case APPROVED:
+                return 2;
+            case COMPLETED:
+                return 1;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Get priority value for PR Status string sorting in order:
+     * SUBMITTED = 1, APPROVED = 2, SENT_TO_PURCHASE = 3, COMPLETED = 4
+     */
+    private int getPRStatusSortPriority(String status) {
+        if (status == null) return 5;
+        switch (status) {
+            case "SUBMITTED":
+                return 1;
+            case "APPROVED":
+                return 2;
+            case "SENT_TO_PURCHASE":
+                return 3;
+            case "COMPLETED":
+                return 4;
+            default:
+                return 5;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public long countPartsPendingApproval() {
+        List<PurchaseRequisition> allPrs = prRepository.findAll();
+        return allPrs.stream()
+                .flatMap(pr -> pr.getRequisitionParts() != null ? pr.getRequisitionParts().stream() : java.util.stream.Stream.empty())
+                .filter(prPart -> prPart.getIsPartApproved() == null)
+                .count();
+    }
+
+    @Transactional(readOnly = true)
+    public long countPartsApproved() {
+        List<PurchaseRequisition> allPrs = prRepository.findAll();
+        return allPrs.stream()
+                .flatMap(pr -> pr.getRequisitionParts() != null ? pr.getRequisitionParts().stream() : java.util.stream.Stream.empty())
+                .filter(prPart -> Boolean.TRUE.equals(prPart.getIsPartApproved()))
+                .count();
+    }
+
+    @Transactional(readOnly = true)
+    public long countPartsRejected() {
+        List<PurchaseRequisition> allPrs = prRepository.findAll();
+        return allPrs.stream()
+                .flatMap(pr -> pr.getRequisitionParts() != null ? pr.getRequisitionParts().stream() : java.util.stream.Stream.empty())
+                .filter(prPart -> Boolean.FALSE.equals(prPart.getIsPartApproved()))
+                .count();
     }
 
     // Helper methods

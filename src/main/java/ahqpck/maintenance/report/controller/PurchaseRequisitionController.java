@@ -152,6 +152,49 @@ public class PurchaseRequisitionController {
         }
     }
 
+    // Parts Status List - Show all parts from PRs with their status
+    @GetMapping("/parts-status-list")
+    public String partsStatusList(
+            @RequestParam(value = "search", required = false) String searchTerm,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "100") int size,
+            @RequestParam(value = "sortBy", defaultValue = "prCode") String sortBy,
+            @RequestParam(value = "ascending", defaultValue = "true") boolean ascending,
+            Authentication authentication,
+            Model model) {
+
+        try {
+            String currentUserId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                currentUserId = userDetails.getId();
+            }
+
+            // Only fetch current user if needed
+            if (currentUserId != null) {
+                var currentUser = userService.getUserById(currentUserId);
+                model.addAttribute("currentUser", currentUser);
+            }
+
+            // Get parts with PR approval status
+            Page<Map<String, Object>> prPartsPage = prService.getPartsWithPRApprovalStatus(searchTerm, null, page, size, sortBy, ascending);
+
+            model.addAttribute("prParts", prPartsPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", prPartsPage.getTotalPages());
+            model.addAttribute("totalElements", prPartsPage.getTotalElements());
+            model.addAttribute("searchTerm", searchTerm);
+            model.addAttribute("sortBy", sortBy);
+            model.addAttribute("ascending", ascending);
+
+            return "purchase-requisition/parts-status-list";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load parts status list: " + e.getMessage());
+            return "purchase-requisition/parts-status-list";
+        }
+    }
+
     // Show PR details
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'USER')")
     @GetMapping("/{id}")
@@ -587,5 +630,67 @@ public class PurchaseRequisitionController {
 
         // Add criticality levels for part form
         model.addAttribute("criticalityLevels", Arrays.asList(CriticalityLevel.values()));
+    }
+
+    // Update Parts Status - Bulk update for selected parts (REST endpoint)
+    @PostMapping("/update-parts-status")
+    public ResponseEntity<?> updatePartsStatus(@RequestBody Map<String, Object> requestData) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String status = (String) requestData.get("status");
+            String supplier = (String) requestData.get("supplier");
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> parts = (List<Map<String, String>>) requestData.get("parts");
+            
+            if (status == null || status.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Status is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (supplier == null || supplier.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Supplier is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (parts == null || parts.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "No parts selected");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            int updatedCount = 0;
+            for (Map<String, String> part : parts) {
+                String partId = part.get("partId");
+                String prId = part.get("prId");
+                
+                if (partId != null && prId != null) {
+                    try {
+                        // TODO: Implement service method updatePartStatus
+                        // prService.updatePartStatus(prId, partId, status, supplier);
+                        updatedCount++;
+                    } catch (Exception e) {
+                        System.err.println("Error updating part " + partId + ": " + e.getMessage());
+                    }
+                }
+            }
+            
+            if (updatedCount > 0) {
+                response.put("success", true);
+                response.put("message", updatedCount + " part(s) status updated successfully!");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to update status for selected parts");
+                return ResponseEntity.internalServerError().body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error processing request: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 }

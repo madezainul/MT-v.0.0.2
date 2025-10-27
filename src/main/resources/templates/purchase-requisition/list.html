@@ -64,6 +64,47 @@
                             </div>
                         </div>
                         <div class="card-body">
+                            <!-- Approval Status Filter Tabs -->
+                            <div class="nav nav-tabs mb-3" role="tablist" style="border-bottom: 2px solid #e0e4e7;">
+                                <a class="nav-link" 
+                                   th:classappend="${approvalFilter == null || approvalFilter == 'all'} ? 'active'"
+                                   th:href="@{/purchase-requisition/list(search=${searchTerm}, approvalFilter='all', page=0, sortBy=${sortBy}, ascending=${ascending})}"
+                                   role="tab" style="color: #2196F3; font-weight: 500;">
+                                    <i class="fas fa-list mr-2"></i>All PRs
+                                    <span class="badge badge-secondary ml-2" th:text="${totalElements}"></span>
+                                </a>
+                                <a class="nav-link" 
+                                   th:classappend="${approvalFilter == 'pending'} ? 'active'"
+                                   th:href="@{/purchase-requisition/list(search=${searchTerm}, approvalFilter='pending', page=0, sortBy=${sortBy}, ascending=${ascending})}"
+                                   role="tab" style="color: #ffc107; font-weight: 500;">
+                                    <i class="fas fa-clock mr-2"></i>Pending Approval
+                                    <span class="badge badge-warning ml-2" th:text="${pendingApprovalCount ?: 0}"></span>
+                                </a>
+                                <a class="nav-link" 
+                                   th:classappend="${approvalFilter == 'approved'} ? 'active'"
+                                   th:href="@{/purchase-requisition/list(search=${searchTerm}, approvalFilter='approved', page=0, sortBy=${sortBy}, ascending=${ascending})}"
+                                   role="tab" style="color: #28a745; font-weight: 500;">
+                                    <i class="fas fa-check-circle mr-2"></i>Approved
+                                    <span class="badge badge-success ml-2" th:text="${approvedCount ?: 0}"></span>
+                                </a>
+                                <a class="nav-link" 
+                                   th:classappend="${approvalFilter == 'rejected'} ? 'active'"
+                                   th:href="@{/purchase-requisition/list(search=${searchTerm}, approvalFilter='rejected', page=0, sortBy=${sortBy}, ascending=${ascending})}"
+                                   role="tab" style="color: #dc3545; font-weight: 500;">
+                                    <i class="fas fa-times-circle mr-2"></i>Rejected
+                                    <span class="badge badge-danger ml-2" th:text="${rejectedCount ?: 0}"></span>
+                                </a>
+                            </div>
+
+                            <!-- Status Info Banner -->
+                            <div th:if="${approvalFilter == 'pending' && pendingApprovalCount > 0}" class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Action Required!</strong> You have <strong th:text="${pendingApprovalCount}"></strong> Purchase Requisition(s) waiting for approval.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table table-hover table-head-bg-primary">
                                     <thead>

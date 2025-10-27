@@ -180,7 +180,7 @@ public class PurchaseRequisitionPart {
         LOW("Low"),
         MEDIUM("Medium"),
         HIGH("High"),
-        CRITICAL("Critical");
+        CRITICAL("Urgent");
 
         private final String displayName;
 

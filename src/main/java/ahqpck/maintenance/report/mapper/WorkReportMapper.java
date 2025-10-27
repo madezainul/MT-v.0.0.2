@@ -18,6 +18,7 @@ import ahqpck.maintenance.report.repository.EquipmentRepository;
 import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class WorkReportMapper {
+
+    @Lazy
+    private final DTOMapper dtoMapper;
 
     public WorkReportDTO toDTO(WorkReport workReport) {
         WorkReportDTO dto = new WorkReportDTO();
@@ -91,7 +95,7 @@ public class WorkReportMapper {
             dto.setPartsUsed(workReport.getPartsUsed().stream()
                     .map(cp -> {
                         WorkReportPartDTO partDto = new WorkReportPartDTO();
-                        partDto.setPart(mapToPartDTO(cp.getPart()));
+                        partDto.setPart(dtoMapper.mapToPartDTO(cp.getPart()));
                         partDto.setQuantity(cp.getQuantity());
                         return partDto;
                     })
@@ -201,18 +205,6 @@ public class WorkReportMapper {
         dto.setName(user.getName());
         dto.setEmployeeId(user.getEmployeeId());
         dto.setEmail(user.getEmail());
-        return dto;
-    }
-
-    private PartDTO mapToPartDTO(Part part) {
-        if (part == null)
-            return null;
-
-        PartDTO dto = new PartDTO();
-        dto.setId(part.getId());
-        dto.setName(part.getName());
-        dto.setCode(part.getCode());
-        dto.setSpecification(part.getSpecification());
         return dto;
     }
 }
