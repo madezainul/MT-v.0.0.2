@@ -322,10 +322,6 @@
                                             <td class="font-weight-bold">Reviewer:</td>
                                             <td th:text="${pr.reviewerName}"></td>
                                         </tr>
-                                        <tr th:if="${pr.quotationNumber}">
-                                            <td class="font-weight-bold">QR Number:</td>
-                                            <td th:text="${pr.quotationNumber}"></td>
-                                        </tr>
                                     </table>
                                 </div>
                             </div>
@@ -519,44 +515,6 @@
                                 </div>
                                 <button type="submit" class="btn btn-danger btn-sm btn-block">
                                     <i class="fas fa-times mr-1"></i> Reject
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- QR Creation Status Card -->
-                    <div class="card section-card" th:if="${pr.status.name() == 'APPROVED' && pr.quotationNumber == null}">
-                        <div class="section-header" style="background: #17a2b8;">
-                            <h5 class="mb-0">
-                                <i class="fas fa-file-invoice mr-2" style="color: white;"></i>
-                                <span style="color: white;">Create Quotation Request</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-3">This requisition is approved and ready for quotation request creation.</p>
-                            <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary btn-sm btn-block">
-                                <i class="fas fa-plus mr-1"></i> Create New QR
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- PO Number Entry Card -->
-                    <div class="card section-card" th:if="${pr.status.name() == 'APPROVED' && (pr.quotationNumber == null || pr.quotationNumber == '')}">
-                        <div class="section-header" style="background: #6f42c1;">
-                            <h5 class="mb-0">
-                                <i class="fas fa-barcode mr-2" style="color: white;"></i>
-                                <span style="color: white;">Add QR/PO Number</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <form th:action="@{'/purchase-requisition/' + ${pr.id} + '/add-po'}" method="post">
-                                <div class="form-group">
-                                    <label for="quotationNumber"><small class="font-weight-bold">QR Number <span class="text-danger">*</span></small></label>
-                                    <input type="text" class="form-control form-control-sm" name="quotationNumber" 
-                                           placeholder="Enter QR/PO number" required>
-                                </div>
-                                <button type="submit" class="btn btn-info btn-sm btn-block">
-                                    <i class="fas fa-save mr-1"></i> Add QR Number
                                 </button>
                             </form>
                         </div>

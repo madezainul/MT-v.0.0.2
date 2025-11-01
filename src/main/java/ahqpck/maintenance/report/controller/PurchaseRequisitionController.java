@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -27,10 +26,10 @@ import ahqpck.maintenance.report.config.UserDetailsImpl;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
 import ahqpck.maintenance.report.entity.PurchaseRequisition.PRStatus;
+import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.PurchaseRequisitionPart.CriticalityLevel;
 import ahqpck.maintenance.report.service.EquipmentService;
 import ahqpck.maintenance.report.service.PartService;
-import ahqpck.maintenance.report.service.QuotationRequestService;
 import ahqpck.maintenance.report.service.PurchaseRequisitionService;
 import ahqpck.maintenance.report.service.UserService;
 import ahqpck.maintenance.report.util.WebUtil;
@@ -46,7 +45,6 @@ public class PurchaseRequisitionController {
     private final EquipmentService equipmentService;
     private final PartService partService;
     private final UserService userService;
-    private final QuotationRequestService qrService;
 
     // Smart Dashboard - Entry point
     @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'REVIEWER', 'USER')")
@@ -76,19 +74,17 @@ public class PurchaseRequisitionController {
             Page<PurchaseRequisitionDTO> actionRequiredPRs = prService.getActionRequired(0, 5);
             model.addAttribute("actionRequiredPRs", actionRequiredPRs.getContent());
 
-            // Monitoring Section (approved PRs)
-            Page<PurchaseRequisitionDTO> approvedPRs = prService.getPurchaseRequisitionsByStatus(PRStatus.APPROVED, 0, 5);
-            model.addAttribute("monitoringPRs", approvedPRs.getContent());
-
-            // Quotation Request Monitoring Section
-            try {
-                // Get recent QRs for monitoring
-                var recentQRs = qrService.getAllQuotationRequests(null, 0, 5, "createdAt", false);
-                model.addAttribute("recentQRs", recentQRs.getContent());
-            } catch (Exception e) {
-                // Fallback in case QR service is not available
-                model.addAttribute("recentQRs", java.util.Collections.emptyList());
-            }
+            // Parts Status Summary - count by status
+            long pendingPartsCount = prService.getPartsCountByStatus(PurchaseRequisitionPart.PRPartStatus.PENDING);
+            long orderedPartsCount = prService.getPartsCountByStatus(PurchaseRequisitionPart.PRPartStatus.ORDERED);
+            long partiallyReceivedCount = prService.getPartsCountByStatus(PurchaseRequisitionPart.PRPartStatus.PARTIALLY_RECEIVED);
+            long receivedPartsCount = prService.getPartsCountByStatus(PurchaseRequisitionPart.PRPartStatus.RECEIVED);
+            
+            model.addAttribute("pendingPartsCount", pendingPartsCount);
+            model.addAttribute("orderedPartsCount", orderedPartsCount);
+            model.addAttribute("partiallyReceivedCount", partiallyReceivedCount);
+            model.addAttribute("receivedPartsCount", receivedPartsCount);
+            model.addAttribute("totalPartsCount", pendingPartsCount + orderedPartsCount + partiallyReceivedCount + receivedPartsCount);
 
             return "purchase-requisition/dashboard";
 
@@ -640,6 +636,7 @@ public class PurchaseRequisitionController {
         try {
             String status = (String) requestData.get("status");
             String supplier = (String) requestData.get("supplier");
+            String poNumber = (String) requestData.get("poNumber");
             @SuppressWarnings("unchecked")
             List<Map<String, String>> parts = (List<Map<String, String>>) requestData.get("parts");
             
@@ -649,31 +646,43 @@ public class PurchaseRequisitionController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            if (supplier == null || supplier.trim().isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Supplier is required");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
             if (parts == null || parts.isEmpty()) {
                 response.put("success", false);
                 response.put("message", "No parts selected");
                 return ResponseEntity.badRequest().body(response);
             }
             
+            // Supplier and PO Number are optional - only use if provided
+            String supplierToUpdate = (supplier != null && !supplier.trim().isEmpty()) ? supplier.trim() : null;
+            String poNumberToUpdate = (poNumber != null && !poNumber.trim().isEmpty()) ? poNumber.trim() : null;
+            
+            // Track updated PRs to update their status later
+            java.util.Set<String> updatedPRIds = new java.util.HashSet<>();
             int updatedCount = 0;
+            
             for (Map<String, String> part : parts) {
                 String partId = part.get("partId");
                 String prId = part.get("prId");
                 
                 if (partId != null && prId != null) {
                     try {
-                        // TODO: Implement service method updatePartStatus
-                        // prService.updatePartStatus(prId, partId, status, supplier);
+                        // Call service to update part status (supplier and poNumber are optional)
+                        prService.updatePartStatus(prId, partId, status, supplierToUpdate, poNumberToUpdate);
                         updatedCount++;
+                        updatedPRIds.add(prId);
                     } catch (Exception e) {
                         System.err.println("Error updating part " + partId + ": " + e.getMessage());
                     }
+                }
+            }
+            
+            // Update PR status for each PR that had parts updated
+            // This runs in a separate transaction to avoid JPA cache issues
+            for (String prId : updatedPRIds) {
+                try {
+                    prService.updatePRStatusAfterPartUpdate(prId);
+                } catch (Exception e) {
+                    System.err.println("Error updating PR status for " + prId + ": " + e.getMessage());
                 }
             }
             

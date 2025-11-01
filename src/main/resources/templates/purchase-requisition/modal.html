@@ -684,22 +684,35 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="statusSelect">New Status <span class="text-danger">*</span></label>
+                                <label for="statusSelect">New PO Status <span class="text-danger">*</span></label>
                                 <select id="statusSelect" class="form-control" required>
                                     <option value="">Select status...</option>
-                                    <option value="DELIVERED">Delivered</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="ORDERED">Ordered</option>
+                                    <option value="PARTIALLY_RECEIVED">Partially Received</option>
                                     <option value="RECEIVED">Received</option>
                                 </select>
-                                <small class="form-text text-muted">Choose the new status for selected parts</small>
+                                <small class="form-text text-muted">Choose the new PO status for selected parts</small>
                             </div>
                         </div>
 
-                        <!-- Supplier Input -->
+                        <!-- PO Number Input -->
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="supplierInput">New Supplier <span class="text-danger">*</span></label>
-                                <input type="text" id="supplierInput" class="form-control" placeholder="Enter supplier name" required>
-                                <small class="form-text text-muted">Enter the new supplier for selected parts</small>
+                                <label for="poNumberInput">PO Number (Optional)</label>
+                                <input type="text" id="poNumberInput" class="form-control" placeholder="Enter PO number">
+                                <small class="form-text text-muted">Enter the PO number if applicable</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Input -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="supplierInput">New Supplier (Optional)</label>
+                                <input type="text" id="supplierInput" class="form-control" placeholder="Enter supplier name if changing supplier">
+                                <small class="form-text text-muted">Leave empty if supplier is not changing</small>
                             </div>
                         </div>
                     </div>
@@ -707,7 +720,7 @@
                     <!-- Info Alert -->
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle mr-2"></i>
-                        <strong>Note:</strong> This action will update the status and supplier for all selected parts.
+                        <strong>Note:</strong> This action will update the PO status for all selected parts. Supplier will only be updated if provided.
                     </div>
                 </form>
             </div>
@@ -719,113 +732,129 @@
             </div>
         </div>
     </div>
-</div>
-
-<th:block th:inline="javascript">
-    <script>
-        // Handle Update Parts Status Modal
-        document.addEventListener('DOMContentLoaded', function() {
-            const updatePartsStatusModal = document.getElementById('updatePartsStatusModal');
-            
-            if (updatePartsStatusModal) {
-                // When modal is shown
-                updatePartsStatusModal.addEventListener('show.bs.modal', function() {
-                    try {
-                        const selectedParts = window.getSelectedParts();
-                        const selectedPartsList = document.getElementById('selectedPartsList');
-                        const selectedPartsCount = document.getElementById('selectedPartsCount');
-                        
-                        if (selectedParts && selectedParts.length > 0) {
-                            selectedPartsCount.textContent = selectedParts.length;
-                            
-                            // Build parts list HTML
-                            let html = '<ul class="list-unstyled">';
-                            selectedParts.forEach((part, index) => {
-                                html += '<li class="mb-1"><small><strong>Part ' + (index + 1) + ':</strong> ID=' + part.partId + ', PR ID=' + part.prId + '</small></li>';
-                            });
-                            html += '</ul>';
-                            
-                            selectedPartsList.innerHTML = html;
-                        }
-                        
-                        // Store selected parts in form data
-                        const form = document.getElementById('updatePartsStatusForm');
-                        form.selectedPartsData = selectedParts;
-                        
-                    } catch (e) {
-                        console.error('Error loading selected parts:', e);
-                    }
-                });
-
-                // Handle form submission
-                const submitBtn = document.getElementById('submitUpdatePartsStatusBtn');
-                if (submitBtn) {
-                    submitBtn.addEventListener('click', function() {
+    
+    <!-- JavaScript for Update Parts Status Modal - Inside Fragment -->
+    <th:block th:inline="javascript">
+        <script>
+            // Handle Update Parts Status Modal
+            document.addEventListener('DOMContentLoaded', function() {
+                const updatePartsStatusModal = document.getElementById('updatePartsStatusModal');
+                
+                if (updatePartsStatusModal) {
+                    console.log('Modal found, attaching show event listener');
+                    
+                    // When modal is shown
+                    updatePartsStatusModal.addEventListener('show.bs.modal', function() {
                         try {
-                            const statusSelect = document.getElementById('statusSelect');
-                            const supplierInput = document.getElementById('supplierInput');
+                            console.log('Modal showing event triggered');
+                            console.log('window.getSelectedParts exists:', typeof window.getSelectedParts === 'function');
+                            
+                            const selectedParts = window.getSelectedParts ? window.getSelectedParts() : [];
+                            console.log('Selected parts from callback:', selectedParts);
+                            
+                            const selectedPartsList = document.getElementById('selectedPartsList');
+                            const selectedPartsCount = document.getElementById('selectedPartsCount');
+                            
+                            console.log('selectedPartsList element:', selectedPartsList);
+                            console.log('selectedPartsCount element:', selectedPartsCount);
+                            
+                            if (selectedParts && selectedParts.length > 0) {
+                                console.log('Parts found:', selectedParts.length);
+                                selectedPartsCount.textContent = selectedParts.length;
+                                
+                                // Build parts list HTML
+                                let html = '<ul class="list-unstyled">';
+                                selectedParts.forEach((part, index) => {
+                                    html += '<li class="mb-1"><small><strong>Part ' + (index + 1) + ':</strong> ID=' + part.partId + ', PR ID=' + part.prId + '</small></li>';
+                                });
+                                html += '</ul>';
+                                
+                                selectedPartsList.innerHTML = html;
+                            } else {
+                                console.log('No parts selected');
+                                selectedPartsList.innerHTML = '<small class="text-muted">No parts selected</small>';
+                            }
+                            
+                            // Store selected parts in form data
                             const form = document.getElementById('updatePartsStatusForm');
-                            
-                            // Validation
-                            if (!statusSelect.value) {
-                                alert('Please select a status');
-                                return;
-                            }
-                            
-                            if (!supplierInput.value.trim()) {
-                                alert('Please enter a supplier name');
-                                return;
-                            }
-                            
-                            const selectedParts = form.selectedPartsData;
-                            if (!selectedParts || selectedParts.length === 0) {
-                                alert('No parts selected');
-                                return;
-                            }
-                            
-                            // Prepare data
-                            const requestData = {
-                                status: statusSelect.value,
-                                supplier: supplierInput.value.trim(),
-                                parts: selectedParts
-                            };
-                            
-                            console.log('Submitting update:', requestData);
-                            
-                            // Send to server (endpoint to be implemented)
-                            fetch('/purchase-requisition/update-parts-status', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                },
-                                body: JSON.stringify(requestData)
-                            })
-                            .then(response => {
-                                if (response.ok) {
-                                    alert('Parts status updated successfully!');
-                                    // Close modal and reload
-                                    $('#updatePartsStatusModal').modal('hide');
-                                    // Reload page to show updated data
-                                    setTimeout(() => {
-                                        location.reload();
-                                    }, 500);
-                                } else {
-                                    alert('Error updating parts status: ' + response.statusText);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Error: ' + error.message);
-                            });
+                            form.selectedPartsData = selectedParts;
                             
                         } catch (e) {
-                            console.error('Error submitting form:', e);
-                            alert('Error: ' + e.message);
+                            console.error('Error loading selected parts:', e);
                         }
                     });
+
+                    // Handle form submission
+                    const submitBtn = document.getElementById('submitUpdatePartsStatusBtn');
+                    if (submitBtn) {
+                        submitBtn.addEventListener('click', function() {
+                            try {
+                                const statusSelect = document.getElementById('statusSelect');
+                                const supplierInput = document.getElementById('supplierInput');
+                                const form = document.getElementById('updatePartsStatusForm');
+                                
+                                // Validation
+                                if (!statusSelect.value) {
+                                    alert('Please select a status');
+                                    return;
+                                }
+                                
+                                const selectedParts = form.selectedPartsData;
+                                if (!selectedParts || selectedParts.length === 0) {
+                                    alert('No parts selected');
+                                    return;
+                                }
+                                
+                                // Get PO Number input
+                                const poNumberInput = document.getElementById('poNumberInput');
+                                
+                                // Prepare data (supplier and poNumber are optional)
+                                const requestData = {
+                                    status: statusSelect.value,
+                                    poNumber: poNumberInput ? poNumberInput.value.trim() : null,
+                                    supplier: supplierInput.value.trim() || null,
+                                    parts: selectedParts
+                                };
+                                
+                                console.log('Submitting update:', requestData);
+                                
+                                // Send to server
+                                fetch('/purchase-requisition/update-parts-status', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: JSON.stringify(requestData)
+                                })
+                                .then(response => {
+                                    if (response.ok) {
+                                        alert('Parts status updated successfully!');
+                                        // Close modal and reload
+                                        $('#updatePartsStatusModal').modal('hide');
+                                        // Reload page to show updated data
+                                        setTimeout(() => {
+                                            location.reload();
+                                        }, 500);
+                                    } else {
+                                        alert('Error updating parts status: ' + response.statusText);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('Error: ' + error.message);
+                                });
+                                
+                            } catch (e) {
+                                console.error('Error submitting form:', e);
+                                alert('Error: ' + e.message);
+                            }
+                        });
+                    }
+                } else {
+                    console.error('Modal element not found');
                 }
-            }
-        });
-    </script>
-</th:block>
+            });
+        </script>
+    </th:block>
+</div>

@@ -294,7 +294,6 @@
                         code: 'PR-2024-001',
                         title: 'Emergency Motor Parts',
                         status: 'SENT_TO_PURCHASE',
-                        quotationNumber: 'QR-2024-0501',
                         requestorName: 'John Smith',
                         dateNeeded: '2024-01-20',
                         totalItems: 3,
@@ -307,7 +306,6 @@
                         code: 'PR-2024-002',
                         title: 'Preventive Maintenance Parts',
                         status: 'SENT_TO_PURCHASE',
-                        quotationNumber: null,
                         requestorName: 'Jane Doe',
                         dateNeeded: '2024-01-25',
                         totalItems: 5,
@@ -337,10 +335,6 @@
                     const statusBadge = pr.status === 'COMPLETED' ? 
                         '<span class="badge badge-success">Completed</span>' : 
                         '<span class="badge badge-secondary">Sent to Purchase</span>';
-                    
-                    const qrDisplay = pr.quotationNumber ? 
-                        `<span class="text-success">${pr.quotationNumber}</span>` : 
-                        '<span class="text-warning">Awaiting QR</span>';
 
                     html += `
                         <tr>

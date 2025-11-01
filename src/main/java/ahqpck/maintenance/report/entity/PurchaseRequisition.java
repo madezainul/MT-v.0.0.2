@@ -95,10 +95,6 @@ public class PurchaseRequisition {
     @Builder.Default
     private List<PurchaseRequisitionPart> requisitionParts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "purchaseRequisition", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Builder.Default
-    private List<QuotationRequest> quotationRequests = new ArrayList<>();
-
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
@@ -174,27 +170,10 @@ public class PurchaseRequisition {
                 .toList();
     }
 
-    // Get QR number if all parts have the same QR number
-    public String getQuotationNumber() {
-        if (requisitionParts == null || requisitionParts.isEmpty()) {
-            return null;
-        }
-        
-        String firstQrNumber = requisitionParts.get(0).getQuotationNumber();
-        if (firstQrNumber == null) {
-            return null;
-        }
-        
-        // Check if all parts have the same QR number
-        boolean allSameQr = requisitionParts.stream()
-                .allMatch(part -> firstQrNumber.equals(part.getQuotationNumber()));
-        
-        return allSameQr ? firstQrNumber : null;
-    }
-
     public enum PRStatus {
         SUBMITTED("Submitted"),
-        APPROVED("Approved"), 
+        APPROVED("Approved"),
+        SENT_TO_PURCHASE("Sent to Purchase"),
         COMPLETED("Completed");
 
         private final String displayName;

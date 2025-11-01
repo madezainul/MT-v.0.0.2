@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import ahqpck.maintenance.report.mapper.PurchaseRequisitionMapper;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionDTO;
 import ahqpck.maintenance.report.dto.PurchaseRequisitionPartDTO;
@@ -23,6 +24,7 @@ import ahqpck.maintenance.report.entity.PurchaseRequisitionPart;
 import ahqpck.maintenance.report.entity.User;
 import ahqpck.maintenance.report.repository.PartRepository;
 import ahqpck.maintenance.report.repository.PurchaseRequisitionRepository;
+import ahqpck.maintenance.report.repository.PurchaseRequisitionPartRepository;
 import ahqpck.maintenance.report.repository.UserRepository;
 import ahqpck.maintenance.report.util.ZeroPaddedCodeGenerator;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class PurchaseRequisitionService {
 
     private final PurchaseRequisitionRepository prRepository;
     private final PartRepository partRepository;
+    private final PurchaseRequisitionPartRepository purchaseRequisitionPartRepository;
     private final UserRepository userRepository;
     private final PurchaseRequisitionMapper purchaseRequisitionMapper;
     private final ZeroPaddedCodeGenerator codeGenerator;
@@ -438,6 +441,175 @@ public class PurchaseRequisitionService {
         }
     }
 
+    /**
+     * Update status for a single part in a purchase requisition.
+     * Used for bulk updates from the parts status list page.
+     *
+     * @param prId Purchase Requisition ID
+     * @param partId Part ID
+     * @param status New status (PENDING, ORDERED, PARTIALLY_RECEIVED, RECEIVED)
+     * @param supplier Supplier name (optional)
+     * @param poNumber Purchase Order number (optional)
+     * @throws RuntimeException if part not found or invalid status
+     */
+    @Transactional
+    public void updatePartStatus(String prId, String partId, String status, String supplier, String poNumber) {
+        try {
+            System.out.println("updatePartStatus called: prId=" + prId + ", partId=" + partId + ", status=" + status);
+            
+            // Find the part by both prId and partId
+            java.util.List<PurchaseRequisitionPart> parts = 
+                purchaseRequisitionPartRepository.findByPurchaseRequisitionIdAndPartId(prId, partId);
+            
+            if (parts == null || parts.isEmpty()) {
+                throw new RuntimeException("Part not found in this Purchase Requisition. PR ID: " + prId + ", Part ID: " + partId);
+            }
+            
+            PurchaseRequisitionPart part = parts.get(0);
+            System.out.println("Found part: " + part.getId() + ", current status: " + part.getStatus());
+            
+            // Validate and convert status string to enum
+            PurchaseRequisitionPart.PRPartStatus newStatus;
+            try {
+                newStatus = PurchaseRequisitionPart.PRPartStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status: " + status + ". Valid statuses: PENDING, ORDERED, PARTIALLY_RECEIVED, RECEIVED");
+            }
+            
+            // Update the part status
+            part.setStatus(newStatus);
+            System.out.println("Part status set to: " + newStatus);
+            
+            // Update supplier name if provided (from the Part entity)
+            if (supplier != null && !supplier.trim().isEmpty()) {
+                Part partEntity = part.getPart();
+                if (partEntity != null) {
+                    partEntity.setSupplierName(supplier);
+                    partRepository.save(partEntity);
+                    System.out.println("Supplier updated to: " + supplier);
+                }
+            }
+            
+            // Store PO number if provided
+            if (poNumber != null && !poNumber.trim().isEmpty()) {
+                part.setPoNumber(poNumber);
+                System.out.println("PO number set to: " + poNumber);
+            }
+            
+            // Update timestamp
+            part.setUpdatedAt(LocalDateTime.now());
+            
+            // Save the updated part
+            purchaseRequisitionPartRepository.saveAndFlush(part);
+            System.out.println("Part saved and flushed");
+            
+            // Clear the persistence context to avoid stale data
+            // This ensures fresh data is fetched from DB in the next method
+            
+        } catch (RuntimeException e) {
+            System.err.println("RuntimeException in updatePartStatus: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            System.err.println("Exception in updatePartStatus: " + e.getMessage());
+            throw new RuntimeException("Failed to update part status: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Separate method to update PR status - runs in its own transaction
+     * This avoids the issue of querying the same table that was just updated
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updatePRStatusAfterPartUpdate(String prId) {
+        try {
+            System.out.println("updatePRStatusAfterPartUpdate called for prId: " + prId);
+            
+            // Small delay to ensure database write is committed
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            updatePRStatusBasedOnPOStatus(prId);
+            System.out.println("updatePRStatusAfterPartUpdate completed for prId: " + prId);
+        } catch (Exception e) {
+            System.err.println("Error in updatePRStatusAfterPartUpdate: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Update PR status based on the PO status of its parts
+     * - If any part has status ORDERED, set PR status to SENT_TO_PURCHASE
+     * - If all parts have status RECEIVED, set PR status to COMPLETED
+     */
+    @Transactional
+    private void updatePRStatusBasedOnPOStatus(String prId) {
+        try {
+            // Flush pending changes to database before querying
+            purchaseRequisitionPartRepository.flush();
+            
+            PurchaseRequisition pr = prRepository.findById(prId).orElse(null);
+            if (pr == null) {
+                System.out.println("PR not found: " + prId);
+                return;
+            }
+            
+            // Get all parts for this PR - this will get the fresh data from DB
+            java.util.List<PurchaseRequisitionPart> allParts = purchaseRequisitionPartRepository.findByPurchaseRequisitionId(prId);
+            
+            if (allParts == null || allParts.isEmpty()) {
+                System.out.println("No parts found for PR: " + prId);
+                return;
+            }
+            
+            System.out.println("Checking PR status update for " + prId);
+            System.out.println("Current PR status: " + pr.getStatus());
+            System.out.println("Number of parts: " + allParts.size());
+            
+            // Log part statuses
+            for (PurchaseRequisitionPart part : allParts) {
+                System.out.println("  Part: " + part.getId() + " - Status: " + part.getStatus());
+            }
+            
+            // Check if any part has status ORDERED
+            boolean hasOrderedParts = allParts.stream()
+                .anyMatch(part -> part.getStatus() == PurchaseRequisitionPart.PRPartStatus.ORDERED);
+            
+            // Check if all parts have status RECEIVED
+            boolean allPartsReceived = allParts.stream()
+                .allMatch(part -> part.getStatus() == PurchaseRequisitionPart.PRPartStatus.RECEIVED);
+            
+            System.out.println("hasOrderedParts: " + hasOrderedParts + ", allPartsReceived: " + allPartsReceived);
+            
+            // Update PR status accordingly
+            if (allPartsReceived) {
+                // If all parts are received, set PR status to COMPLETED
+                if (pr.getStatus() != PurchaseRequisition.PRStatus.COMPLETED) {
+                    System.out.println("Setting PR status to COMPLETED");
+                    pr.setStatus(PurchaseRequisition.PRStatus.COMPLETED);
+                    prRepository.saveAndFlush(pr);
+                    System.out.println("PR status updated to COMPLETED and flushed");
+                }
+            } else if (hasOrderedParts) {
+                // If any part is ordered, set to SENT_TO_PURCHASE
+                if (pr.getStatus() != PurchaseRequisition.PRStatus.SENT_TO_PURCHASE && 
+                    pr.getStatus() != PurchaseRequisition.PRStatus.COMPLETED) {
+                    System.out.println("Setting PR status to SENT_TO_PURCHASE");
+                    pr.setStatus(PurchaseRequisition.PRStatus.SENT_TO_PURCHASE);
+                    prRepository.saveAndFlush(pr);
+                    System.out.println("PR status updated to SENT_TO_PURCHASE and flushed");
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error updating PR status based on PO status: " + e.getMessage());
+            e.printStackTrace();
+            // Don't throw exception to avoid blocking the part update
+        }
+    }
+
     // Statistics and Dashboard
     public long getTotalPRsCount() {
         return prRepository.count();
@@ -453,6 +625,13 @@ public class PurchaseRequisitionService {
 
     public long getReadyForPOCount() {
         return prRepository.countReadyForPO();
+    }
+
+    /**
+     * Get count of parts by status
+     */
+    public long getPartsCountByStatus(PurchaseRequisitionPart.PRPartStatus status) {
+        return purchaseRequisitionPartRepository.countByStatus(status);
     }
 
     @Transactional(readOnly = true)
@@ -547,6 +726,7 @@ public class PurchaseRequisitionService {
                                 prPart.getCriticalityLevel().getDisplayName() : "Medium");
                     partMap.put("criticalityDisplay", prPart.getCriticalityLevel() != null ? 
                                 "badge-" + prPart.getCriticalityLevel().name().toLowerCase() : "badge-warning");
+                    partMap.put("poNumber", prPart.getPoNumber()); // Add PO Number
                     
                     // Add criticality CSS class for color coding
                     String criticalityClass = "criticality-medium";
@@ -592,8 +772,8 @@ public class PurchaseRequisitionService {
                     int priorityA = getPRStatusSortPriority((String) valueA);
                     int priorityB = getPRStatusSortPriority((String) valueB);
                     comparison = Integer.compare(priorityA, priorityB);
-                } else if (valueA instanceof Comparable && valueB instanceof Comparable) {
-                    comparison = ((Comparable) valueA).compareTo(valueB);
+                } else if (valueA instanceof Comparable<?> && valueB instanceof Comparable<?>) {
+                    comparison = ((Comparable<Object>) valueA).compareTo(valueB);
                 } else if (valueA != null && valueB != null) {
                     comparison = valueA.toString().compareTo(valueB.toString());
                 }
@@ -706,7 +886,6 @@ public class PurchaseRequisitionService {
         dto.setCanBeCompleted(pr.canBeCompleted());
         dto.setStatusDisplay(pr.getStatus().getDisplayName());
         dto.setSuppliers(pr.getSuppliers());
-        dto.setQuotationNumber(pr.getQuotationNumber());
 
         return dto;
     }

@@ -261,13 +261,20 @@
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
-                                            <th>Actions</th>
+                                            <th data-sort="poNumber">
+                                                <a th:href="@{/purchase-requisition/parts-status-list(search=${searchTerm}, sortBy='poNumber', ascending=${!ascending})}" 
+                                                   class="text-white text-decoration-none">
+                                                    PO No.
+                                                    <i class="fas fa-sort ml-1"></i>
+                                                </a>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr th:each="prPart : ${prParts}">
                                             <td class="text-center align-middle">
-                                                <input type="checkbox" name="partCheckbox" class="part-checkbox" th:data-part-id="${prPart['partId']}" th:data-pr-id="${prPart['prId']}">
+                                                <input type="checkbox" name="partCheckbox" class="part-checkbox" 
+                                                       th:attr="data-part-id=${prPart['partId']},data-pr-id=${prPart['prId']},data-part-name=${prPart['partName']},data-quantity=${prPart['quantityRequested']}">
                                             </td>
                                             <td>
                                                 <a th:href="@{'/parts/' + ${prPart['partId']}}" 
@@ -295,6 +302,7 @@
                                                 <span th:if="${prPart['status'] == 'ORDERED'}" class="badge badge-pill badge-info">Ordered</span>
                                                 <span th:if="${prPart['status'] == 'PARTIALLY_RECEIVED'}" class="badge badge-pill badge-primary">Partially Received</span>
                                                 <span th:if="${prPart['status'] == 'RECEIVED'}" class="badge badge-pill badge-success">Received</span>
+                                                <span th:if="${prPart['status'] == null or (prPart['status'] != 'PENDING' and prPart['status'] != 'ORDERED' and prPart['status'] != 'PARTIALLY_RECEIVED' and prPart['status'] != 'RECEIVED')}" class="badge badge-pill badge-secondary" th:text="${prPart['status']}"></span>
                                             </td>
                                             <td>
                                                 <span class="badge badge-pill badge-info" 
@@ -302,13 +310,8 @@
                                                       th:text="${prPart['criticalityLevel']}"></span>
                                             </td>
                                             <td>
-                                                <div class="form-button-action">
-                                                    <a th:href="@{'/purchase-requisition/' + ${prPart['prId']}}" 
-                                                       class="btn btn-link btn-primary btn-lg" 
-                                                       title="View PR Details">
-                                                        <i class="fa fa-eye"></i>
-                                                    </a>
-                                                </div>
+                                                <span th:if="${prPart['poNumber']}" th:text="${prPart['poNumber']}"></span>
+                                                <span th:unless="${prPart['poNumber']}" class="text-muted">—</span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -368,6 +371,9 @@
                 </div>
             </div>
 
+            <!-- Include the Update Parts Status Modal Fragment -->
+            <div th:replace="~{purchase-requisition/modal :: updatePartsStatusModal}"></div>
+
             <!-- Checkbox Script - Inside Thymeleaf Fragment -->
             <th:block th:inline="javascript">
                 <script>
@@ -375,6 +381,43 @@
                     function openUpdatePartsStatusModal() {
                         const modalElement = document.getElementById('updatePartsStatusModal');
                         if (modalElement) {
+                            // Get selected parts BEFORE showing modal
+                            const selectedParts = window.getSelectedParts ? window.getSelectedParts() : [];
+                            console.log('openUpdatePartsStatusModal: selectedParts =', selectedParts);
+                            
+                            // Populate modal with selected parts
+                            const selectedPartsList = document.getElementById('selectedPartsList');
+                            const selectedPartsCount = document.getElementById('selectedPartsCount');
+                            const form = document.getElementById('updatePartsStatusForm');
+                            
+                            if (selectedParts && selectedParts.length > 0) {
+                                selectedPartsCount.textContent = selectedParts.length;
+                                
+                                // Build parts list HTML with part name and quantity
+                                let html = '<ul class="list-unstyled">';
+                                selectedParts.forEach((part, index) => {
+                                    html += '<li class="mb-2">' +
+                                            '<small>' +
+                                            '<strong>Part ' + (index + 1) + ':</strong> ' +
+                                            '<br>' +
+                                            '<strong>Name:</strong> ' + (part.partName || 'N/A') +
+                                            '<br>' +
+                                            '<strong>Quantity:</strong> ' + (part.quantity || 'N/A') +
+                                            '</small>' +
+                                            '</li>';
+                                });
+                                html += '</ul>';
+                                
+                                selectedPartsList.innerHTML = html;
+                            } else {
+                                selectedPartsCount.textContent = '0';
+                                selectedPartsList.innerHTML = '<small class="text-muted">No parts selected</small>';
+                            }
+                            
+                            // Store selected parts in form data
+                            form.selectedPartsData = selectedParts;
+                            
+                            // Now show the modal
                             const modal = new bootstrap.Modal(modalElement);
                             modal.show();
                         } else {
@@ -409,6 +452,11 @@
                             rowCheckboxes.forEach((checkbox) => {
                                 checkbox.addEventListener('change', function() {
                                     try {
+                                        console.log('Checkbox changed:', {
+                                            checked: this.checked,
+                                            partId: this.dataset.partId,
+                                            prId: this.dataset.prId
+                                        });
                                         updateRowHighlight(this);
                                         updateSelectAllState();
                                         updateButtonState();
@@ -459,8 +507,10 @@
                             function updateButtonState() {
                                 try {
                                     const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+                                    console.log('updateButtonState: checkedCount =', checkedCount);
                                     if (updateStatusBtn) {
                                         updateStatusBtn.disabled = checkedCount === 0;
+                                        console.log('Button disabled:', updateStatusBtn.disabled);
                                     }
                                 } catch (e) {
                                     console.error('Checkbox error:', e);
@@ -470,13 +520,41 @@
                             // Get selected parts for bulk actions
                             window.getSelectedParts = function() {
                                 try {
+                                    console.log('=== getSelectedParts called ===');
+                                    const allCheckboxes = document.querySelectorAll('input[name="partCheckbox"]');
+                                    console.log('Total checkboxes on page:', allCheckboxes.length);
+                                    
+                                    const checkedCheckboxes = document.querySelectorAll('input[name="partCheckbox"]:checked');
+                                    console.log('Checked checkboxes:', checkedCheckboxes.length);
+                                    
                                     const selected = [];
-                                    document.querySelectorAll('input[name="partCheckbox"]:checked').forEach(checkbox => {
-                                        selected.push({
-                                            partId: checkbox.getAttribute('data-part-id'),
-                                            prId: checkbox.getAttribute('data-pr-id')
+                                    checkedCheckboxes.forEach((checkbox, idx) => {
+                                        // Use dataset property for data-* attributes
+                                        const partId = checkbox.dataset.partId || checkbox.getAttribute('data-part-id');
+                                        const prId = checkbox.dataset.prId || checkbox.getAttribute('data-pr-id');
+                                        const partName = checkbox.dataset.partName || checkbox.getAttribute('data-part-name');
+                                        const quantity = checkbox.dataset.quantity || checkbox.getAttribute('data-quantity');
+                                        
+                                        console.log(`Checkbox ${idx + 1}:`, {
+                                            checked: checkbox.checked,
+                                            partId: partId,
+                                            prId: prId,
+                                            partName: partName,
+                                            quantity: quantity
                                         });
+                                        
+                                        if (partId && prId) {
+                                            selected.push({
+                                                partId: partId,
+                                                prId: prId,
+                                                partName: partName,
+                                                quantity: quantity
+                                            });
+                                        } else {
+                                            console.warn(`Checkbox ${idx + 1} skipped: partId=${partId}, prId=${prId}`);
+                                        }
                                     });
+                                    console.log('=== Final selected parts ===', selected);
                                     return selected;
                                 } catch (e) {
                                     console.error('Checkbox error:', e);

@@ -19,11 +19,15 @@ public interface PurchaseRequisitionPartRepository extends JpaRepository<Purchas
     // Find by part
     List<PurchaseRequisitionPart> findByPartId(String partId);
 
+    // Find by purchase requisition ID and part ID
+    @Query("SELECT prp FROM PurchaseRequisitionPart prp " +
+           "WHERE prp.purchaseRequisition.id = :purchaseRequisitionId AND prp.part.id = :partId")
+    List<PurchaseRequisitionPart> findByPurchaseRequisitionIdAndPartId(
+            @Param("purchaseRequisitionId") String purchaseRequisitionId,
+            @Param("partId") String partId);
+
     // Find by status
     List<PurchaseRequisitionPart> findByStatus(PRPartStatus status);
-
-    // Find by PO number
-    List<PurchaseRequisitionPart> findByQuotationNumber(String quotationNumber);
 
     // Find parts pending for PO creation (approved PRs, pending parts)
     @Query("SELECT prp FROM PurchaseRequisitionPart prp " +

@@ -78,9 +78,6 @@ public class PurchaseRequisitionDTO {
     // Suppliers for PO creation
     private List<String> suppliers;
 
-    // QR Number if created
-    private String quotationNumber;
-
     // Helper methods for display
     public String getFormattedDateNeeded() {
         return dateNeeded != null ? dateNeeded.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
@@ -103,6 +100,7 @@ public class PurchaseRequisitionDTO {
             case SUBMITTED -> Boolean.TRUE.equals(isApproved) ? "badge-success" : 
                            (Boolean.FALSE.equals(isApproved) ? "badge-danger" : "badge-warning");
             case APPROVED -> "badge-success";
+            case SENT_TO_PURCHASE -> "badge-secondary";
             case COMPLETED -> "badge-primary";
         };
     }

@@ -125,9 +125,9 @@
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <a th:href="@{/purchase-requisition/parts-status-list}" class="btn btn-info ml-2 mt-2">
+                    <!-- <a th:href="@{/purchase-requisition/parts-status-list}" class="btn btn-info ml-2 mt-2">
                         <i class="fa fa-list mr-1"></i> Parts Status List
-                    </a>
+                    </a> -->
                     <a th:href="@{/purchase-requisition/create}" class="btn btn-primary ml-2 mt-2">
                         <i class="fa fa-plus mr-1"></i> Create New PR
                     </a>
@@ -224,7 +224,7 @@
 
             <div class="row mb-4">
                 <!-- Action Required -->
-                <div class="col-md-12">
+                <div class="col-md-6">
                     <div class="card section-card">
                         <div class="section-header">
                             <h5 class="mb-0">
@@ -275,112 +275,66 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Monitoring Row -->
-            <div class="row mb-4">
+                <!-- Parts Status List -->
                 <div class="col-md-6">
                     <div class="card section-card">
                         <div class="section-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-eye mr-2"></i>PR Monitoring
+                                <i class="fa fa-list mr-2"></i>Parts Status List
+                                <small class="ml-2" style="font-size: 0.75rem; opacity: 0.8;">PO Status Tracking</small>
                             </h5>
-                            <a th:href="@{/purchase-requisition/list?status=SENT_TO_PURCHASE}"
+                            <a th:href="@{/purchase-requisition/parts-status-list}"
                                 class="btn btn-outline-light btn-sm">
-                                View All
+                                Manage
                             </a>
                         </div>
-                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                            <div th:if="${monitoringPRs != null and !monitoringPRs.empty}">
-                                <div th:each="pr : ${monitoringPRs}" class="card mb-2 monitoring-item">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <h6 class="card-title mb-1">
-                                                    <a th:href="@{/purchase-requisition/{id}(id=${pr.id})}"
-                                                        th:text="${pr.code}" class="text-decoration-none"></a>
-                                                </h6>
-                                                <p class="card-text small text-muted mb-2" th:text="${pr.title}"></p>
-                                                <div class="d-flex flex-wrap">
-                                                    <span class="badge badge-info badge-sm mr-2"
-                                                        th:text="${pr.quotationNumber ?: 'QR Pending'}"></span>
-                                                    <span class="badge badge-secondary badge-sm mr-2"
-                                                        th:text="${pr.statusDisplay}"></span>
-                                                </div>
-                                            </div>
-                                            <small class="text-muted"
-                                                th:text="${#temporals.format(pr.reviewedAt ?: pr.createdAt, 'MMM dd')}"></small>
-                                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <div class="mini-stat-card">
+                                        <p class="text-muted small mb-1">Total Parts</p>
+                                        <h5 th:text="${totalPartsCount ?: 0}" class="mb-0">0</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat-card">
+                                        <p class="text-muted small mb-1">Pending</p>
+                                        <h5 th:text="${pendingPartsCount ?: 0}" class="text-warning mb-0">0</h5>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${monitoringPRs == null or monitoringPRs.empty}" class="empty-state">
-                                <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
-                                <p>No purchase requisitions to monitor at this time.</p>
-                                <a th:href="@{/purchase-requisition/create}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus mr-2"></i>Create PR
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card section-card">
-                        <div class="section-header">
-                            <h5 class="mb-0">
-                                <i class="fas fa-file-invoice mr-2"></i>Quotation Monitoring
-                            </h5>
-                            <a th:href="@{/quotation-request/list}" class="btn btn-outline-light btn-sm">
-                                View All Quotations
-                            </a>
-                        </div>
-                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                            <!-- Recent Uncompleted Quotations -->
-                            <div th:if="${recentQRs != null and !recentQRs.empty}">
-                                <div th:each="qr : ${recentQRs}" th:if="${qr.status.name() != 'COMPLETED'}" class="card mb-2 qr-item">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <h6 class="card-title mb-1">
-                                                    <a th:href="@{'/quotation-request/' + ${qr.id}}"
-                                                        th:text="${qr.quotationNumber}"
-                                                        class="text-decoration-none"></a>
-                                                </h6>
-                                                <p class="card-text small text-muted mb-2" th:text="${qr.supplierName}">
-                                                </p>
-                                                <div class="d-flex flex-wrap">
-                                                    <span class="badge badge-pill-custom mr-2"
-                                                        th:classappend="${
-                                                            qr.status.name() == 'CREATED' ? 'badge-created' :
-                                                            qr.status.name() == 'SENT' ? 'badge-sent' :
-                                                            qr.status.name() == 'CONFIRMED' ? 'badge-confirmed' :
-                                                            qr.status.name() == 'DELIVERED' ? 'badge-delivered' :
-                                                            'badge-light'
-                                                        }"
-                                                        th:text="${qr.status.name()}"></span>
-                                                    <span class="badge badge-light badge-sm mr-2"
-                                                        th:text="${qr.totalParts + ' parts'}"></span>
-                                                </div>
-                                            </div>
-                                            <small class="text-muted"
-                                                th:text="${#temporals.format(qr.requestDate, 'MMM dd')}"></small>
-                                        </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <div class="mini-stat-card">
+                                        <p class="text-muted small mb-1">Ordered</p>
+                                        <h5 th:text="${orderedPartsCount ?: 0}" class="text-info mb-0">0</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat-card">
+                                        <p class="text-muted small mb-1">Partially Received</p>
+                                        <h5 th:text="${partiallyReceivedCount ?: 0}" class="text-primary mb-0">0</h5>
                                     </div>
                                 </div>
                             </div>
-                            <!-- If no uncompleted QRs found -->
-                            <div th:if="${recentQRs == null or recentQRs.empty}" class="empty-state">
-                                <i class="fas fa-file-invoice fa-3x mb-3 text-muted"></i>
-                                <p class="mb-3">All quotation requests are completed!</p>
-                                <a th:href="@{/quotation-request/create-multi}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus mr-2"></i>Create Quotation Request
-                                </a>
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="mini-stat-card">
+                                        <p class="text-muted small mb-1">Received</p>
+                                        <h5 th:text="${receivedPartsCount ?: 0}" class="text-success mb-0">0</h5>
+                                    </div>
+                                </div>
                             </div>
+                            <a th:href="@{/purchase-requisition/parts-status-list}" class="btn btn-info btn-sm btn-block">
+                                <i class="fa fa-arrow-right mr-1"></i>Go to Parts Status List
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- End of Content -->
         </div>
     </div>
 </body>

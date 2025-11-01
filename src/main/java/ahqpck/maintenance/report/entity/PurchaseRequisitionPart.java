@@ -55,10 +55,6 @@ public class PurchaseRequisitionPart {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // QR and Status tracking
-    @Column(name = "quotation_number", length = 100)
-    private String quotationNumber;
-
     @Column(name = "quantity_ordered")
     @Builder.Default
     private Integer quantityOrdered = 0;
@@ -81,6 +77,9 @@ public class PurchaseRequisitionPart {
 
     @Column(name = "part_approval_notes", columnDefinition = "TEXT")
     private String partApprovalNotes;
+
+    @Column(name = "po_number", length = 100)
+    private String poNumber;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -114,8 +113,7 @@ public class PurchaseRequisitionPart {
         return quantityReceived != null && quantityReceived.equals(quantityOrdered);
     }
 
-    public void markAsOrdered(String quotationNumber, Integer orderedQuantity) {
-        this.quotationNumber = quotationNumber;
+    public void markAsOrdered(Integer orderedQuantity) {
         this.quantityOrdered = orderedQuantity;
         this.status = PRPartStatus.ORDERED;
         this.updatedAt = LocalDateTime.now();

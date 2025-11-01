@@ -25,15 +25,18 @@
                         <i class="flaticon-right-arrow"></i>
                     </li>
                     <li class="nav-item">
-                        <a>List</a>
+                        <a th:text="${actionRequired} ? 'Action Required' : 'List'"></a>
                     </li>
                 </ul>
                 <div class="header-action-group d-flex align-items-center ml-auto">
-                    <a th:href="@{/purchase-requisition/create}" class="btn btn-primary ml-auto mt-2">
+                    <a th:if="${!actionRequired}" th:href="@{/purchase-requisition/create}" class="btn btn-primary ml-auto mt-2">
                         <i class="fa fa-plus mr-1"></i> Create New PR
                     </a>
                     <a th:href="@{/purchase-requisition}" class="btn btn-secondary ml-2 mt-2">
                         <i class="fa fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                    <a th:if="${actionRequired}" th:href="@{/purchase-requisition/list}" class="btn btn-info ml-2 mt-2">
+                        <i class="fa fa-list mr-1"></i> View All PRs
                     </a>
                 </div>
             </div>
@@ -43,7 +46,7 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="card-head-row">
-                                <div class="card-title">Purchase Requisitions</div>
+                                <div class="card-title" th:text="${actionRequired} ? 'PRs Requiring Action' : 'Purchase Requisitions'"></div>
                                 <div class="card-tools">
                                     <!-- Search Form -->
                                     <form th:action="@{/purchase-requisition/list}" method="get" class="form-inline">
@@ -64,8 +67,8 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Approval Status Filter Tabs -->
-                            <div class="nav nav-tabs mb-3" role="tablist" style="border-bottom: 2px solid #e0e4e7;">
+                            <!-- Approval Status Filter Tabs - Hidden when actionRequired is true -->
+                            <div th:if="!${actionRequired}" class="nav nav-tabs mb-3" role="tablist" style="border-bottom: 2px solid #e0e4e7;">
                                 <a class="nav-link" 
                                    th:classappend="${approvalFilter == null || approvalFilter == 'all'} ? 'active'"
                                    th:href="@{/purchase-requisition/list(search=${searchTerm}, approvalFilter='all', page=0, sortBy=${sortBy}, ascending=${ascending})}"
@@ -96,8 +99,26 @@
                                 </a>
                             </div>
 
-                            <!-- Status Info Banner -->
-                            <div th:if="${approvalFilter == 'pending' && pendingApprovalCount > 0}" class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                            <!-- Action Required Info Banner -->
+                            <div th:if="${actionRequired && totalElements > 0}" class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Action Required!</strong> You have <strong th:text="${totalElements}"></strong> Purchase Requisition(s) waiting for approval or have been rejected.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+
+                            <!-- Empty State for Action Required -->
+                            <div th:if="${actionRequired && totalElements == 0}" class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <strong>All Caught Up!</strong> No purchase requisitions require action at this time.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+
+                            <!-- Status Info Banner - Hidden when actionRequired is true -->
+                            <div th:if="!${actionRequired} and ${approvalFilter == 'pending'} and ${pendingApprovalCount > 0}" class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
                                 <i class="fas fa-exclamation-triangle mr-2"></i>
                                 <strong>Action Required!</strong> You have <strong th:text="${pendingApprovalCount}"></strong> Purchase Requisition(s) waiting for approval.
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -152,7 +173,7 @@
                                                     <i class="fas fa-sort ml-1"></i>
                                                 </a>
                                             </th>
-                                            <th>Actions</th>
+                                            <th th:if="!${actionRequired}">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -180,7 +201,7 @@
                                             </td>
                                             <td th:text="${#temporals.format(pr.dateNeeded, 'MMM dd, yyyy')}"></td>
                                             <td th:text="${#temporals.format(pr.createdAt, 'MMM dd, yyyy')}"></td>
-                                            <td>
+                                            <td th:if="!${actionRequired}">
                                                 <div class="form-button-action">
                                                     <a th:href="@{'/purchase-requisition/' + ${pr.id}}" 
                                                        class="btn btn-link btn-primary btn-lg" 

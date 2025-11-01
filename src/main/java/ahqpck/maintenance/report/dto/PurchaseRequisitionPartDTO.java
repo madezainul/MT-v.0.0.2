@@ -42,8 +42,6 @@ public class PurchaseRequisitionPartDTO {
     private String justification;
     private String notes;
 
-    // QR and Status tracking
-    private String quotationNumber;
     @Builder.Default
     private Integer quantityOrdered = 0;
     @Builder.Default
